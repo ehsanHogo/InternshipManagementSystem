@@ -27,6 +27,8 @@ services:
       DB_PASSWORD: postgres
       DB_NAME: internship_management
       DB_SSLMODE: disable
+      JWT_SECRET: development-only-secret-change-me
+      JWT_EXPIRES_HOURS: "24"
     ports:
       - "8082:8080"
     depends_on:

@@ -11,8 +11,8 @@ import (
 func CORS(frontendOrigin string) gin.HandlerFunc {
 	return cors.New(cors.Config{
 		AllowOrigins:     []string{frontendOrigin},
-		AllowMethods:     []string{http.MethodGet, http.MethodOptions},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodOptions},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		AllowCredentials: false,
 		MaxAge:           12 * time.Hour,
 	})

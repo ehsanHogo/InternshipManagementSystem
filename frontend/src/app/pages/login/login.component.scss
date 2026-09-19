@@ -1,0 +1,119 @@
+:host {
+  display: block;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+  background:
+    radial-gradient(circle at 10% 15%, rgb(37 99 235 / 8%), transparent 24rem),
+    linear-gradient(145deg, #f8fafc, #eef4fb);
+}
+
+.login-shell {
+  width: min(100%, 29rem);
+}
+
+.brand {
+  margin-bottom: 1.5rem;
+  text-align: center;
+
+  h1 {
+    margin: 0.8rem 0 0.35rem;
+    color: #15345b;
+    font-size: clamp(1.35rem, 5vw, 1.8rem);
+    line-height: 1.6;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+}
+
+.brand-icon {
+  width: 3.75rem;
+  height: 3.75rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 1rem;
+  color: #fff;
+  background: #2563eb;
+  box-shadow: 0 0.75rem 2rem rgb(37 99 235 / 24%);
+
+  i {
+    font-size: 1.9rem;
+  }
+}
+
+.card-heading {
+  padding: 1.5rem 1.5rem 0;
+
+  h2 {
+    margin: 0 0 0.4rem;
+    color: #1e293b;
+    font-size: 1.25rem;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.875rem;
+  }
+}
+
+form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.5rem;
+
+  label {
+    color: #334155;
+    font-weight: 600;
+  }
+
+  input {
+    width: 100%;
+    padding-inline: 2.4rem 0.75rem;
+  }
+}
+
+.p-input-icon-right {
+  position: relative;
+  display: block;
+
+  > i {
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    right: auto;
+    left: 0.8rem;
+    color: #94a3b8;
+    transform: translateY(-50%);
+  }
+}
+
+.validation-error {
+  color: #dc2626;
+}
+
+.demo-hint {
+  margin: 1rem 0 0;
+  color: #64748b;
+  font-size: 0.8rem;
+  text-align: center;
+  direction: ltr;
+}
+
+:host ::ng-deep .p-card {
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1rem 3rem rgb(15 23 42 / 9%);
+}

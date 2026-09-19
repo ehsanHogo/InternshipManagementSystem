@@ -1,0 +1,69 @@
+<main class="login-page">
+  <section class="login-shell" aria-labelledby="application-title">
+    <header class="brand">
+      <span class="brand-icon" aria-hidden="true"><i class="pi pi-graduation-cap"></i></span>
+      <h1 id="application-title">سامانه مدیریت کارآموزی دانشجویان</h1>
+      <p>دانشگاه، دانشجو و محیط کار؛ یکپارچه و هماهنگ</p>
+    </header>
+
+    <p-card>
+      <ng-template #header>
+        <div class="card-heading">
+          <h2>ورود به سامانه</h2>
+          <p>برای ادامه، اطلاعات حساب کاربری خود را وارد کنید.</p>
+        </div>
+      </ng-template>
+
+      <form [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label for="email">ایمیل</label>
+          <span class="p-input-icon-right">
+            <i class="pi pi-envelope" aria-hidden="true"></i>
+            <input
+              id="email"
+              type="email"
+              pInputText
+              formControlName="email"
+              autocomplete="email"
+              dir="ltr"
+              placeholder="student@demo.local"
+            />
+          </span>
+          @if (loginForm.controls.email.touched && loginForm.controls.email.hasError('required')) {
+            <small class="validation-error">وارد کردن ایمیل الزامی است</small>
+          } @else if (loginForm.controls.email.touched && loginForm.controls.email.hasError('email')) {
+            <small class="validation-error">فرمت ایمیل صحیح نیست</small>
+          }
+        </div>
+
+        <div class="field">
+          <label for="password">رمز عبور</label>
+          <p-password
+            inputId="password"
+            formControlName="password"
+            autocomplete="current-password"
+            [feedback]="false"
+            [toggleMask]="true"
+            [fluid]="true"
+            placeholder="رمز عبور"
+          />
+          @if (loginForm.controls.password.touched && loginForm.controls.password.hasError('required')) {
+            <small class="validation-error">وارد کردن رمز عبور الزامی است</small>
+          }
+        </div>
+
+        <p-button
+          type="submit"
+          label="ورود"
+          icon="pi pi-sign-in"
+          iconPos="left"
+          [loading]="submitting"
+          [disabled]="submitting"
+          [fluid]="true"
+        />
+      </form>
+    </p-card>
+
+    <p class="demo-hint">حساب آزمایشی دانشجو: student@demo.local</p>
+  </section>
+</main>

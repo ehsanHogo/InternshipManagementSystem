@@ -1,0 +1,141 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.dashboard-page {
+  min-height: 100vh;
+  background: #f6f8fb;
+}
+
+.topbar {
+  min-height: 4.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem clamp(1rem, 5vw, 4rem);
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: #15345b;
+  font-weight: 700;
+
+  i {
+    color: #2563eb;
+    font-size: 1.6rem;
+  }
+}
+
+.user-actions,
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.identity {
+  padding-inline-end: 0.25rem;
+}
+
+.dashboard-content {
+  width: min(100% - 2rem, 70rem);
+  margin: 0 auto;
+  padding-block: clamp(1.5rem, 5vw, 3.5rem);
+}
+
+.welcome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  padding: clamp(1.5rem, 5vw, 2.5rem);
+  overflow: hidden;
+  border-radius: 1rem;
+  color: #fff;
+  background: linear-gradient(125deg, #1d4ed8, #2563eb 58%, #38bdf8);
+  box-shadow: 0 1rem 2.5rem rgb(37 99 235 / 17%);
+
+  h1 {
+    margin: 0.35rem 0;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+  }
+
+  p {
+    margin: 0;
+    color: #dbeafe;
+  }
+}
+
+.eyebrow {
+  color: #bfdbfe;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.welcome-icon {
+  opacity: 0.25;
+
+  i {
+    font-size: 5rem;
+  }
+}
+
+.placeholder {
+  min-height: 11rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  color: #64748b;
+  text-align: center;
+
+  > i {
+    color: #93c5fd;
+    font-size: 2.75rem;
+  }
+
+  h2 {
+    margin: 0 0 0.4rem;
+    color: #334155;
+    font-size: 1.1rem;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+@media (max-width: 42rem) {
+  .topbar,
+  .user-actions {
+    align-items: stretch;
+  }
+
+  .topbar {
+    flex-direction: column;
+  }
+
+  .brand {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .user-actions {
+    justify-content: space-between;
+  }
+
+  .identity {
+    flex-wrap: wrap;
+  }
+
+  .welcome-icon {
+    display: none;
+  }
+}

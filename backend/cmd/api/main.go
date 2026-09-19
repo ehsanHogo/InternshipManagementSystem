@@ -29,6 +29,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("connect to database: %v", err)
 	}
+	if err := database.MigrateAndSeed(db); err != nil {
+		log.Fatalf("prepare database: %v", err)
+	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
@@ -42,12 +45,16 @@ func main() {
 
 	healthService := service.NewHealthService(db)
 	healthHandler := handler.NewHealthHandler(healthService)
+	authHandler := handler.NewAuthHandler(db, cfg.JWT.Secret, time.Duration(cfg.JWT.ExpiresHours)*time.Hour)
 
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery(), appmiddleware.CORS(cfg.FrontendOrigin))
 
 	api := router.Group("/api")
 	api.GET("/health", healthHandler.Get)
+	api.POST("/auth/login", authHandler.Login)
+	api.GET("/auth/me", appmiddleware.RequireAuth(cfg.JWT.Secret), authHandler.Me)
+	api.GET("/protected", appmiddleware.RequireAuth(cfg.JWT.Secret), authHandler.Protected)
 
 	server := &http.Server{
 		Addr:              ":" + cfg.AppPort,

@@ -1,7 +1,5 @@
 # Internship Management System
 
-A small Milestone 1 foundation for a university internship management application. The current scope provides a Persian RTL Angular page and a Go health API backed by a PostgreSQL connectivity check. Authentication and internship business entities are intentionally not included yet.
-
 ## Stack
 
 - Go, Gin, GORM, PostgreSQL
@@ -32,7 +30,7 @@ npm install
 npm start
 ```
 
-Open the frontend at <http://localhost:4200>. The backend is available at <http://localhost:8082>, and its health endpoint is:
+Open the login page at <http://localhost:4200/login>. The backend is available at <http://localhost:8082>, and its health endpoint is:
 
 ```text
 GET http://localhost:8082/api/health
@@ -41,10 +39,58 @@ GET http://localhost:8082/api/health
 Expected response:
 
 ```json
-{"status":"ok"}
+{ "status": "ok" }
 ```
 
 The Angular development server proxies `/api` requests to the backend. The backend CORS policy separately permits only `http://localhost:4200` by default.
+
+## Authentication
+
+The backend stores bcrypt password hashes and issues one HMAC-SHA256 access JWT after a successful login. Tokens contain the user ID, role, email, issue time, and expiry. The Angular client stores the demo token in `localStorage`, adds it to authenticated API requests, and validates an existing token against `/api/auth/me` whenever the application starts.
+
+The available roles are `STUDENT`, `PROFESSOR`, `COMPANY_SUPERVISOR`, `UNIVERSITY_SUPERVISOR`, and `ADMIN`. Each user has one role. There are deliberately no refresh tokens, role/permission tables, or password recovery flow in this MVP.
+
+These development environment variables configure token signing:
+
+```text
+JWT_SECRET=replace-with-a-long-random-secret
+JWT_EXPIRES_HOURS=24
+```
+
+Docker Compose supplies a development-only secret. Replace it outside local demos. When running the backend directly, use the values in `backend/.env.example` as a guide; the Go application reads environment variables but does not load the file automatically.
+
+## Demo accounts
+
+The backend runs GORM `AutoMigrate` and an idempotent seed on startup. Each account is looked up by email before insertion, so restarting the backend does not create duplicates. All five accounts use the explicitly non-production password `Demo123!`.
+
+| Role                  | Email                   | Name            | Additional details                               |
+| --------------------- | ----------------------- | --------------- | ------------------------------------------------ |
+| Student               | `student@demo.local`    | علی رضایی       | Student number `40123456`, major مهندسی کامپیوتر |
+| Professor             | `professor@demo.local`  | دکتر محمد احمدی | —                                                |
+| University supervisor | `university@demo.local` | کارشناس آموزش   | —                                                |
+| Company supervisor    | `company@demo.local`    | رضا محمدی       | —                                                |
+| Admin                 | `admin@demo.local`      | مدیر سیستم      | —                                                |
+
+After login, the frontend redirects to <http://localhost:4200/dashboard>. Visiting the dashboard without a valid authenticated session redirects back to the login page. Logging out removes the stored token.
+
+## Test authentication from the command line
+
+Log in and copy the returned `token` value:
+
+```bash
+curl -X POST http://localhost:8082/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"student@demo.local","password":"Demo123!"}'
+```
+
+Use that token to request the current user:
+
+```bash
+curl http://localhost:8082/api/auth/me \
+  -H 'Authorization: Bearer YOUR_TOKEN'
+```
+
+The same header can be used with `GET /api/protected`, the small authenticated verification endpoint. Missing, malformed, expired, or incorrectly signed tokens receive HTTP 401. Invalid login credentials also receive HTTP 401 without revealing which credential was wrong.
 
 Stop the Docker services with:
 
@@ -60,6 +106,9 @@ PostgreSQL data remains in the `postgres_data` Docker volume. To also remove tha
 # Build the backend locally
 cd backend
 go build ./cmd/api
+
+# Run backend tests
+go test ./...
 
 # Build the frontend
 cd frontend
