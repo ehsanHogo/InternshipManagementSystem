@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -53,6 +53,10 @@ export class CompanyCaseComponent {
   readonly evaluationSaving = signal(false);
   readonly reportDialogVisible = signal(false);
   readonly selectedReport = signal<WeeklyReport | null>(null);
+  readonly confirmedReportCount = computed(() => this.reports().filter((report) => report.isConfirmed).length);
+  readonly canSubmitEvaluation = computed(() =>
+    this.reports().length === 8 && this.confirmedReportCount() === 8 && this.evaluation() === null
+  );
 
   readonly ratingOptions = (Object.entries(evaluationRatingLabels) as [EvaluationRating, string][])
     .map(([value, label]) => ({ value, label }));
@@ -134,6 +138,10 @@ export class CompanyCaseComponent {
   }
 
   confirmEvaluationSubmission(): void {
+    if (!this.canSubmitEvaluation()) {
+      this.messages.add({ severity: 'warn', summary: 'ارزیابی غیرفعال است', detail: 'ابتدا هر ۸ گزارش هفتگی باید ثبت و تأیید شوند.' });
+      return;
+    }
     if (this.evaluationForm.invalid) {
       this.evaluationForm.markAllAsTouched();
       this.messages.add({ severity: 'warn', summary: 'اطلاعات ناقص', detail: 'تمام معیارهای ارزیابی را تکمیل کنید.' });

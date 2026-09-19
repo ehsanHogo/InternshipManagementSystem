@@ -110,18 +110,26 @@
           <div class="detail full-width"><span>پیشنهادها و توضیحات</span><strong>{{ submittedEvaluation.suggestions || '—' }}</strong></div>
         </div>
       } @else {
-        <form class="form-grid" [formGroup]="evaluationForm">
-          @for (criterion of criteria; track criterion.key) {
-            <label class="field">
-              <span>{{ criterion.label }} <b>*</b></span>
-              <p-select [formControlName]="criterion.key" [options]="ratingOptions" optionLabel="label" optionValue="value" placeholder="انتخاب کنید" />
-            </label>
-          }
-          <label class="field"><span>تعداد روزهای مرخصی <b>*</b></span><p-inputnumber formControlName="leaveDays" [min]="0" [useGrouping]="false" /></label>
-          <label class="field"><span>تعداد روزهای غیبت <b>*</b></span><p-inputnumber formControlName="absenceDays" [min]="0" [useGrouping]="false" /></label>
-          <label class="field full-width"><span>پیشنهادها و توضیحات</span><textarea pTextarea formControlName="suggestions" rows="5"></textarea></label>
-        </form>
-        <div class="card-actions"><p-button label="ثبت ارزیابی نهایی" icon="pi pi-check-circle" [loading]="evaluationSaving()" (onClick)="confirmEvaluationSubmission()" /></div>
+        <div class="detail-grid">
+          <div class="detail"><span>گزارش‌های ثبت‌شده</span><strong>{{ reports().length }} از ۸</strong></div>
+          <div class="detail"><span>گزارش‌های تأییدشده</span><strong>{{ confirmedReportCount() }} از ۸</strong></div>
+        </div>
+        @if (!canSubmitEvaluation()) {
+          <div class="notice">ارزیابی نهایی پس از ثبت و تأیید هر ۸ گزارش هفتگی فعال خواهد شد.</div>
+        } @else {
+          <form class="form-grid" [formGroup]="evaluationForm" style="margin-top: 1rem">
+            @for (criterion of criteria; track criterion.key) {
+              <label class="field">
+                <span>{{ criterion.label }} <b>*</b></span>
+                <p-select [formControlName]="criterion.key" [options]="ratingOptions" optionLabel="label" optionValue="value" placeholder="انتخاب کنید" />
+              </label>
+            }
+            <label class="field"><span>تعداد روزهای مرخصی <b>*</b></span><p-inputnumber formControlName="leaveDays" [min]="0" [useGrouping]="false" /></label>
+            <label class="field"><span>تعداد روزهای غیبت <b>*</b></span><p-inputnumber formControlName="absenceDays" [min]="0" [useGrouping]="false" /></label>
+            <label class="field full-width"><span>پیشنهادها و توضیحات</span><textarea pTextarea formControlName="suggestions" rows="5"></textarea></label>
+          </form>
+          <div class="card-actions"><p-button label="ثبت ارزیابی نهایی" icon="pi pi-check-circle" [loading]="evaluationSaving()" (onClick)="confirmEvaluationSubmission()" /></div>
+        }
       }
     </p-card>
   }

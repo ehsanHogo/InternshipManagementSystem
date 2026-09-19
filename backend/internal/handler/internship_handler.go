@@ -37,32 +37,33 @@ type preferenceRequest struct {
 }
 
 type internshipCaseResponse struct {
-	ID                   uint                           `json:"id"`
-	Status               model.InternshipCaseStatus     `json:"status"`
-	PassedCredits        *int                           `json:"passedCredits"`
-	Mobile               *string                        `json:"mobile"`
-	Student              model.PublicUser               `json:"student"`
-	Professor            model.PublicUser               `json:"professor"`
-	Preferences          []internshipPreferenceResponse `json:"preferences"`
-	SelectedPreferenceID *uint                          `json:"selectedPreferenceId"`
-	SelectedPreference   *internshipPreferenceResponse  `json:"selectedPreference,omitempty"`
-	CompanySupervisorID  *uint                          `json:"companySupervisorId"`
-	CompanySupervisor    *model.PublicUser              `json:"companySupervisor,omitempty"`
-	LetterNumber         *string                        `json:"letterNumber"`
-	LetterDate           *time.Time                     `json:"letterDate"`
-	InternshipSubject    *string                        `json:"internshipSubject"`
-	StartDate            *time.Time                     `json:"startDate"`
-	WorkplaceAddress     *string                        `json:"workplaceAddress"`
-	WorkplacePhone       *string                        `json:"workplacePhone"`
-	CreatedAt            time.Time                      `json:"createdAt"`
-	UpdatedAt            time.Time                      `json:"updatedAt"`
-	SubmittedAt          *time.Time                     `json:"submittedAt"`
-	CompanyConfirmedAt   *time.Time                     `json:"companyConfirmedAt"`
-	UniversityApprovedAt *time.Time                     `json:"universityApprovedAt"`
-	ActivatedAt          *time.Time                     `json:"activatedAt"`
-	FinalReport          *fileMetadataResponse          `json:"finalReport,omitempty"`
-	WeeklyReportCount    int                            `json:"weeklyReportCount"`
-	ConfirmedReportCount int                            `json:"confirmedReportCount"`
+	ID                         uint                           `json:"id"`
+	Status                     model.InternshipCaseStatus     `json:"status"`
+	PassedCredits              *int                           `json:"passedCredits"`
+	Mobile                     *string                        `json:"mobile"`
+	Student                    model.PublicUser               `json:"student"`
+	Professor                  model.PublicUser               `json:"professor"`
+	Preferences                []internshipPreferenceResponse `json:"preferences"`
+	SelectedPreferenceID       *uint                          `json:"selectedPreferenceId"`
+	SelectedPreference         *internshipPreferenceResponse  `json:"selectedPreference,omitempty"`
+	CompanySupervisorID        *uint                          `json:"companySupervisorId"`
+	CompanySupervisor          *model.PublicUser              `json:"companySupervisor,omitempty"`
+	LetterNumber               *string                        `json:"letterNumber"`
+	LetterDate                 *time.Time                     `json:"letterDate"`
+	InternshipSubject          *string                        `json:"internshipSubject"`
+	StartDate                  *time.Time                     `json:"startDate"`
+	WorkplaceAddress           *string                        `json:"workplaceAddress"`
+	WorkplacePhone             *string                        `json:"workplacePhone"`
+	CreatedAt                  time.Time                      `json:"createdAt"`
+	UpdatedAt                  time.Time                      `json:"updatedAt"`
+	SubmittedAt                *time.Time                     `json:"submittedAt"`
+	CompanyConfirmedAt         *time.Time                     `json:"companyConfirmedAt"`
+	UniversityApprovedAt       *time.Time                     `json:"universityApprovedAt"`
+	ActivatedAt                *time.Time                     `json:"activatedAt"`
+	FinalReport                *fileMetadataResponse          `json:"finalReport,omitempty"`
+	WeeklyReportCount          int                            `json:"weeklyReportCount"`
+	ConfirmedReportCount       int                            `json:"confirmedReportCount"`
+	CanSubmitCompanyEvaluation bool                           `json:"canSubmitCompanyEvaluation"`
 }
 
 type fileMetadataResponse struct {
@@ -247,7 +248,7 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit), errors.Is(err, service.ErrDuplicatePriority),
 		errors.Is(err, service.ErrDuplicateWeeklyReport), errors.Is(err, service.ErrWeeklyReportConfirmed),
-		errors.Is(err, service.ErrDuplicateEvaluation):
+		errors.Is(err, service.ErrDuplicateEvaluation), errors.Is(err, service.ErrWeeklyReportsIncomplete):
 		ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 	case errors.Is(err, service.ErrInvalidTransition):
 		ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
@@ -316,6 +317,8 @@ func caseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 			UploadedAt: internshipCase.FinalReportFile.UploadedAt,
 		}
 	}
+	response.CanSubmitCompanyEvaluation = internshipCase.Status == model.InternshipCaseStatusActive &&
+		response.WeeklyReportCount == 8 && response.ConfirmedReportCount == 8 && internshipCase.CompanyEvaluation == nil
 	return response
 }
 

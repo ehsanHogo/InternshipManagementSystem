@@ -13,14 +13,15 @@ import (
 )
 
 var (
-	ErrWeeklyReportNotFound  = errors.New("weekly report not found")
-	ErrInvalidWeeklyReport   = errors.New("invalid weekly report")
-	ErrDuplicateWeeklyReport = errors.New("weekly report for this week already exists")
-	ErrWeeklyReportConfirmed = errors.New("confirmed weekly report cannot be changed")
-	ErrEvaluationNotFound    = errors.New("company evaluation not found")
-	ErrInvalidEvaluation     = errors.New("invalid company evaluation")
-	ErrDuplicateEvaluation   = errors.New("company evaluation already exists")
-	ErrFileNotFound          = errors.New("file not found")
+	ErrWeeklyReportNotFound    = errors.New("weekly report not found")
+	ErrInvalidWeeklyReport     = errors.New("invalid weekly report")
+	ErrDuplicateWeeklyReport   = errors.New("weekly report for this week already exists")
+	ErrWeeklyReportConfirmed   = errors.New("confirmed weekly report cannot be changed")
+	ErrEvaluationNotFound      = errors.New("company evaluation not found")
+	ErrInvalidEvaluation       = errors.New("invalid company evaluation")
+	ErrDuplicateEvaluation     = errors.New("company evaluation already exists")
+	ErrWeeklyReportsIncomplete = errors.New("all 8 weekly reports must be submitted and confirmed before final company evaluation")
+	ErrFileNotFound            = errors.New("file not found")
 )
 
 type WeeklyReportInput struct {
@@ -202,6 +203,20 @@ func (service *InternshipService) CreateCompanyEvaluation(supervisorID, caseID u
 		}
 		if count != 0 {
 			return ErrDuplicateEvaluation
+		}
+
+		var reportCount int64
+		var confirmedReportCount int64
+		if err := tx.Model(&model.WeeklyReport{}).Where("internship_case_id = ?", caseID).Count(&reportCount).Error; err != nil {
+			return fmt.Errorf("count weekly reports for evaluation: %w", err)
+		}
+		if err := tx.Model(&model.WeeklyReport{}).
+			Where("internship_case_id = ? AND is_confirmed = ?", caseID, true).
+			Count(&confirmedReportCount).Error; err != nil {
+			return fmt.Errorf("count confirmed weekly reports for evaluation: %w", err)
+		}
+		if reportCount != 8 || confirmedReportCount != 8 {
+			return ErrWeeklyReportsIncomplete
 		}
 		evaluation = model.CompanyEvaluation{
 			InternshipCaseID: caseID, CompanySupervisorID: supervisorID,

@@ -174,6 +174,16 @@ func TestWorkflow(t *testing.T) {
 		if err := tx.Create(&activeCase).Error; err != nil {
 			t.Fatalf("create active case: %v", err)
 		}
+		evaluationInput := service.CompanyEvaluationInput{
+			AttendanceRating: model.EvaluationRatingExcellent, ParticipationRating: model.EvaluationRatingGood,
+			LearningRating: model.EvaluationRatingExcellent, InterestRating: model.EvaluationRatingGood,
+			PersistenceRating: model.EvaluationRatingGood, SuggestionRating: model.EvaluationRatingAverage,
+			ResourceUsageRating: model.EvaluationRatingGood, ReportQualityRating: model.EvaluationRatingExcellent,
+			ProjectPerformanceRating: model.EvaluationRatingGood, LeaveDays: 1, AbsenceDays: 0,
+		}
+		if _, err := workflow.CreateCompanyEvaluation(supervisor.ID, activeCase.ID, evaluationInput); !errors.Is(err, service.ErrWeeklyReportsIncomplete) {
+			t.Fatalf("evaluation with no reports error = %v", err)
+		}
 
 		input := service.WeeklyReportInput{
 			WeekNumber: 1, StartDate: testDate(t, "2026-07-11"), EndDate: testDate(t, "2026-07-17"),
@@ -206,12 +216,35 @@ func TestWorkflow(t *testing.T) {
 			t.Fatalf("confirmed report update error = %v", err)
 		}
 
-		evaluationInput := service.CompanyEvaluationInput{
-			AttendanceRating: model.EvaluationRatingExcellent, ParticipationRating: model.EvaluationRatingGood,
-			LearningRating: model.EvaluationRatingExcellent, InterestRating: model.EvaluationRatingGood,
-			PersistenceRating: model.EvaluationRatingGood, SuggestionRating: model.EvaluationRatingAverage,
-			ResourceUsageRating: model.EvaluationRatingGood, ReportQualityRating: model.EvaluationRatingExcellent,
-			ProjectPerformanceRating: model.EvaluationRatingGood, LeaveDays: 1, AbsenceDays: 0,
+		if _, err := workflow.CreateCompanyEvaluation(supervisor.ID, activeCase.ID, evaluationInput); !errors.Is(err, service.ErrWeeklyReportsIncomplete) {
+			t.Fatalf("evaluation with fewer than 8 reports error = %v", err)
+		}
+
+		var eighthReport *model.WeeklyReport
+		for week := 2; week <= 8; week++ {
+			weeklyReport, err := workflow.CreateWeeklyReport(student.ID, service.WeeklyReportInput{
+				WeekNumber: week, StartDate: testDate(t, "2026-07-18"), EndDate: testDate(t, "2026-07-24"),
+				ActivityDescription: fmt.Sprintf("گزارش هفته %d", week),
+			})
+			if err != nil {
+				t.Fatalf("create report for week %d: %v", week, err)
+			}
+			if week == 8 {
+				eighthReport = weeklyReport
+				continue
+			}
+			if _, err := workflow.ConfirmWeeklyReport(supervisor.ID, activeCase.ID, weeklyReport.ID, nil); err != nil {
+				t.Fatalf("confirm report for week %d: %v", week, err)
+			}
+		}
+		if _, err := workflow.CreateCompanyEvaluation(supervisor.ID, activeCase.ID, evaluationInput); !errors.Is(err, service.ErrWeeklyReportsIncomplete) {
+			t.Fatalf("evaluation with one unconfirmed report error = %v", err)
+		}
+		if eighthReport == nil {
+			t.Fatal("week 8 report was not created")
+		}
+		if _, err := workflow.ConfirmWeeklyReport(supervisor.ID, activeCase.ID, eighthReport.ID, nil); err != nil {
+			t.Fatalf("confirm report for week 8: %v", err)
 		}
 		if _, err := workflow.CreateCompanyEvaluation(supervisor.ID, activeCase.ID, evaluationInput); err != nil {
 			t.Fatalf("create company evaluation: %v", err)

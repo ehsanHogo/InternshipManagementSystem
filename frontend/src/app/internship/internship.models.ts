@@ -60,6 +60,7 @@ export interface InternshipCase {
   finalReport?: FileMetadata;
   weeklyReportCount: number;
   confirmedReportCount: number;
+  canSubmitCompanyEvaluation: boolean;
 }
 
 export interface FileMetadata {

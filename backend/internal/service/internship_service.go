@@ -333,7 +333,8 @@ func (service *InternshipService) caseQuery(db *gorm.DB) *gorm.DB {
 	return db.Preload("Student").Preload("Professor").
 		Preload("Preferences", func(query *gorm.DB) *gorm.DB { return query.Order("priority ASC") }).
 		Preload("Preferences.Company").Preload("SelectedPreference.Company").Preload("CompanySupervisor").
-		Preload("FinalReportFile").Preload("WeeklyReports", func(query *gorm.DB) *gorm.DB { return query.Order("week_number ASC") })
+		Preload("FinalReportFile").Preload("CompanyEvaluation").
+		Preload("WeeklyReports", func(query *gorm.DB) *gorm.DB { return query.Order("week_number ASC") })
 }
 
 func (service *InternshipService) getCaseByID(caseID uint) (*model.InternshipCase, error) {
