@@ -57,7 +57,69 @@ export interface InternshipCase {
   companyConfirmedAt?: string;
   universityApprovedAt?: string;
   activatedAt?: string;
+  finalReport?: FileMetadata;
+  weeklyReportCount: number;
+  confirmedReportCount: number;
 }
+
+export interface FileMetadata {
+  id: number;
+  originalName: string;
+  uploadedAt: string;
+}
+
+export interface WeeklyReport {
+  id: number;
+  internshipCaseId: number;
+  weekNumber: number;
+  startDate: string;
+  endDate: string;
+  activityDescription: string;
+  submittedAt: string;
+  isConfirmed: boolean;
+  supervisorComment?: string;
+  confirmedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WeeklyReportPayload {
+  weekNumber: number;
+  startDate: string;
+  endDate: string;
+  activityDescription: string;
+}
+
+export type EvaluationRating = 'EXCELLENT' | 'GOOD' | 'AVERAGE' | 'WEAK' | 'FAILED';
+
+export interface CompanyEvaluation {
+  id: number;
+  internshipCaseId: number;
+  companySupervisorId: number;
+  attendanceRating: EvaluationRating;
+  participationRating: EvaluationRating;
+  learningRating: EvaluationRating;
+  interestRating: EvaluationRating;
+  persistenceRating: EvaluationRating;
+  suggestionRating: EvaluationRating;
+  resourceUsageRating: EvaluationRating;
+  reportQualityRating: EvaluationRating;
+  projectPerformanceRating: EvaluationRating;
+  leaveDays: number;
+  absenceDays: number;
+  suggestions?: string;
+  submittedAt: string;
+}
+
+export type CompanyEvaluationPayload = Omit<CompanyEvaluation, 'id' | 'internshipCaseId' | 'companySupervisorId' | 'submittedAt'>;
+
+export const evaluationRatingLabels: Record<EvaluationRating, string> = {
+  EXCELLENT: 'عالی',
+  GOOD: 'خوب',
+  AVERAGE: 'متوسط',
+  WEAK: 'ضعیف',
+  FAILED: 'مردود'
+};
 
 export interface SendToCompanyPayload {
   preferenceId: number;

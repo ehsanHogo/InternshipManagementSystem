@@ -6,6 +6,7 @@ backend/.env
 backend/bin/
 backend/api
 backend/coverage.out
+backend/uploads/
 
 # Angular / Node
 frontend/node_modules/

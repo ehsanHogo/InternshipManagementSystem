@@ -48,7 +48,7 @@ func main() {
 	healthHandler := handler.NewHealthHandler(healthService)
 	authHandler := handler.NewAuthHandler(db, cfg.JWT.Secret, time.Duration(cfg.JWT.ExpiresHours)*time.Hour)
 	internshipService := service.NewInternshipService(db)
-	internshipHandler := handler.NewInternshipHandler(internshipService)
+	internshipHandler := handler.NewInternshipHandler(internshipService, cfg.UploadDir)
 
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery(), appmiddleware.CORS(cfg.FrontendOrigin))
@@ -72,6 +72,10 @@ func main() {
 	student.PUT("/internship-case/preferences/:id", internshipHandler.UpdatePreference)
 	student.DELETE("/internship-case/preferences/:id", internshipHandler.DeletePreference)
 	student.POST("/internship-case/submit", internshipHandler.SubmitCase)
+	student.GET("/internship-case/weekly-reports", internshipHandler.ListStudentWeeklyReports)
+	student.POST("/internship-case/weekly-reports", internshipHandler.CreateWeeklyReport)
+	student.PUT("/internship-case/weekly-reports/:id", internshipHandler.UpdateWeeklyReport)
+	student.POST("/internship-case/final-report", internshipHandler.UploadFinalReport)
 
 	university := authenticated.Group("/university")
 	university.Use(appmiddleware.RequireRole(model.RoleUniversitySupervisor))
@@ -87,6 +91,12 @@ func main() {
 	company.GET("/internship-cases", internshipHandler.ListCompanyCases)
 	company.GET("/internship-cases/:id", internshipHandler.GetCompanyCase)
 	company.POST("/internship-cases/:id/confirm", internshipHandler.ConfirmCompanyCase)
+	company.GET("/internship-cases/:id/weekly-reports", internshipHandler.ListCompanyWeeklyReports)
+	company.POST("/internship-cases/:id/weekly-reports/:reportId/confirm", internshipHandler.ConfirmWeeklyReport)
+	company.GET("/internship-cases/:id/evaluation", internshipHandler.GetCompanyEvaluation)
+	company.POST("/internship-cases/:id/evaluation", internshipHandler.CreateCompanyEvaluation)
+
+	authenticated.GET("/files/:id/download", internshipHandler.DownloadFile)
 
 	server := &http.Server{
 		Addr:              ":" + cfg.AppPort,

@@ -55,6 +55,7 @@ These development environment variables configure token signing:
 ```text
 JWT_SECRET=replace-with-a-long-random-secret
 JWT_EXPIRES_HOURS=24
+UPLOAD_DIR=uploads
 ```
 
 Docker Compose supplies a development-only secret. Replace it outside local demos. When running the backend directly, use the values in `backend/.env.example` as a guide; the Go application reads environment variables but does not load the file automatically.
@@ -99,6 +100,18 @@ docker compose down
 ```
 
 PostgreSQL data remains in the `postgres_data` Docker volume. To also remove that development data, explicitly run `docker compose down --volumes`.
+Final report PDFs are stored on local disk. Docker Compose persists them in the `final_reports` volume and the database stores only protected metadata and the generated storage name.
+
+## Active internship reporting
+
+Milestone 5 keeps an internship case in `ACTIVE` while the student submits up to eight weekly reports and a PDF final report. The assigned company supervisor can confirm each weekly report once and submit one read-only final company evaluation. Final-report downloads require authentication and access to the related internship case.
+
+Student pages:
+
+- `/student/weekly-reports`
+- `/student/final-report`
+
+Company reporting is available inside each assigned ACTIVE case at `/company/internships/:id`.
 
 ## Useful development commands
 

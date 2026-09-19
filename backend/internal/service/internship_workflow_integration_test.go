@@ -25,7 +25,8 @@ func TestWorkflow(t *testing.T) {
 	}
 	if err := db.AutoMigrate(
 		&model.User{}, &model.Company{}, &model.ProfessorAssignment{},
-		&model.InternshipCase{}, &model.InternshipPreference{},
+		&model.File{}, &model.InternshipCase{}, &model.InternshipPreference{},
+		&model.WeeklyReport{}, &model.CompanyEvaluation{},
 	); err != nil {
 		t.Fatalf("migrate integration database: %v", err)
 	}
@@ -162,6 +163,90 @@ func TestWorkflow(t *testing.T) {
 			t.Fatalf("confirm existing company placement: %v", err)
 		}
 		assertCompanyCount(t, tx, existingCompany.Name, 1)
+	})
+
+	t.Run("active internship reporting workflow", func(t *testing.T) {
+		student := createTestStudent(t, tx, suffix, "reporting")
+		activeCase := model.InternshipCase{
+			StudentID: student.ID, ProfessorID: professor.ID, CompanySupervisorID: &supervisor.ID,
+			Status: model.InternshipCaseStatusActive,
+		}
+		if err := tx.Create(&activeCase).Error; err != nil {
+			t.Fatalf("create active case: %v", err)
+		}
+
+		input := service.WeeklyReportInput{
+			WeekNumber: 1, StartDate: testDate(t, "2026-07-11"), EndDate: testDate(t, "2026-07-17"),
+			ActivityDescription: "توسعه API",
+		}
+		report, err := workflow.CreateWeeklyReport(student.ID, input)
+		if err != nil || report.IsConfirmed || report.SubmittedAt.IsZero() {
+			t.Fatalf("create weekly report: report=%+v err=%v", report, err)
+		}
+		if _, err := workflow.CreateWeeklyReport(student.ID, input); !errors.Is(err, service.ErrDuplicateWeeklyReport) {
+			t.Fatalf("duplicate weekly report error = %v", err)
+		}
+		invalid := input
+		invalid.WeekNumber = 9
+		if _, err := workflow.CreateWeeklyReport(student.ID, invalid); !errors.Is(err, service.ErrInvalidWeeklyReport) {
+			t.Fatalf("invalid week error = %v", err)
+		}
+		input.ActivityDescription = "توسعه و آزمون API"
+		if _, err := workflow.UpdateWeeklyReport(student.ID, report.ID, input); err != nil {
+			t.Fatalf("update weekly report: %v", err)
+		}
+		if _, err := workflow.ListCompanyWeeklyReports(otherSupervisor.ID, activeCase.ID); !errors.Is(err, service.ErrCaseAccessDenied) {
+			t.Fatalf("unassigned report access error = %v", err)
+		}
+		confirmed, err := workflow.ConfirmWeeklyReport(supervisor.ID, activeCase.ID, report.ID, nil)
+		if err != nil || !confirmed.IsConfirmed || confirmed.ConfirmedAt == nil {
+			t.Fatalf("confirm weekly report: report=%+v err=%v", confirmed, err)
+		}
+		if _, err := workflow.UpdateWeeklyReport(student.ID, report.ID, input); !errors.Is(err, service.ErrWeeklyReportConfirmed) {
+			t.Fatalf("confirmed report update error = %v", err)
+		}
+
+		evaluationInput := service.CompanyEvaluationInput{
+			AttendanceRating: model.EvaluationRatingExcellent, ParticipationRating: model.EvaluationRatingGood,
+			LearningRating: model.EvaluationRatingExcellent, InterestRating: model.EvaluationRatingGood,
+			PersistenceRating: model.EvaluationRatingGood, SuggestionRating: model.EvaluationRatingAverage,
+			ResourceUsageRating: model.EvaluationRatingGood, ReportQualityRating: model.EvaluationRatingExcellent,
+			ProjectPerformanceRating: model.EvaluationRatingGood, LeaveDays: 1, AbsenceDays: 0,
+		}
+		if _, err := workflow.CreateCompanyEvaluation(supervisor.ID, activeCase.ID, evaluationInput); err != nil {
+			t.Fatalf("create company evaluation: %v", err)
+		}
+		if _, err := workflow.CreateCompanyEvaluation(supervisor.ID, activeCase.ID, evaluationInput); !errors.Is(err, service.ErrDuplicateEvaluation) {
+			t.Fatalf("duplicate evaluation error = %v", err)
+		}
+
+		file := &model.File{
+			OriginalName: "final.pdf", StoredName: fmt.Sprintf("final-%d.pdf", suffix), Path: "/tmp/final.pdf",
+			MimeType: "application/pdf", SizeBytes: 100, UploadedBy: student.ID, UploadedAt: time.Now(),
+		}
+		if _, _, err := workflow.AttachFinalReport(student.ID, file); err != nil {
+			t.Fatalf("attach final report: %v", err)
+		}
+		if _, err := workflow.GetAccessibleFile(student.ID, model.RoleStudent, file.ID); err != nil {
+			t.Fatalf("student access final report: %v", err)
+		}
+		if _, err := workflow.GetAccessibleFile(otherSupervisor.ID, model.RoleCompanySupervisor, file.ID); !errors.Is(err, service.ErrCaseAccessDenied) {
+			t.Fatalf("unassigned file access error = %v", err)
+		}
+	})
+
+	t.Run("reports require active internship", func(t *testing.T) {
+		student := createTestStudent(t, tx, suffix, "inactive-reporting")
+		inactiveCase := model.InternshipCase{StudentID: student.ID, ProfessorID: professor.ID, Status: model.InternshipCaseStatusUniversityApproved}
+		if err := tx.Create(&inactiveCase).Error; err != nil {
+			t.Fatalf("create inactive case: %v", err)
+		}
+		_, err := workflow.CreateWeeklyReport(student.ID, service.WeeklyReportInput{
+			WeekNumber: 1, StartDate: testDate(t, "2026-07-11"), EndDate: testDate(t, "2026-07-17"), ActivityDescription: "test",
+		})
+		if !errors.Is(err, service.ErrInvalidCaseStatus) {
+			t.Fatalf("inactive report error = %v", err)
+		}
 	})
 }
 

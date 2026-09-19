@@ -1,0 +1,39 @@
+<section class="page-heading">
+  <div>
+    <span class="eyebrow">کارآموزی فعال</span>
+    <h1>گزارش نهایی کارآموزی</h1>
+    <p>نسخه PDF گزارش نهایی خود را بارگذاری کنید.</p>
+  </div>
+</section>
+
+@if (loading()) {
+  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت اطلاعات...</span></div>
+} @else if (internshipCase()?.status !== 'ACTIVE') {
+  <div class="empty-state"><div><i class="pi pi-lock"></i><p>این بخش پس از فعال شدن کارآموزی در دسترس خواهد بود.</p></div></div>
+} @else {
+  @if (internshipCase()?.finalReport; as report) {
+    <p-card header="گزارش بارگذاری‌شده">
+      <div class="file-row">
+        <span class="pdf-icon"><i class="pi pi-file-pdf"></i></span>
+        <div><span>نام فایل</span><strong>{{ report.originalName }}</strong></div>
+        <div><span>تاریخ بارگذاری</span><strong>{{ report.uploadedAt | jalaliDate }}</strong></div>
+        <p-button label="دانلود" icon="pi pi-download" severity="secondary" [outlined]="true" [loading]="downloading()" (onClick)="download()" />
+      </div>
+    </p-card>
+  } @else {
+    <div class="notice neutral">هنوز گزارش نهایی بارگذاری نشده است.</div>
+  }
+
+  <p-card [header]="internshipCase()?.finalReport ? 'جایگزینی گزارش نهایی' : 'بارگذاری گزارش نهایی'">
+    <div class="upload-box">
+      <i class="pi pi-cloud-upload"></i>
+      <strong>{{ selectedFile()?.name ?? 'یک فایل PDF انتخاب کنید' }}</strong>
+      <span>حداکثر حجم مجاز: ۱۰ مگابایت</span>
+      <input #fileInput type="file" accept="application/pdf,.pdf" (change)="fileChanged($event)" hidden />
+      <div class="upload-actions">
+        <p-button label="انتخاب فایل" icon="pi pi-folder-open" severity="secondary" [outlined]="true" (onClick)="chooseFile()" />
+        <p-button label="بارگذاری گزارش نهایی" icon="pi pi-upload" [disabled]="!selectedFile()" [loading]="uploading()" (onClick)="upload()" />
+      </div>
+    </div>
+  </p-card>
+}

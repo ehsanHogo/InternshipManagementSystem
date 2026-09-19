@@ -28,15 +28,40 @@
         />
       </div>
     </p-card>
+    @if (internshipCase(); as item) {
+      @if (item.status === 'ACTIVE') {
+        <p-card header="پیشرفت کارآموزی">
+          <div class="progress-grid">
+            <a routerLink="/student/weekly-reports">
+              <i class="pi pi-file-edit"></i><span>گزارش‌های ثبت‌شده</span><strong>{{ item.weeklyReportCount }} از ۸</strong>
+            </a>
+            <a routerLink="/student/weekly-reports">
+              <i class="pi pi-check-circle"></i><span>گزارش‌های تأییدشده</span><strong>{{ item.confirmedReportCount }} از {{ item.weeklyReportCount }}</strong>
+            </a>
+            <a routerLink="/student/final-report">
+              <i class="pi pi-file-pdf"></i><span>گزارش نهایی</span><strong>{{ item.finalReport ? 'ثبت شده' : 'ثبت نشده' }}</strong>
+            </a>
+          </div>
+        </p-card>
+      }
+    }
   } @else {
     <p-card header="نمای کلی">
-      <div class="placeholder">
-        <i class="pi pi-chart-line" aria-hidden="true"></i>
-        <div>
-          <h2>داشبورد شما آماده است</h2>
-          <p>امکانات نقش شما در مراحل بعدی به این بخش افزوده می‌شود.</p>
+      @if (currentUser.role === 'COMPANY_SUPERVISOR') {
+        <div class="placeholder">
+          <i class="pi pi-briefcase" aria-hidden="true"></i>
+          <div>
+            <h2>پرونده‌های کارآموزی</h2>
+            <p>گزارش‌های هفتگی کارآموزان فعال و ارزیابی نهایی را در پرونده هر دانشجو بررسی کنید.</p>
+            <p-button label="مشاهده پرونده‌ها" icon="pi pi-arrow-left" iconPos="right" routerLink="/company/internships" />
+          </div>
         </div>
-      </div>
+      } @else {
+        <div class="placeholder">
+          <i class="pi pi-chart-line" aria-hidden="true"></i>
+          <div><h2>داشبورد شما آماده است</h2><p>امکانات نقش شما در مراحل بعدی به این بخش افزوده می‌شود.</p></div>
+        </div>
+      }
     </p-card>
   }
 }

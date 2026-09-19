@@ -9,6 +9,7 @@ import (
 type Config struct {
 	AppPort        string
 	FrontendOrigin string
+	UploadDir      string
 	Database       DatabaseConfig
 	JWT            JWTConfig
 }
@@ -43,6 +44,7 @@ func Load() (Config, error) {
 	return Config{
 		AppPort:        valueOrDefault("APP_PORT", "8080"),
 		FrontendOrigin: valueOrDefault("FRONTEND_ORIGIN", "http://localhost:4200"),
+		UploadDir:      valueOrDefault("UPLOAD_DIR", "uploads"),
 		Database: DatabaseConfig{
 			Host:     valueOrDefault("DB_HOST", "localhost"),
 			Port:     databasePort,

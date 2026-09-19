@@ -68,6 +68,9 @@ type InternshipCase struct {
 	Preferences        []InternshipPreference `gorm:"foreignKey:InternshipCaseID"`
 	SelectedPreference *InternshipPreference  `gorm:"foreignKey:SelectedPreferenceID;-:migration"`
 	CompanySupervisor  *User                  `gorm:"foreignKey:CompanySupervisorID"`
+	FinalReportFile    *File                  `gorm:"foreignKey:FinalReportFileID"`
+	WeeklyReports      []WeeklyReport         `gorm:"foreignKey:InternshipCaseID"`
+	CompanyEvaluation  *CompanyEvaluation     `gorm:"foreignKey:InternshipCaseID"`
 
 	CreatedAt            time.Time
 	UpdatedAt            time.Time

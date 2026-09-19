@@ -6,7 +6,7 @@ import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 
 import { AuthService } from '../../auth/auth.service';
-import { InternshipCaseStatus, internshipStatusLabels } from '../../internship/internship.models';
+import { InternshipCase, InternshipCaseStatus, internshipStatusLabels } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 
 @Component({
@@ -21,6 +21,7 @@ export class DashboardComponent {
 
   readonly user = this.auth.user;
   readonly internshipStatus = signal<InternshipCaseStatus | null>(null);
+  readonly internshipCase = signal<InternshipCase | null>(null);
   readonly statusLoading = signal(false);
 
   constructor() {
@@ -28,6 +29,7 @@ export class DashboardComponent {
       this.statusLoading.set(true);
       this.internshipService.getCurrentCase().subscribe({
         next: (internshipCase) => {
+          this.internshipCase.set(internshipCase);
           this.internshipStatus.set(internshipCase.status);
           this.statusLoading.set(false);
         },

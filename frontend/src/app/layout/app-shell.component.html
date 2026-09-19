@@ -33,6 +33,14 @@
           <i class="pi pi-file-edit" aria-hidden="true"></i>
           درخواست کارآموزی
         </a>
+        <a routerLink="/student/weekly-reports" routerLinkActive="active">
+          <i class="pi pi-calendar" aria-hidden="true"></i>
+          گزارش‌های هفتگی
+        </a>
+        <a routerLink="/student/final-report" routerLinkActive="active">
+          <i class="pi pi-file-pdf" aria-hidden="true"></i>
+          گزارش نهایی
+        </a>
       }
       @if (user()?.role === 'UNIVERSITY_SUPERVISOR') {
         <a routerLink="/university/applications" routerLinkActive="active">

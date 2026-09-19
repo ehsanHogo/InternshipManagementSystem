@@ -33,6 +33,22 @@ export const routes: Routes = [
           )
       },
       {
+        path: 'student/weekly-reports',
+        canActivate: [studentGuard],
+        loadComponent: () =>
+          import('./pages/student-weekly-reports/student-weekly-reports.component').then(
+            (module) => module.StudentWeeklyReportsComponent
+          )
+      },
+      {
+        path: 'student/final-report',
+        canActivate: [studentGuard],
+        loadComponent: () =>
+          import('./pages/student-final-report/student-final-report.component').then(
+            (module) => module.StudentFinalReportComponent
+          )
+      },
+      {
         path: 'university/applications',
         canActivate: [universitySupervisorGuard],
         loadComponent: () =>

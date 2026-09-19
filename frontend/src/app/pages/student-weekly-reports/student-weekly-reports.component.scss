@@ -1,0 +1,5 @@
+.report-list { display: grid; gap: 0.25rem; }
+.report-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem 0; }
+.description { white-space: pre-wrap; line-height: 1.9; }
+.empty-state i { display: block; margin-bottom: 0.75rem; color: #94a3b8; font-size: 2rem; }
+textarea { width: 100%; resize: vertical; }

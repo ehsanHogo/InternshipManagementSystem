@@ -102,6 +102,25 @@
   }
 }
 
+.progress-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+
+  a {
+    display: grid;
+    gap: 0.45rem;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.8rem;
+    background: #f8fafc;
+  }
+
+  i { color: #2563eb; font-size: 1.35rem; }
+  span { color: #64748b; font-size: 0.85rem; }
+  strong { color: #1e293b; }
+}
+
 @media (max-width: 42rem) {
   .welcome-icon {
     display: none;
@@ -114,4 +133,6 @@
       grid-column: 1 / -1;
     }
   }
+
+  .progress-grid { grid-template-columns: 1fr; }
 }

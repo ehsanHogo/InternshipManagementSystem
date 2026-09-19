@@ -31,11 +31,14 @@ services:
       DB_SSLMODE: disable
       JWT_SECRET: development-only-secret-change-me
       JWT_EXPIRES_HOURS: "24"
+      UPLOAD_DIR: /data/uploads
     ports:
       - "8082:8080"
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - final_reports:/data/uploads
 
   pgadmin:
     image: dpage/pgadmin4:9.14
@@ -53,3 +56,4 @@ services:
 volumes:
   postgres_data:
   pgadmin_data:
+  final_reports:

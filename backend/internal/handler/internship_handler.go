@@ -15,7 +15,8 @@ import (
 )
 
 type InternshipHandler struct {
-	service *service.InternshipService
+	service   *service.InternshipService
+	uploadDir string
 }
 
 type updateCaseRequest struct {
@@ -59,6 +60,15 @@ type internshipCaseResponse struct {
 	CompanyConfirmedAt   *time.Time                     `json:"companyConfirmedAt"`
 	UniversityApprovedAt *time.Time                     `json:"universityApprovedAt"`
 	ActivatedAt          *time.Time                     `json:"activatedAt"`
+	FinalReport          *fileMetadataResponse          `json:"finalReport,omitempty"`
+	WeeklyReportCount    int                            `json:"weeklyReportCount"`
+	ConfirmedReportCount int                            `json:"confirmedReportCount"`
+}
+
+type fileMetadataResponse struct {
+	ID           uint      `json:"id"`
+	OriginalName string    `json:"originalName"`
+	UploadedAt   time.Time `json:"uploadedAt"`
 }
 
 type internshipPreferenceResponse struct {
@@ -75,8 +85,12 @@ type internshipPreferenceResponse struct {
 	WorkField              string         `json:"workField"`
 }
 
-func NewInternshipHandler(internshipService *service.InternshipService) *InternshipHandler {
-	return &InternshipHandler{service: internshipService}
+func NewInternshipHandler(internshipService *service.InternshipService, uploadDirs ...string) *InternshipHandler {
+	uploadDir := "uploads"
+	if len(uploadDirs) > 0 && uploadDirs[0] != "" {
+		uploadDir = uploadDirs[0]
+	}
+	return &InternshipHandler{service: internshipService, uploadDir: uploadDir}
 }
 
 func (handler *InternshipHandler) ListCompanies(ctx *gin.Context) {
@@ -222,13 +236,18 @@ func (request preferenceRequest) preferenceInput() service.PreferenceInput {
 
 func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 	switch {
-	case errors.Is(err, service.ErrCaseNotFound), errors.Is(err, service.ErrPreferenceNotFound):
+	case errors.Is(err, service.ErrCaseNotFound), errors.Is(err, service.ErrPreferenceNotFound),
+		errors.Is(err, service.ErrWeeklyReportNotFound), errors.Is(err, service.ErrEvaluationNotFound),
+		errors.Is(err, service.ErrFileNotFound):
 		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 	case errors.Is(err, service.ErrAssignmentNotFound), errors.Is(err, service.ErrInvalidApplication),
 		errors.Is(err, service.ErrInvalidPreference), errors.Is(err, service.ErrInvalidCaseStatus),
-		errors.Is(err, service.ErrCompanySupervisor):
+		errors.Is(err, service.ErrCompanySupervisor), errors.Is(err, service.ErrInvalidWeeklyReport),
+		errors.Is(err, service.ErrInvalidEvaluation):
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit), errors.Is(err, service.ErrDuplicatePriority):
+	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit), errors.Is(err, service.ErrDuplicatePriority),
+		errors.Is(err, service.ErrDuplicateWeeklyReport), errors.Is(err, service.ErrWeeklyReportConfirmed),
+		errors.Is(err, service.ErrDuplicateEvaluation):
 		ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 	case errors.Is(err, service.ErrInvalidTransition):
 		ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
@@ -284,6 +303,18 @@ func caseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 	if internshipCase.CompanySupervisor != nil {
 		supervisor := internshipCase.CompanySupervisor.Public()
 		response.CompanySupervisor = &supervisor
+	}
+	response.WeeklyReportCount = len(internshipCase.WeeklyReports)
+	for _, report := range internshipCase.WeeklyReports {
+		if report.IsConfirmed {
+			response.ConfirmedReportCount++
+		}
+	}
+	if internshipCase.FinalReportFile != nil {
+		response.FinalReport = &fileMetadataResponse{
+			ID: internshipCase.FinalReportFile.ID, OriginalName: internshipCase.FinalReportFile.OriginalName,
+			UploadedAt: internshipCase.FinalReportFile.UploadedAt,
+		}
 	}
 	return response
 }

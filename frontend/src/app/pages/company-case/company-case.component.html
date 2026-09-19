@@ -70,4 +70,69 @@
       </div>
     </p-card>
   }
+
+  @if (item.status === 'ACTIVE') {
+    <p-card header="گزارش‌های هفتگی">
+      @if (reportsLoading()) {
+        <p class="muted">در حال دریافت گزارش‌ها...</p>
+      } @else if (reports().length === 0) {
+        <p class="muted">هنوز گزارش هفتگی ثبت نشده است.</p>
+      } @else {
+        <div class="preference-list">
+          @for (report of reports(); track report.id) {
+            <div class="detail">
+              <div class="status-line">
+                <strong>هفته {{ report.weekNumber }}</strong>
+                <p-tag [value]="report.isConfirmed ? 'تأیید شده' : 'در انتظار تأیید'" [severity]="report.isConfirmed ? 'success' : 'warn'" />
+              </div>
+              <span>{{ report.startDate | jalaliDate }} تا {{ report.endDate | jalaliDate }}</span>
+              <p style="white-space: pre-wrap; line-height: 1.9">{{ report.activityDescription }}</p>
+              @if (report.supervisorComment) { <span>نظر سرپرست: {{ report.supervisorComment }}</span> }
+              @if (!report.isConfirmed) {
+                <div class="card-actions"><p-button label="تأیید گزارش" icon="pi pi-check" (onClick)="openReportConfirmation(report)" /></div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </p-card>
+
+    <p-card header="ارزیابی نهایی دانشجو">
+      @if (evaluationLoading()) {
+        <p class="muted">در حال دریافت ارزیابی...</p>
+      } @else if (evaluation(); as submittedEvaluation) {
+        <div class="detail-grid">
+          @for (criterion of criteria; track criterion.key) {
+            <div class="detail"><span>{{ criterion.label }}</span><strong>{{ ratingLabel(submittedEvaluation[criterion.key]) }}</strong></div>
+          }
+          <div class="detail"><span>تعداد روزهای مرخصی</span><strong>{{ submittedEvaluation.leaveDays }}</strong></div>
+          <div class="detail"><span>تعداد روزهای غیبت</span><strong>{{ submittedEvaluation.absenceDays }}</strong></div>
+          <div class="detail full-width"><span>پیشنهادها و توضیحات</span><strong>{{ submittedEvaluation.suggestions || '—' }}</strong></div>
+        </div>
+      } @else {
+        <form class="form-grid" [formGroup]="evaluationForm">
+          @for (criterion of criteria; track criterion.key) {
+            <label class="field">
+              <span>{{ criterion.label }} <b>*</b></span>
+              <p-select [formControlName]="criterion.key" [options]="ratingOptions" optionLabel="label" optionValue="value" placeholder="انتخاب کنید" />
+            </label>
+          }
+          <label class="field"><span>تعداد روزهای مرخصی <b>*</b></span><p-inputnumber formControlName="leaveDays" [min]="0" [useGrouping]="false" /></label>
+          <label class="field"><span>تعداد روزهای غیبت <b>*</b></span><p-inputnumber formControlName="absenceDays" [min]="0" [useGrouping]="false" /></label>
+          <label class="field full-width"><span>پیشنهادها و توضیحات</span><textarea pTextarea formControlName="suggestions" rows="5"></textarea></label>
+        </form>
+        <div class="card-actions"><p-button label="ثبت ارزیابی نهایی" icon="pi pi-check-circle" [loading]="evaluationSaving()" (onClick)="confirmEvaluationSubmission()" /></div>
+      }
+    </p-card>
+  }
 }
+
+<p-dialog header="تأیید گزارش هفتگی" [visible]="reportDialogVisible()" (visibleChange)="reportDialogVisible.set($event)" [modal]="true" [style]="{ width: 'min(92vw, 34rem)' }">
+  <form [formGroup]="reportConfirmationForm">
+    <label class="field"><span>نظر سرپرست (اختیاری)</span><textarea pTextarea formControlName="comment" rows="4"></textarea></label>
+  </form>
+  <ng-template #footer>
+    <p-button label="انصراف" severity="secondary" [text]="true" (onClick)="reportDialogVisible.set(false)" />
+    <p-button label="تأیید گزارش" icon="pi pi-check" [loading]="confirmingReport()" (onClick)="confirmWeeklyReport()" />
+  </ng-template>
+</p-dialog>

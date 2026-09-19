@@ -1,0 +1,68 @@
+<section class="page-heading">
+  <div>
+    <span class="eyebrow">کارآموزی فعال</span>
+    <h1>گزارش‌های هفتگی</h1>
+    <p>فعالیت‌های انجام‌شده در هر هفته را ثبت و وضعیت تأیید آن‌ها را پیگیری کنید.</p>
+  </div>
+  @if (internshipCase()?.status === 'ACTIVE' && reports().length < 8) {
+    <p-button label="ثبت گزارش جدید" icon="pi pi-plus" (onClick)="openCreate()" />
+  }
+</section>
+
+@if (loading()) {
+  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت گزارش‌ها...</span></div>
+} @else if (internshipCase()?.status !== 'ACTIVE') {
+  <div class="empty-state"><div><i class="pi pi-lock"></i><p>این بخش پس از فعال شدن کارآموزی در دسترس خواهد بود.</p></div></div>
+} @else if (reports().length === 0) {
+  <div class="empty-state"><div><i class="pi pi-file-edit"></i><p>هنوز گزارش هفتگی ثبت نشده است.</p></div></div>
+} @else {
+  <div class="report-list">
+    @for (report of reports(); track report.id) {
+      <p-card>
+        <ng-template #header>
+          <div class="report-header">
+            <strong>هفته {{ report.weekNumber }}</strong>
+            <p-tag [value]="report.isConfirmed ? 'تأیید شده' : 'در انتظار تأیید'" [severity]="report.isConfirmed ? 'success' : 'warn'" />
+          </div>
+        </ng-template>
+        <div class="detail-grid">
+          <div class="detail"><span>تاریخ شروع</span><strong>{{ report.startDate | jalaliDate }}</strong></div>
+          <div class="detail"><span>تاریخ پایان</span><strong>{{ report.endDate | jalaliDate }}</strong></div>
+          <div class="detail full-width"><span>شرح فعالیت‌ها</span><strong class="description">{{ report.activityDescription }}</strong></div>
+          @if (report.supervisorComment) {
+            <div class="detail full-width"><span>نظر سرپرست</span><strong>{{ report.supervisorComment }}</strong></div>
+          }
+        </div>
+        @if (!report.isConfirmed) {
+          <div class="card-actions"><p-button label="ویرایش گزارش" icon="pi pi-pencil" severity="secondary" [outlined]="true" (onClick)="openEdit(report)" /></div>
+        }
+      </p-card>
+    }
+  </div>
+}
+
+<p-dialog
+  [header]="editingReport() ? 'ویرایش گزارش' : 'ثبت گزارش هفتگی'"
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  [modal]="true"
+  [style]="{ width: 'min(94vw, 42rem)' }"
+>
+  <form class="form-grid" [formGroup]="reportForm">
+    <label class="field">
+      <span>شماره هفته <b>*</b></span>
+      <p-inputnumber formControlName="weekNumber" [min]="1" [max]="8" [useGrouping]="false" />
+    </label>
+    <span></span>
+    <label class="field"><span>تاریخ شروع <b>*</b></span><app-jalali-date-picker formControlName="startDate" /></label>
+    <label class="field"><span>تاریخ پایان <b>*</b></span><app-jalali-date-picker formControlName="endDate" /></label>
+    <label class="field full-width">
+      <span>شرح فعالیت‌های انجام‌شده <b>*</b></span>
+      <textarea pTextarea formControlName="activityDescription" rows="6"></textarea>
+    </label>
+  </form>
+  <ng-template #footer>
+    <p-button label="انصراف" severity="secondary" [text]="true" (onClick)="dialogVisible.set(false)" />
+    <p-button label="ذخیره گزارش" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+  </ng-template>
+</p-dialog>

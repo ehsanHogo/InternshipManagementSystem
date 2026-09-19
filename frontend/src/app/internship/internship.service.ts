@@ -5,12 +5,17 @@ import { Observable } from 'rxjs';
 import { User } from '../auth/auth.models';
 import {
   Company,
+  CompanyEvaluation,
+  CompanyEvaluationPayload,
   CompanyConfirmationPayload,
   InternshipCase,
   InternshipCaseStatus,
   InternshipPreference,
   PreferencePayload,
-  SendToCompanyPayload
+  SendToCompanyPayload,
+  FileMetadata,
+  WeeklyReport,
+  WeeklyReportPayload
 } from './internship.models';
 
 @Injectable({ providedIn: 'root' })
@@ -84,5 +89,46 @@ export class InternshipService {
 
   confirmCompanyCase(id: number, payload: CompanyConfirmationPayload): Observable<InternshipCase> {
     return this.http.post<InternshipCase>(`/api/company/internship-cases/${id}/confirm`, payload);
+  }
+
+  listStudentWeeklyReports(): Observable<WeeklyReport[]> {
+    return this.http.get<WeeklyReport[]>('/api/student/internship-case/weekly-reports');
+  }
+
+  createWeeklyReport(payload: WeeklyReportPayload): Observable<WeeklyReport> {
+    return this.http.post<WeeklyReport>('/api/student/internship-case/weekly-reports', payload);
+  }
+
+  updateWeeklyReport(id: number, payload: WeeklyReportPayload): Observable<WeeklyReport> {
+    return this.http.put<WeeklyReport>(`/api/student/internship-case/weekly-reports/${id}`, payload);
+  }
+
+  uploadFinalReport(file: File): Observable<FileMetadata> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<FileMetadata>('/api/student/internship-case/final-report', form);
+  }
+
+  downloadFile(id: number): Observable<Blob> {
+    return this.http.get(`/api/files/${id}/download`, { responseType: 'blob' });
+  }
+
+  listCompanyWeeklyReports(caseId: number): Observable<WeeklyReport[]> {
+    return this.http.get<WeeklyReport[]>(`/api/company/internship-cases/${caseId}/weekly-reports`);
+  }
+
+  confirmWeeklyReport(caseId: number, reportId: number, comment?: string): Observable<WeeklyReport> {
+    return this.http.post<WeeklyReport>(
+      `/api/company/internship-cases/${caseId}/weekly-reports/${reportId}/confirm`,
+      { comment: comment?.trim() || null }
+    );
+  }
+
+  getCompanyEvaluation(caseId: number): Observable<CompanyEvaluation> {
+    return this.http.get<CompanyEvaluation>(`/api/company/internship-cases/${caseId}/evaluation`);
+  }
+
+  createCompanyEvaluation(caseId: number, payload: CompanyEvaluationPayload): Observable<CompanyEvaluation> {
+    return this.http.post<CompanyEvaluation>(`/api/company/internship-cases/${caseId}/evaluation`, payload);
   }
 }
