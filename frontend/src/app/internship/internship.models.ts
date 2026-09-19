@@ -61,6 +61,8 @@ export interface InternshipCase {
   weeklyReportCount: number;
   confirmedReportCount: number;
   canSubmitCompanyEvaluation: boolean;
+  weeklyReports: WeeklyReport[];
+  companyEvaluation?: CompanyEvaluation;
   finalResult?: ProfessorFinalResult;
   professorComment?: string;
   completedAt?: string;

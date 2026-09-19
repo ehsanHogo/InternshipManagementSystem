@@ -47,9 +47,15 @@ type CompanyEvaluationInput struct {
 }
 
 func (service *InternshipService) ListStudentWeeklyReports(studentID uint) ([]model.WeeklyReport, error) {
-	internshipCase, err := service.findStudentActiveCase(service.db, studentID, false)
+	var internshipCase model.InternshipCase
+	err := service.db.Where("student_id = ? AND status IN ?", studentID, []model.InternshipCaseStatus{
+		model.InternshipCaseStatusActive, model.InternshipCaseStatusCompleted,
+	}).Order("created_at DESC").First(&internshipCase).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrInvalidCaseStatus
+	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get reporting-visible student case: %w", err)
 	}
 	return service.listWeeklyReports(internshipCase.ID)
 }
@@ -136,7 +142,7 @@ func (service *InternshipService) UpdateWeeklyReport(studentID, reportID uint, i
 }
 
 func (service *InternshipService) ListCompanyWeeklyReports(supervisorID, caseID uint) ([]model.WeeklyReport, error) {
-	if _, err := service.findAssignedActiveCase(service.db, supervisorID, caseID, false); err != nil {
+	if _, err := service.GetCompanyCase(supervisorID, caseID); err != nil {
 		return nil, err
 	}
 	return service.listWeeklyReports(caseID)
@@ -174,7 +180,7 @@ func (service *InternshipService) ConfirmWeeklyReport(supervisorID, caseID, repo
 }
 
 func (service *InternshipService) GetCompanyEvaluation(supervisorID, caseID uint) (*model.CompanyEvaluation, error) {
-	if _, err := service.findAssignedActiveCase(service.db, supervisorID, caseID, false); err != nil {
+	if _, err := service.GetCompanyCase(supervisorID, caseID); err != nil {
 		return nil, err
 	}
 	var evaluation model.CompanyEvaluation

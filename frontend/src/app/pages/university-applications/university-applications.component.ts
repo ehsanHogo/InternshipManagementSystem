@@ -35,7 +35,8 @@ export class UniversityApplicationsComponent {
     { label: internshipStatusLabels.PENDING_COMPANY_APPROVAL, value: 'PENDING_COMPANY_APPROVAL' },
     { label: internshipStatusLabels.COMPANY_APPROVED, value: 'COMPANY_APPROVED' },
     { label: internshipStatusLabels.UNIVERSITY_APPROVED, value: 'UNIVERSITY_APPROVED' },
-    { label: internshipStatusLabels.ACTIVE, value: 'ACTIVE' }
+    { label: internshipStatusLabels.ACTIVE, value: 'ACTIVE' },
+    { label: internshipStatusLabels.COMPLETED, value: 'COMPLETED' }
   ];
 
   constructor() {

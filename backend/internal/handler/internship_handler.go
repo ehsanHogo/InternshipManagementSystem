@@ -64,6 +64,8 @@ type internshipCaseResponse struct {
 	WeeklyReportCount          int                            `json:"weeklyReportCount"`
 	ConfirmedReportCount       int                            `json:"confirmedReportCount"`
 	CanSubmitCompanyEvaluation bool                           `json:"canSubmitCompanyEvaluation"`
+	WeeklyReports              []model.WeeklyReport           `json:"weeklyReports"`
+	CompanyEvaluation          *model.CompanyEvaluation       `json:"companyEvaluation,omitempty"`
 	FinalResult                *model.ProfessorFinalResult    `json:"finalResult,omitempty"`
 	ProfessorComment           *string                        `json:"professorComment,omitempty"`
 	CompletedAt                *time.Time                     `json:"completedAt,omitempty"`
@@ -313,6 +315,11 @@ func caseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 		response.CompanySupervisor = &supervisor
 	}
 	response.WeeklyReportCount = len(internshipCase.WeeklyReports)
+	response.WeeklyReports = internshipCase.WeeklyReports
+	if response.WeeklyReports == nil {
+		response.WeeklyReports = []model.WeeklyReport{}
+	}
+	response.CompanyEvaluation = internshipCase.CompanyEvaluation
 	for _, report := range internshipCase.WeeklyReports {
 		if report.IsConfirmed {
 			response.ConfirmedReportCount++

@@ -319,6 +319,7 @@ func universityCaseStatuses() []model.InternshipCaseStatus {
 		model.InternshipCaseStatusCompanyApproved,
 		model.InternshipCaseStatusUniversityApproved,
 		model.InternshipCaseStatusActive,
+		model.InternshipCaseStatusCompleted,
 	}
 }
 
@@ -328,6 +329,7 @@ func companyVisibleStatuses() []model.InternshipCaseStatus {
 		model.InternshipCaseStatusCompanyApproved,
 		model.InternshipCaseStatusUniversityApproved,
 		model.InternshipCaseStatusActive,
+		model.InternshipCaseStatusCompleted,
 	}
 }
 

@@ -85,6 +85,29 @@
       }
     },
     {
+      "label": "Database: Apply Migrations",
+      "type": "shell",
+      "command": "go run ./cmd/migrate",
+      "options": {
+        "cwd": "${workspaceFolder}/backend",
+        "env": {
+          "DB_HOST": "localhost",
+          "DB_PORT": "5433",
+          "DB_USER": "postgres",
+          "DB_PASSWORD": "postgres",
+          "DB_NAME": "internship_management",
+          "DB_SSLMODE": "disable"
+        }
+      },
+      "dependsOn": "Database: Up",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
       "label": "Backend: Run Locally",
       "type": "shell",
       "command": "go run ./cmd/api",
@@ -158,9 +181,9 @@
     },
     {
       "label": "Development: Start",
-      "dependsOrder": "sequence",
+      "dependsOrder": "parallel",
       "dependsOn": [
-        "Backend: Run in Docker",
+        "Backend: Run Locally",
         "Frontend: Serve"
       ],
       "problemMatcher": [],

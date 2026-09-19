@@ -387,6 +387,35 @@ func TestWorkflow(t *testing.T) {
 				}); !errors.Is(err, service.ErrInvalidCaseStatus) {
 					t.Fatalf("company evaluation mutation after completion error = %v", err)
 				}
+				studentReports, err := workflow.ListStudentWeeklyReports(readyCase.StudentID)
+				if err != nil || len(studentReports) != 8 {
+					t.Fatalf("student completed report visibility: count=%d err=%v", len(studentReports), err)
+				}
+				companyCase, err := workflow.GetCompanyCase(supervisor.ID, readyCase.ID)
+				if err != nil || companyCase.Status != model.InternshipCaseStatusCompleted {
+					t.Fatalf("company completed case visibility: case=%+v err=%v", companyCase, err)
+				}
+				companyReports, err := workflow.ListCompanyWeeklyReports(supervisor.ID, readyCase.ID)
+				if err != nil || len(companyReports) != 8 {
+					t.Fatalf("company completed reports visibility: count=%d err=%v", len(companyReports), err)
+				}
+				if _, err := workflow.GetCompanyEvaluation(supervisor.ID, readyCase.ID); err != nil {
+					t.Fatalf("company completed evaluation visibility: %v", err)
+				}
+				completedStatus := model.InternshipCaseStatusCompleted
+				universityCases, err := workflow.ListUniversityCases(&completedStatus)
+				if err != nil || len(universityCases) == 0 {
+					t.Fatalf("university completed case list: count=%d err=%v", len(universityCases), err)
+				}
+				universityCase, err := workflow.GetUniversityCase(readyCase.ID)
+				if err != nil || universityCase.Status != model.InternshipCaseStatusCompleted ||
+					len(universityCase.WeeklyReports) != 8 || universityCase.CompanyEvaluation == nil ||
+					universityCase.FinalReportFile == nil || universityCase.FinalResult == nil {
+					t.Fatalf("university completed case detail: case=%+v err=%v", universityCase, err)
+				}
+				if _, err := workflow.ApproveUniversityCase(readyCase.ID); !errors.Is(err, service.ErrInvalidTransition) {
+					t.Fatalf("university completed mutation error = %v", err)
+				}
 			}
 		}
 

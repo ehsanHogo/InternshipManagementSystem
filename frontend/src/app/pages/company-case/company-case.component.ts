@@ -55,6 +55,7 @@ export class CompanyCaseComponent {
   readonly selectedReport = signal<WeeklyReport | null>(null);
   readonly confirmedReportCount = computed(() => this.reports().filter((report) => report.isConfirmed).length);
   readonly canSubmitEvaluation = computed(() =>
+    this.internshipCase()?.status === 'ACTIVE' &&
     this.reports().length === 8 && this.confirmedReportCount() === 8 && this.evaluation() === null
   );
 
@@ -103,7 +104,7 @@ export class CompanyCaseComponent {
       next: (internshipCase) => {
         this.internshipCase.set(internshipCase);
         this.loading.set(false);
-        if (internshipCase.status === 'ACTIVE') this.loadActiveData();
+        if (internshipCase.status === 'ACTIVE' || internshipCase.status === 'COMPLETED') this.loadReportingData();
       },
       error: (error: HttpErrorResponse) => {
         this.loading.set(false);
@@ -156,7 +157,7 @@ export class CompanyCaseComponent {
     });
   }
 
-  private loadActiveData(): void {
+  private loadReportingData(): void {
     this.reportsLoading.set(true);
     this.evaluationLoading.set(true);
     this.internshipService.listCompanyWeeklyReports(this.caseID).subscribe({

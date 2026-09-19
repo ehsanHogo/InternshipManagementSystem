@@ -22,6 +22,17 @@ From this directory, start PostgreSQL and the backend:
 docker compose up --build
 ```
 
+For development, keep PostgreSQL in Docker and run the Go backend locally:
+
+```bash
+docker compose up -d postgres pgadmin
+cd backend
+APP_PORT=8082 DB_HOST=localhost DB_PORT=5433 go run ./cmd/api
+```
+
+Restart `go run` after changing backend code. PostgreSQL and its data volume keep
+running, so restarting the backend does not remove any data.
+
 In another terminal, install and start the Angular development server:
 
 ```bash
@@ -63,6 +74,18 @@ Docker Compose supplies a development-only secret. Replace it outside local demo
 ## Demo accounts
 
 The backend runs GORM `AutoMigrate` and an idempotent seed on startup. Each account is looked up by email before insertion, so restarting the backend does not create duplicates. All five accounts use the explicitly non-production password `Demo123!`.
+
+After changing `backend/internal/database/migrate.go` or a model, apply the
+migration to the existing database without deleting volumes or restarting the
+whole stack:
+
+```bash
+cd backend
+DB_HOST=localhost DB_PORT=5433 go run ./cmd/migrate
+```
+
+This updates the existing PostgreSQL database directly. It does not restart
+containers or delete the database volume.
 
 | Role                  | Email                   | Name            | Additional details                               |
 | --------------------- | ----------------------- | --------------- | ------------------------------------------------ |
@@ -136,8 +159,9 @@ docker compose logs backend postgres
 When this repository is open as the VS Code workspace, run tasks from **Terminal → Run Task**. The most useful entries are:
 
 - `Setup: Install Dependencies` for first-time setup.
-- `Development: Start` to start PostgreSQL/backend in Docker and Angular locally.
-- `Database: Up`, `Database: Drop`, or `Database: Open psql` for database work. `Database: Drop` removes only PostgreSQL data; pgAdmin and its saved settings are preserved.
+- `Development: Start` to start PostgreSQL in Docker, the Go backend locally, and Angular locally.
+- `Backend: Run Locally` to start only PostgreSQL and the local Go backend.
+- `Database: Up`, `Database: Apply Migrations`, `Database: Drop`, or `Database: Open psql` for database work. `Database: Apply Migrations` preserves all PostgreSQL data. `Database: Drop` removes only PostgreSQL data; pgAdmin and its saved settings are preserved.
 - `Build: All` to build both applications.
 - `Backend: Test` and `Health: Check Backend` for quick verification.
 - `Docker: Follow Logs`, `Docker: Show Status`, and `Docker: Stop` for container management.

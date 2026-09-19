@@ -8,7 +8,7 @@
 
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت اطلاعات...</span></div>
-} @else if (internshipCase()?.status !== 'ACTIVE') {
+} @else if (internshipCase()?.status !== 'ACTIVE' && internshipCase()?.status !== 'COMPLETED') {
   <div class="empty-state"><div><i class="pi pi-lock"></i><p>این بخش پس از فعال شدن کارآموزی در دسترس خواهد بود.</p></div></div>
 } @else {
   @if (internshipCase()?.finalReport; as report) {
@@ -24,16 +24,18 @@
     <div class="notice neutral">هنوز گزارش نهایی بارگذاری نشده است.</div>
   }
 
-  <p-card [header]="internshipCase()?.finalReport ? 'جایگزینی گزارش نهایی' : 'بارگذاری گزارش نهایی'">
-    <div class="upload-box">
-      <i class="pi pi-cloud-upload"></i>
-      <strong>{{ selectedFile()?.name ?? 'یک فایل PDF انتخاب کنید' }}</strong>
-      <span>حداکثر حجم مجاز: ۱۰ مگابایت</span>
-      <input #fileInput type="file" accept="application/pdf,.pdf" (change)="fileChanged($event)" hidden />
-      <div class="upload-actions">
-        <p-button label="انتخاب فایل" icon="pi pi-folder-open" severity="secondary" [outlined]="true" (onClick)="chooseFile()" />
-        <p-button label="بارگذاری گزارش نهایی" icon="pi pi-upload" [disabled]="!selectedFile()" [loading]="uploading()" (onClick)="upload()" />
+  @if (internshipCase()?.status === 'ACTIVE') {
+    <p-card [header]="internshipCase()?.finalReport ? 'جایگزینی گزارش نهایی' : 'بارگذاری گزارش نهایی'">
+      <div class="upload-box">
+        <i class="pi pi-cloud-upload"></i>
+        <strong>{{ selectedFile()?.name ?? 'یک فایل PDF انتخاب کنید' }}</strong>
+        <span>حداکثر حجم مجاز: ۱۰ مگابایت</span>
+        <input #fileInput type="file" accept="application/pdf,.pdf" (change)="fileChanged($event)" hidden />
+        <div class="upload-actions">
+          <p-button label="انتخاب فایل" icon="pi pi-folder-open" severity="secondary" [outlined]="true" (onClick)="chooseFile()" />
+          <p-button label="بارگذاری گزارش نهایی" icon="pi pi-upload" [disabled]="!selectedFile()" [loading]="uploading()" (onClick)="upload()" />
+        </div>
       </div>
-    </div>
-  </p-card>
+    </p-card>
+  }
 }

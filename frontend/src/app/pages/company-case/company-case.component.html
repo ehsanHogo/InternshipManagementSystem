@@ -71,7 +71,7 @@
     </p-card>
   }
 
-  @if (item.status === 'ACTIVE') {
+  @if (item.status === 'ACTIVE' || item.status === 'COMPLETED') {
     <p-card header="گزارش‌های هفتگی">
       @if (reportsLoading()) {
         <p class="muted">در حال دریافت گزارش‌ها...</p>
@@ -88,7 +88,7 @@
               <span>{{ report.startDate | jalaliDate }} تا {{ report.endDate | jalaliDate }}</span>
               <p style="white-space: pre-wrap; line-height: 1.9">{{ report.activityDescription }}</p>
               @if (report.supervisorComment) { <span>نظر سرپرست: {{ report.supervisorComment }}</span> }
-              @if (!report.isConfirmed) {
+              @if (item.status === 'ACTIVE' && !report.isConfirmed) {
                 <div class="card-actions"><p-button label="تأیید گزارش" icon="pi pi-check" (onClick)="openReportConfirmation(report)" /></div>
               }
             </div>
@@ -114,9 +114,9 @@
           <div class="detail"><span>گزارش‌های ثبت‌شده</span><strong>{{ reports().length }} از ۸</strong></div>
           <div class="detail"><span>گزارش‌های تأییدشده</span><strong>{{ confirmedReportCount() }} از ۸</strong></div>
         </div>
-        @if (!canSubmitEvaluation()) {
+        @if (item.status === 'ACTIVE' && !canSubmitEvaluation()) {
           <div class="notice">ارزیابی نهایی پس از ثبت و تأیید هر ۸ گزارش هفتگی فعال خواهد شد.</div>
-        } @else {
+        } @else if (item.status === 'ACTIVE') {
           <form class="form-grid" [formGroup]="evaluationForm" style="margin-top: 1rem">
             @for (criterion of criteria; track criterion.key) {
               <label class="field">

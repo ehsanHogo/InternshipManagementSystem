@@ -97,7 +97,7 @@ export class StudentWeeklyReportsComponent {
     this.internshipService.getCurrentCase().subscribe({
       next: (internshipCase) => {
         this.internshipCase.set(internshipCase);
-        if (internshipCase.status !== 'ACTIVE') {
+        if (internshipCase.status !== 'ACTIVE' && internshipCase.status !== 'COMPLETED') {
           this.loading.set(false);
           return;
         }

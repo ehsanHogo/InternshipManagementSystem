@@ -75,7 +75,7 @@
     </p-card>
   }
 
-  @if (item.letterNumber) {
+  @if (item.letterNumber || item.companySupervisor || item.selectedPreference) {
     <p-card header="نامه معرفی و سرپرست شرکت">
       <div class="detail-grid">
         <div class="detail"><span>شماره نامه</span><strong>{{ item.letterNumber }}</strong></div>
@@ -108,6 +108,63 @@
       <p class="muted">تمام تأییدهای لازم انجام شده است. در این مرحله می‌توانید کارآموزی را فعال کنید.</p>
       <div class="card-actions">
         <p-button label="فعال‌سازی کارآموزی" icon="pi pi-play" severity="success" [loading]="saving()" (onClick)="confirmActivate()" />
+      </div>
+    </p-card>
+  }
+
+  @if (item.weeklyReports.length > 0) {
+    <p-card header="گزارش‌های هفتگی">
+      <div class="preference-list">
+        @for (report of item.weeklyReports; track report.id) {
+          <div class="detail">
+            <div class="status-line">
+              <strong>هفته {{ report.weekNumber }}</strong>
+              <p-tag [value]="report.isConfirmed ? 'تأیید شده' : 'در انتظار تأیید'" [severity]="report.isConfirmed ? 'success' : 'warn'" />
+            </div>
+            <span>{{ report.startDate | jalaliDate }} تا {{ report.endDate | jalaliDate }}</span>
+            <p style="white-space: pre-wrap; line-height: 1.9">{{ report.activityDescription }}</p>
+            @if (report.supervisorComment) {
+              <span>نظر سرپرست شرکت: {{ report.supervisorComment }}</span>
+            }
+          </div>
+        }
+      </div>
+    </p-card>
+  }
+
+  @if (item.companyEvaluation; as evaluation) {
+    <p-card header="ارزیابی سرپرست شرکت">
+      <div class="detail-grid">
+        @for (criterion of criteria; track criterion.key) {
+          <div class="detail"><span>{{ criterion.label }}</span><strong>{{ ratingLabel(evaluation[criterion.key]) }}</strong></div>
+        }
+        <div class="detail"><span>تعداد روزهای مرخصی</span><strong>{{ evaluation.leaveDays }}</strong></div>
+        <div class="detail"><span>تعداد روزهای غیبت</span><strong>{{ evaluation.absenceDays }}</strong></div>
+        <div class="detail"><span>نام سرپرست شرکت</span><strong>{{ item.companySupervisor?.fullName ?? '—' }}</strong></div>
+        <div class="detail"><span>تاریخ ثبت</span><strong>{{ evaluation.submittedAt | jalaliDate }}</strong></div>
+        <div class="detail full-width"><span>پیشنهادها و توضیحات</span><strong>{{ evaluation.suggestions || '—' }}</strong></div>
+      </div>
+    </p-card>
+  }
+
+  @if (item.finalReport; as report) {
+    <p-card header="گزارش نهایی کارآموزی">
+      <div class="detail-grid">
+        <div class="detail"><span>نام فایل</span><strong>{{ report.originalName }}</strong></div>
+        <div class="detail"><span>تاریخ بارگذاری</span><strong>{{ report.uploadedAt | jalaliDate }}</strong></div>
+      </div>
+      <div class="card-actions">
+        <p-button label="دانلود گزارش" icon="pi pi-download" [loading]="downloading()" (onClick)="downloadFinalReport()" />
+      </div>
+    </p-card>
+  }
+
+  @if (item.status === 'COMPLETED') {
+    <p-card header="نتیجه نهایی استاد">
+      <div class="detail-grid">
+        <div class="detail"><span>نتیجه نهایی</span><strong>{{ finalResultLabel(item.finalResult) }}</strong></div>
+        <div class="detail"><span>تاریخ تکمیل پرونده</span><strong>{{ item.completedAt | jalaliDate }}</strong></div>
+        <div class="detail full-width"><span>نظر استاد</span><strong>{{ item.professorComment || '—' }}</strong></div>
       </div>
     </p-card>
   }

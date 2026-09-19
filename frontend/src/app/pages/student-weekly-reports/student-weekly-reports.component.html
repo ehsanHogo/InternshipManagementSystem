@@ -11,7 +11,7 @@
 
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت گزارش‌ها...</span></div>
-} @else if (internshipCase()?.status !== 'ACTIVE') {
+} @else if (internshipCase()?.status !== 'ACTIVE' && internshipCase()?.status !== 'COMPLETED') {
   <div class="empty-state"><div><i class="pi pi-lock"></i><p>این بخش پس از فعال شدن کارآموزی در دسترس خواهد بود.</p></div></div>
 } @else if (reports().length === 0) {
   <div class="empty-state"><div><i class="pi pi-file-edit"></i><p>هنوز گزارش هفتگی ثبت نشده است.</p></div></div>
@@ -33,7 +33,7 @@
             <div class="detail full-width"><span>نظر سرپرست</span><strong>{{ report.supervisorComment }}</strong></div>
           }
         </div>
-        @if (!report.isConfirmed) {
+        @if (internshipCase()?.status === 'ACTIVE' && !report.isConfirmed) {
           <div class="card-actions"><p-button label="ویرایش گزارش" icon="pi pi-pencil" severity="secondary" [outlined]="true" (onClick)="openEdit(report)" /></div>
         }
       </p-card>
