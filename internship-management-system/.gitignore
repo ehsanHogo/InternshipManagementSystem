@@ -1,0 +1,19 @@
+# Environment files
+.env
+backend/.env
+
+# Go
+backend/bin/
+backend/api
+backend/coverage.out
+
+# Angular / Node
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.cache/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store

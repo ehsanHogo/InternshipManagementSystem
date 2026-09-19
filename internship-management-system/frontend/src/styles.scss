@@ -1,0 +1,24 @@
+@import 'primeicons/primeicons.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  direction: rtl;
+  color: #1f2937;
+  background: #f5f7fa;
+  font-family: Tahoma, Arial, sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
