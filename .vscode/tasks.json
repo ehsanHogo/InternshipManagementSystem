@@ -6,7 +6,7 @@
       "type": "shell",
       "command": "go mod download",
       "options": {
-        "cwd": "${workspaceFolder}/internship-management-system/backend"
+        "cwd": "${workspaceFolder}/backend"
       },
       "problemMatcher": []
     },
@@ -15,7 +15,7 @@
       "type": "shell",
       "command": "npm ci",
       "options": {
-        "cwd": "${workspaceFolder}/internship-management-system/frontend"
+        "cwd": "${workspaceFolder}/frontend"
       },
       "problemMatcher": []
     },
@@ -33,7 +33,7 @@
       "type": "shell",
       "command": "docker compose up -d postgres",
       "options": {
-        "cwd": "${workspaceFolder}/internship-management-system"
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "presentation": {
@@ -47,7 +47,7 @@
       "type": "shell",
       "command": "docker compose exec postgres psql -U postgres -d internship_management",
       "options": {
-        "cwd": "${workspaceFolder}/internship-management-system"
+        "cwd": "${workspaceFolder}"
       },
       "dependsOn": "Database: Start",
       "problemMatcher": [],
@@ -61,7 +61,7 @@
       "type": "shell",
       "command": "docker compose up -d --build backend",
       "options": {
-        "cwd": "${workspaceFolder}/internship-management-system"
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "presentation": {
@@ -75,7 +75,7 @@
       "type": "shell",
       "command": "go run ./cmd/api",
       "options": {
-        "cwd": "${workspaceFolder}/internship-management-system/backend",
+        "cwd": "${workspaceFolder}/backend",
         "env": {
           "APP_PORT": "8082",
           "FRONTEND_ORIGIN": "http://localhost:4200",
@@ -100,7 +100,7 @@
       "type": "shell",
       "command": "go build -o api ./cmd/api",
       "options": {
-        "cwd": "${workspaceFolder}/internship-management-system/backend"
+        "cwd": "${workspaceFolder}/backend"
       },
       "problemMatcher": "$go",
       "group": "build"
@@ -110,7 +110,7 @@
       "type": "shell",
       "command": "go test ./...",
       "options": {
-        "cwd": "${workspaceFolder}/internship-management-system/backend"
+        "cwd": "${workspaceFolder}/backend"
       },
       "problemMatcher": "$go",
       "group": {
@@ -123,7 +123,7 @@
       "type": "shell",
       "command": "npm start",
       "options": {
-        "cwd": "${workspaceFolder}/internship-management-system/frontend"
+        "cwd": "${workspaceFolder}/frontend"
       },
       "problemMatcher": [],
       "presentation": {
@@ -137,7 +137,7 @@
       "type": "shell",
       "command": "npm run build",
       "options": {
-        "cwd": "${workspaceFolder}/internship-management-system/frontend"
+        "cwd": "${workspaceFolder}/frontend"
       },
       "problemMatcher": [],
       "group": "build"
@@ -172,7 +172,7 @@
       "type": "shell",
       "command": "curl --fail --show-error http://localhost:8082/api/health",
       "options": {
-        "cwd": "${workspaceFolder}/internship-management-system"
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "presentation": {
@@ -186,7 +186,7 @@
       "type": "shell",
       "command": "docker compose ps",
       "options": {
-        "cwd": "${workspaceFolder}/internship-management-system"
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": []
     },
@@ -195,7 +195,7 @@
       "type": "shell",
       "command": "docker compose logs --follow backend postgres",
       "options": {
-        "cwd": "${workspaceFolder}/internship-management-system"
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "presentation": {
@@ -209,7 +209,7 @@
       "type": "shell",
       "command": "docker compose down",
       "options": {
-        "cwd": "${workspaceFolder}/internship-management-system"
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
       "presentation": {
