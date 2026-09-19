@@ -1,0 +1,72 @@
+import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { MessageService } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { SelectModule } from 'primeng/select';
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
+
+import {
+  InternshipCase,
+  InternshipCaseStatus,
+  internshipStatusLabels
+} from '../../internship/internship.models';
+import { InternshipService } from '../../internship/internship.service';
+
+@Component({
+  selector: 'app-university-applications',
+  imports: [DatePipe, FormsModule, RouterLink, ButtonModule, SelectModule, TableModule, TagModule],
+  templateUrl: './university-applications.component.html',
+  styleUrl: '../workflow-page.scss'
+})
+export class UniversityApplicationsComponent {
+  private readonly internshipService = inject(InternshipService);
+  private readonly messages = inject(MessageService);
+
+  readonly cases = signal<InternshipCase[]>([]);
+  readonly loading = signal(true);
+  readonly selectedStatus = signal<InternshipCaseStatus | null>(null);
+  readonly statusOptions: { label: string; value: InternshipCaseStatus | null }[] = [
+    { label: 'همه وضعیت‌ها', value: null },
+    { label: internshipStatusLabels.PENDING_UNIVERSITY_APPROVAL, value: 'PENDING_UNIVERSITY_APPROVAL' },
+    { label: internshipStatusLabels.PENDING_COMPANY_APPROVAL, value: 'PENDING_COMPANY_APPROVAL' },
+    { label: internshipStatusLabels.COMPANY_APPROVED, value: 'COMPANY_APPROVED' },
+    { label: internshipStatusLabels.UNIVERSITY_APPROVED, value: 'UNIVERSITY_APPROVED' },
+    { label: internshipStatusLabels.ACTIVE, value: 'ACTIVE' }
+  ];
+
+  constructor() {
+    this.loadCases();
+  }
+
+  filterChanged(status: InternshipCaseStatus | null): void {
+    this.selectedStatus.set(status);
+    this.loadCases();
+  }
+
+  statusLabel(status: InternshipCaseStatus): string {
+    return internshipStatusLabels[status];
+  }
+
+  placementName(item: InternshipCase): string {
+    const preference = item.selectedPreference;
+    return preference?.company?.name ?? preference?.proposedCompanyName ?? 'هنوز انتخاب نشده';
+  }
+
+  private loadCases(): void {
+    this.loading.set(true);
+    this.internshipService.listUniversityCases(this.selectedStatus() ?? undefined).subscribe({
+      next: (cases) => {
+        this.cases.set(cases);
+        this.loading.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.loading.set(false);
+        this.messages.add({ severity: 'error', summary: 'خطا', detail: error.status === 0 ? 'ارتباط با سرور برقرار نشد.' : 'دریافت پرونده‌ها ناموفق بود.' });
+      }
+    });
+  }
+}

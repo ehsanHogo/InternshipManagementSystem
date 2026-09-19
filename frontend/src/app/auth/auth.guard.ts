@@ -20,3 +20,15 @@ export const studentGuard: CanActivateFn = () => {
   const router = inject(Router);
   return auth.getCurrentUser()?.role === 'STUDENT' ? true : router.createUrlTree(['/dashboard']);
 };
+
+export const universitySupervisorGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return auth.getCurrentUser()?.role === 'UNIVERSITY_SUPERVISOR' ? true : router.createUrlTree(['/dashboard']);
+};
+
+export const companySupervisorGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return auth.getCurrentUser()?.role === 'COMPANY_SUPERVISOR' ? true : router.createUrlTree(['/dashboard']);
+};

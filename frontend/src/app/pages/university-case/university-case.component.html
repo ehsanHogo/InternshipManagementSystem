@@ -1,0 +1,114 @@
+<p-confirmDialog [style]="{ width: 'min(92vw, 32rem)' }" />
+
+@if (loading()) {
+  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده...</span></div>
+} @else if (internshipCase(); as item) {
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">بررسی پرونده شماره {{ item.id }}</span>
+      <h1>{{ item.student.fullName }}</h1>
+      <p>{{ item.student.studentNumber ?? '—' }} · {{ item.student.major ?? '—' }}</p>
+    </div>
+    <div class="heading-actions">
+      <p-tag [value]="statusLabel(item.status)" severity="info" />
+      <p-button label="بازگشت" icon="pi pi-arrow-right" severity="secondary" [text]="true" routerLink="/university/applications" />
+    </div>
+  </section>
+
+  <p-card header="اطلاعات دانشجو و استاد">
+    <div class="detail-grid">
+      <div class="detail"><span>نام دانشجو</span><strong>{{ item.student.fullName }}</strong></div>
+      <div class="detail"><span>شماره دانشجویی</span><strong>{{ item.student.studentNumber ?? '—' }}</strong></div>
+      <div class="detail"><span>رشته</span><strong>{{ item.student.major ?? '—' }}</strong></div>
+      <div class="detail"><span>استاد</span><strong>{{ item.professor.fullName }}</strong></div>
+      <div class="detail"><span>واحد گذرانده</span><strong>{{ item.passedCredits ?? '—' }}</strong></div>
+      <div class="detail"><span>شماره موبایل</span><strong dir="ltr">{{ item.mobile ?? '—' }}</strong></div>
+    </div>
+  </p-card>
+
+  <p-card header="اولویت‌های محل کارآموزی">
+    <div class="preference-list">
+      @for (preference of item.preferences; track preference.id) {
+        <label
+          class="preference-item"
+          [class.selected]="(item.status === 'PENDING_UNIVERSITY_APPROVAL' && reviewForm.controls.preferenceId.value === preference.id) || item.selectedPreferenceId === preference.id"
+        >
+          @if (item.status === 'PENDING_UNIVERSITY_APPROVAL') {
+            <input type="radio" name="preference" [checked]="reviewForm.controls.preferenceId.value === preference.id" (change)="selectPreference(preference.id)" />
+          } @else {
+            <i class="pi" [class.pi-check-circle]="item.selectedPreferenceId === preference.id" [class.pi-circle]="item.selectedPreferenceId !== preference.id"></i>
+          }
+          <div>
+            <strong>اولویت {{ preference.priority }} — {{ preferenceName(preference) }}</strong>
+            <span>{{ preference.city }} · {{ preference.workField }}</span>
+            @if (!preference.companyId) {
+              <div class="notice">
+                این شرکت توسط دانشجو پیشنهاد شده و هنوز در فهرست شرکت‌های مورد تأیید دانشگاه ثبت نشده است.<br />
+                در صورت تأیید پذیرش دانشجو توسط شرکت، شرکت به فهرست شرکت‌های تأییدشده اضافه خواهد شد.
+              </div>
+            }
+          </div>
+        </label>
+      }
+    </div>
+  </p-card>
+
+  @if (item.status === 'PENDING_UNIVERSITY_APPROVAL') {
+    <p-card header="ارسال برای تأیید شرکت">
+      <form class="form-grid" [formGroup]="reviewForm" (ngSubmit)="sendToCompany()">
+        <label class="field">
+          <span>شماره نامه معرفی <b>*</b></span>
+          <input pInputText formControlName="letterNumber" />
+        </label>
+        <label class="field">
+          <span>تاریخ نامه <b>*</b></span>
+          <input pInputText type="date" formControlName="letterDate" dir="ltr" />
+        </label>
+        <label class="field full-width">
+          <span>سرپرست شرکت <b>*</b></span>
+          <p-select formControlName="companySupervisorId" [options]="supervisors()" optionLabel="fullName" optionValue="id" placeholder="انتخاب سرپرست شرکت" />
+        </label>
+      </form>
+      <div class="card-actions">
+        <p-button label="ارسال برای تأیید شرکت" icon="pi pi-send" [loading]="saving()" (onClick)="sendToCompany()" />
+      </div>
+    </p-card>
+  }
+
+  @if (item.letterNumber) {
+    <p-card header="نامه معرفی و سرپرست شرکت">
+      <div class="detail-grid">
+        <div class="detail"><span>شماره نامه</span><strong>{{ item.letterNumber }}</strong></div>
+        <div class="detail"><span>تاریخ نامه</span><strong>{{ item.letterDate | date: 'yyyy/MM/dd' }}</strong></div>
+        <div class="detail"><span>سرپرست شرکت</span><strong>{{ item.companySupervisor?.fullName ?? '—' }}</strong></div>
+        <div class="detail"><span>محل انتخاب‌شده</span><strong>{{ item.selectedPreference ? preferenceName(item.selectedPreference) : '—' }}</strong></div>
+      </div>
+    </p-card>
+  }
+
+  @if (item.companyConfirmedAt) {
+    <p-card header="اطلاعات تأییدشده توسط شرکت">
+      <div class="detail-grid">
+        <div class="detail"><span>موضوع کارآموزی</span><strong>{{ item.internshipSubject }}</strong></div>
+        <div class="detail"><span>تاریخ شروع</span><strong>{{ item.startDate | date: 'yyyy/MM/dd' }}</strong></div>
+        <div class="detail"><span>آدرس محل کارآموزی</span><strong>{{ item.workplaceAddress }}</strong></div>
+        <div class="detail"><span>تلفن محل کارآموزی</span><strong dir="ltr">{{ item.workplacePhone }}</strong></div>
+        <div class="detail"><span>زمان تأیید شرکت</span><strong>{{ item.companyConfirmedAt | date: 'yyyy/MM/dd HH:mm' }}</strong></div>
+      </div>
+      @if (item.status === 'COMPANY_APPROVED') {
+        <div class="card-actions">
+          <p-button label="تأیید نهایی آموزش" icon="pi pi-check-circle" [loading]="saving()" (onClick)="confirmApprove()" />
+        </div>
+      }
+    </p-card>
+  }
+
+  @if (item.status === 'UNIVERSITY_APPROVED') {
+    <p-card header="فعال‌سازی کارآموزی">
+      <p class="muted">تمام تأییدهای لازم انجام شده است. در این مرحله می‌توانید کارآموزی را فعال کنید.</p>
+      <div class="card-actions">
+        <p-button label="فعال‌سازی کارآموزی" icon="pi pi-play" severity="success" [loading]="saving()" (onClick)="confirmActivate()" />
+      </div>
+    </p-card>
+  }
+}

@@ -17,16 +17,10 @@ import {
   InternshipCase,
   InternshipCaseStatus,
   InternshipPreference,
-  PreferencePayload
+  PreferencePayload,
+  internshipStatusLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
-
-const statusLabels: Record<InternshipCaseStatus, string> = {
-  DRAFT: 'پیش‌نویس',
-  UNDER_REVIEW: 'در حال بررسی',
-  ACTIVE: 'فعال',
-  COMPLETED: 'تکمیل شده'
-};
 
 @Component({
   selector: 'app-student-application',
@@ -91,11 +85,12 @@ export class StudentApplicationComponent {
   }
 
   statusLabel(status: InternshipCaseStatus): string {
-    return statusLabels[status];
+    return internshipStatusLabels[status];
   }
 
   statusSeverity(status: InternshipCaseStatus): 'secondary' | 'info' | 'success' | 'contrast' {
-    if (status === 'UNDER_REVIEW') return 'info';
+    if (status === 'PENDING_UNIVERSITY_APPROVAL' || status === 'PENDING_COMPANY_APPROVAL') return 'info';
+    if (status === 'COMPANY_APPROVED' || status === 'UNIVERSITY_APPROVED') return 'success';
     if (status === 'ACTIVE') return 'success';
     if (status === 'COMPLETED') return 'contrast';
     return 'secondary';

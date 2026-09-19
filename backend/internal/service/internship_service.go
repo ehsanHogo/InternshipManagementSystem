@@ -21,6 +21,10 @@ var (
 	ErrDuplicatePriority  = errors.New("preference priority already exists")
 	ErrInvalidPreference  = errors.New("invalid internship preference")
 	ErrInvalidApplication = errors.New("internship application is incomplete")
+	ErrInvalidCaseStatus  = errors.New("invalid internship case status")
+	ErrInvalidTransition  = errors.New("invalid internship case transition")
+	ErrCompanySupervisor  = errors.New("invalid company supervisor")
+	ErrCaseAccessDenied   = errors.New("internship case access denied")
 )
 
 type InternshipService struct {
@@ -312,7 +316,7 @@ func (service *InternshipService) SubmitCase(studentID uint) (*model.InternshipC
 
 		now := time.Now()
 		if err := tx.Model(internshipCase).Updates(map[string]any{
-			"status": model.InternshipCaseStatusUnderReview, "submitted_at": now,
+			"status": model.InternshipCaseStatusPendingUniversityApproval, "submitted_at": now,
 		}).Error; err != nil {
 			return fmt.Errorf("submit internship case: %w", err)
 		}
@@ -328,7 +332,7 @@ func (service *InternshipService) SubmitCase(studentID uint) (*model.InternshipC
 func (service *InternshipService) caseQuery(db *gorm.DB) *gorm.DB {
 	return db.Preload("Student").Preload("Professor").
 		Preload("Preferences", func(query *gorm.DB) *gorm.DB { return query.Order("priority ASC") }).
-		Preload("Preferences.Company")
+		Preload("Preferences.Company").Preload("SelectedPreference.Company").Preload("CompanySupervisor")
 }
 
 func (service *InternshipService) getCaseByID(caseID uint) (*model.InternshipCase, error) {
@@ -449,5 +453,12 @@ func nullableString(value string) any {
 }
 
 func currentCaseStatuses() []model.InternshipCaseStatus {
-	return []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusUnderReview}
+	return []model.InternshipCaseStatus{
+		model.InternshipCaseStatusDraft,
+		model.InternshipCaseStatusPendingUniversityApproval,
+		model.InternshipCaseStatusPendingCompanyApproval,
+		model.InternshipCaseStatusCompanyApproved,
+		model.InternshipCaseStatusUniversityApproved,
+		model.InternshipCaseStatusActive,
+	}
 }

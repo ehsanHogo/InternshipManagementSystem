@@ -1,0 +1,41 @@
+<section class="page-heading">
+  <div>
+    <span class="eyebrow">سرپرست شرکت</span>
+    <h1>پرونده‌های کارآموزی</h1>
+    <p>پرونده‌هایی که از سوی دانشگاه به شما اختصاص یافته‌اند.</p>
+  </div>
+</section>
+
+@if (loading()) {
+  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده‌ها...</span></div>
+} @else {
+  <p-table [value]="cases()" [rowHover]="true" responsiveLayout="scroll">
+    <ng-template #header>
+      <tr>
+        <th>دانشجو</th>
+        <th>شماره دانشجویی</th>
+        <th>رشته</th>
+        <th>شرکت / محل پیشنهادی</th>
+        <th>شماره نامه</th>
+        <th>تاریخ نامه</th>
+        <th>وضعیت</th>
+        <th>عملیات</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-item>
+      <tr>
+        <td>{{ item.student.fullName }}</td>
+        <td>{{ item.student.studentNumber ?? '—' }}</td>
+        <td>{{ item.student.major ?? '—' }}</td>
+        <td>{{ placementName(item) }}</td>
+        <td>{{ item.letterNumber ?? '—' }}</td>
+        <td>{{ item.letterDate ? (item.letterDate | date: 'yyyy/MM/dd') : '—' }}</td>
+        <td><p-tag [value]="statusLabel(item.status)" severity="info" /></td>
+        <td><p-button label="مشاهده" icon="pi pi-eye" [text]="true" [routerLink]="['/company/internships', item.id]" /></td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr><td colspan="8" class="muted">پرونده‌ای به شما اختصاص نیافته است.</td></tr>
+    </ng-template>
+  </p-table>
+}

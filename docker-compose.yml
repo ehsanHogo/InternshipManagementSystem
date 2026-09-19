@@ -1,3 +1,5 @@
+name: internship-management-system
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -35,5 +37,19 @@ services:
       postgres:
         condition: service_healthy
 
+  pgadmin:
+    image: dpage/pgadmin4:9.14
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@internship-management.com
+      PGADMIN_DEFAULT_PASSWORD: Demo123!
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
+  pgadmin_data:

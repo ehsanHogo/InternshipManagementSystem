@@ -10,7 +10,7 @@ const roleLabels: Record<UserRole, string> = {
   STUDENT: 'دانشجو',
   PROFESSOR: 'استاد',
   COMPANY_SUPERVISOR: 'سرپرست شرکت',
-  UNIVERSITY_SUPERVISOR: 'مسئول دانشگاه',
+  UNIVERSITY_SUPERVISOR: 'مسئول آموزش',
   ADMIN: 'مدیر سیستم'
 };
 

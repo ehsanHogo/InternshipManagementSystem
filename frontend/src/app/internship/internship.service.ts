@@ -2,7 +2,16 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { Company, InternshipCase, InternshipPreference, PreferencePayload } from './internship.models';
+import { User } from '../auth/auth.models';
+import {
+  Company,
+  CompanyConfirmationPayload,
+  InternshipCase,
+  InternshipCaseStatus,
+  InternshipPreference,
+  PreferencePayload,
+  SendToCompanyPayload
+} from './internship.models';
 
 @Injectable({ providedIn: 'root' })
 export class InternshipService {
@@ -38,5 +47,42 @@ export class InternshipService {
 
   submitCase(): Observable<InternshipCase> {
     return this.http.post<InternshipCase>('/api/student/internship-case/submit', {});
+  }
+
+  listUniversityCases(status?: InternshipCaseStatus): Observable<InternshipCase[]> {
+    const options = status ? { params: { status } } : {};
+    return this.http.get<InternshipCase[]>('/api/university/internship-cases', options);
+  }
+
+  getUniversityCase(id: number): Observable<InternshipCase> {
+    return this.http.get<InternshipCase>(`/api/university/internship-cases/${id}`);
+  }
+
+  listCompanySupervisors(): Observable<User[]> {
+    return this.http.get<User[]>('/api/university/company-supervisors');
+  }
+
+  sendToCompany(id: number, payload: SendToCompanyPayload): Observable<InternshipCase> {
+    return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/send-to-company`, payload);
+  }
+
+  approveUniversityCase(id: number): Observable<InternshipCase> {
+    return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/approve`, {});
+  }
+
+  activateUniversityCase(id: number): Observable<InternshipCase> {
+    return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/activate`, {});
+  }
+
+  listCompanyCases(): Observable<InternshipCase[]> {
+    return this.http.get<InternshipCase[]>('/api/company/internship-cases');
+  }
+
+  getCompanyCase(id: number): Observable<InternshipCase> {
+    return this.http.get<InternshipCase>(`/api/company/internship-cases/${id}`);
+  }
+
+  confirmCompanyCase(id: number, payload: CompanyConfirmationPayload): Observable<InternshipCase> {
+    return this.http.post<InternshipCase>(`/api/company/internship-cases/${id}/confirm`, payload);
   }
 }

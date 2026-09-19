@@ -29,9 +29,23 @@
       "problemMatcher": []
     },
     {
-      "label": "Database: Start",
+      "label": "Database: Up",
       "type": "shell",
-      "command": "docker compose up -d postgres",
+      "command": "docker compose up -d postgres pgadmin",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "Database: Drop",
+      "type": "shell",
+      "command": "docker compose stop backend postgres && docker compose rm --force postgres && docker volume rm internship-management-system_postgres_data",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -49,7 +63,7 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "dependsOn": "Database: Start",
+      "dependsOn": "Database: Up",
       "problemMatcher": [],
       "presentation": {
         "reveal": "always",
@@ -59,7 +73,7 @@
     {
       "label": "Backend: Run in Docker",
       "type": "shell",
-      "command": "docker compose up -d --build backend",
+      "command": "docker compose up -d --build backend pgadmin",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -87,7 +101,7 @@
           "DB_SSLMODE": "disable"
         }
       },
-      "dependsOn": "Database: Start",
+      "dependsOn": "Database: Up",
       "problemMatcher": "$go",
       "presentation": {
         "reveal": "always",

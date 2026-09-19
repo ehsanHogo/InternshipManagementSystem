@@ -34,7 +34,7 @@
   @if (!isDraft) {
     <div class="review-notice">
       <i class="pi pi-lock" aria-hidden="true"></i>
-      <span>درخواست ثبت نهایی شده و اکنون در حال بررسی است. امکان ویرایش وجود ندارد.</span>
+      <span>درخواست ثبت نهایی شده است. وضعیت جاری: {{ statusLabel(currentCase.status) }}. امکان ویرایش وجود ندارد.</span>
     </div>
   }
 

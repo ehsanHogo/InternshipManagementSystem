@@ -36,16 +36,29 @@ type preferenceRequest struct {
 }
 
 type internshipCaseResponse struct {
-	ID            uint                           `json:"id"`
-	Status        model.InternshipCaseStatus     `json:"status"`
-	PassedCredits *int                           `json:"passedCredits"`
-	Mobile        *string                        `json:"mobile"`
-	Student       model.PublicUser               `json:"student"`
-	Professor     model.PublicUser               `json:"professor"`
-	Preferences   []internshipPreferenceResponse `json:"preferences"`
-	CreatedAt     time.Time                      `json:"createdAt"`
-	UpdatedAt     time.Time                      `json:"updatedAt"`
-	SubmittedAt   *time.Time                     `json:"submittedAt"`
+	ID                   uint                           `json:"id"`
+	Status               model.InternshipCaseStatus     `json:"status"`
+	PassedCredits        *int                           `json:"passedCredits"`
+	Mobile               *string                        `json:"mobile"`
+	Student              model.PublicUser               `json:"student"`
+	Professor            model.PublicUser               `json:"professor"`
+	Preferences          []internshipPreferenceResponse `json:"preferences"`
+	SelectedPreferenceID *uint                          `json:"selectedPreferenceId"`
+	SelectedPreference   *internshipPreferenceResponse  `json:"selectedPreference,omitempty"`
+	CompanySupervisorID  *uint                          `json:"companySupervisorId"`
+	CompanySupervisor    *model.PublicUser              `json:"companySupervisor,omitempty"`
+	LetterNumber         *string                        `json:"letterNumber"`
+	LetterDate           *time.Time                     `json:"letterDate"`
+	InternshipSubject    *string                        `json:"internshipSubject"`
+	StartDate            *time.Time                     `json:"startDate"`
+	WorkplaceAddress     *string                        `json:"workplaceAddress"`
+	WorkplacePhone       *string                        `json:"workplacePhone"`
+	CreatedAt            time.Time                      `json:"createdAt"`
+	UpdatedAt            time.Time                      `json:"updatedAt"`
+	SubmittedAt          *time.Time                     `json:"submittedAt"`
+	CompanyConfirmedAt   *time.Time                     `json:"companyConfirmedAt"`
+	UniversityApprovedAt *time.Time                     `json:"universityApprovedAt"`
+	ActivatedAt          *time.Time                     `json:"activatedAt"`
 }
 
 type internshipPreferenceResponse struct {
@@ -211,10 +224,16 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 	switch {
 	case errors.Is(err, service.ErrCaseNotFound), errors.Is(err, service.ErrPreferenceNotFound):
 		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-	case errors.Is(err, service.ErrAssignmentNotFound), errors.Is(err, service.ErrInvalidApplication), errors.Is(err, service.ErrInvalidPreference):
+	case errors.Is(err, service.ErrAssignmentNotFound), errors.Is(err, service.ErrInvalidApplication),
+		errors.Is(err, service.ErrInvalidPreference), errors.Is(err, service.ErrInvalidCaseStatus),
+		errors.Is(err, service.ErrCompanySupervisor):
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit), errors.Is(err, service.ErrDuplicatePriority):
 		ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+	case errors.Is(err, service.ErrInvalidTransition):
+		ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+	case errors.Is(err, service.ErrCaseAccessDenied):
+		ctx.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 	default:
 		log.Printf("internship request failed: %v", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -244,13 +263,29 @@ func caseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 	for _, preference := range internshipCase.Preferences {
 		preferences = append(preferences, preferenceResponse(preference))
 	}
-	return internshipCaseResponse{
+	response := internshipCaseResponse{
 		ID: internshipCase.ID, Status: internshipCase.Status,
 		PassedCredits: internshipCase.PassedCredits, Mobile: internshipCase.Mobile,
 		Student: internshipCase.Student.Public(), Professor: internshipCase.Professor.Public(),
 		Preferences: preferences, CreatedAt: internshipCase.CreatedAt, UpdatedAt: internshipCase.UpdatedAt,
-		SubmittedAt: internshipCase.SubmittedAt,
+		SubmittedAt:          internshipCase.SubmittedAt,
+		SelectedPreferenceID: internshipCase.SelectedPreferenceID,
+		CompanySupervisorID:  internshipCase.CompanySupervisorID,
+		LetterNumber:         internshipCase.LetterNumber, LetterDate: internshipCase.LetterDate,
+		InternshipSubject: internshipCase.InternshipSubject, StartDate: internshipCase.StartDate,
+		WorkplaceAddress: internshipCase.WorkplaceAddress, WorkplacePhone: internshipCase.WorkplacePhone,
+		CompanyConfirmedAt:   internshipCase.CompanyConfirmedAt,
+		UniversityApprovedAt: internshipCase.UniversityApprovedAt, ActivatedAt: internshipCase.ActivatedAt,
 	}
+	if internshipCase.SelectedPreference != nil {
+		selected := preferenceResponse(*internshipCase.SelectedPreference)
+		response.SelectedPreference = &selected
+	}
+	if internshipCase.CompanySupervisor != nil {
+		supervisor := internshipCase.CompanySupervisor.Public()
+		response.CompanySupervisor = &supervisor
+	}
+	return response
 }
 
 func preferenceResponse(preference model.InternshipPreference) internshipPreferenceResponse {

@@ -10,10 +10,13 @@ const (
 type InternshipCaseStatus string
 
 const (
-	InternshipCaseStatusDraft       InternshipCaseStatus = "DRAFT"
-	InternshipCaseStatusUnderReview InternshipCaseStatus = "UNDER_REVIEW"
-	InternshipCaseStatusActive      InternshipCaseStatus = "ACTIVE"
-	InternshipCaseStatusCompleted   InternshipCaseStatus = "COMPLETED"
+	InternshipCaseStatusDraft                     InternshipCaseStatus = "DRAFT"
+	InternshipCaseStatusPendingUniversityApproval InternshipCaseStatus = "PENDING_UNIVERSITY_APPROVAL"
+	InternshipCaseStatusPendingCompanyApproval    InternshipCaseStatus = "PENDING_COMPANY_APPROVAL"
+	InternshipCaseStatusCompanyApproved           InternshipCaseStatus = "COMPANY_APPROVED"
+	InternshipCaseStatusUniversityApproved        InternshipCaseStatus = "UNIVERSITY_APPROVED"
+	InternshipCaseStatusActive                    InternshipCaseStatus = "ACTIVE"
+	InternshipCaseStatusCompleted                 InternshipCaseStatus = "COMPLETED"
 )
 
 type Company struct {
@@ -60,14 +63,19 @@ type InternshipCase struct {
 	FinalGrade           *float64
 	ProfessorComment     *string `gorm:"size:2000"`
 
-	Student     User                   `gorm:"foreignKey:StudentID"`
-	Professor   User                   `gorm:"foreignKey:ProfessorID"`
-	Preferences []InternshipPreference `gorm:"foreignKey:InternshipCaseID"`
+	Student            User                   `gorm:"foreignKey:StudentID"`
+	Professor          User                   `gorm:"foreignKey:ProfessorID"`
+	Preferences        []InternshipPreference `gorm:"foreignKey:InternshipCaseID"`
+	SelectedPreference *InternshipPreference  `gorm:"foreignKey:SelectedPreferenceID;-:migration"`
+	CompanySupervisor  *User                  `gorm:"foreignKey:CompanySupervisorID"`
 
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	SubmittedAt *time.Time
-	CompletedAt *time.Time
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	SubmittedAt          *time.Time
+	CompanyConfirmedAt   *time.Time
+	UniversityApprovedAt *time.Time
+	ActivatedAt          *time.Time
+	CompletedAt          *time.Time
 }
 
 type InternshipPreference struct {

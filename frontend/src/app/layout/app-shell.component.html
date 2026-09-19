@@ -34,6 +34,18 @@
           درخواست کارآموزی
         </a>
       }
+      @if (user()?.role === 'UNIVERSITY_SUPERVISOR') {
+        <a routerLink="/university/applications" routerLinkActive="active">
+          <i class="pi pi-file-check" aria-hidden="true"></i>
+          درخواست‌های کارآموزی
+        </a>
+      }
+      @if (user()?.role === 'COMPANY_SUPERVISOR') {
+        <a routerLink="/company/internships" routerLinkActive="active">
+          <i class="pi pi-briefcase" aria-hidden="true"></i>
+          پرونده‌های کارآموزی
+        </a>
+      }
     </nav>
 
     <main class="page-content">

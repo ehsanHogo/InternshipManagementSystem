@@ -6,7 +6,7 @@ import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 
 import { AuthService } from '../../auth/auth.service';
-import { InternshipCaseStatus } from '../../internship/internship.models';
+import { InternshipCaseStatus, internshipStatusLabels } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 
 @Component({
@@ -40,10 +40,6 @@ export class DashboardComponent {
   }
 
   statusLabel(status: InternshipCaseStatus | null): string {
-    if (status === 'DRAFT') return 'پیش‌نویس';
-    if (status === 'UNDER_REVIEW') return 'در حال بررسی';
-    if (status === 'ACTIVE') return 'فعال';
-    if (status === 'COMPLETED') return 'تکمیل شده';
-    return 'درخواستی ثبت نشده است';
+    return status ? internshipStatusLabels[status] : 'درخواستی ثبت نشده است';
   }
 }

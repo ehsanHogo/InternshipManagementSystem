@@ -124,7 +124,7 @@ When this repository is open as the VS Code workspace, run tasks from **Terminal
 
 - `Setup: Install Dependencies` for first-time setup.
 - `Development: Start` to start PostgreSQL/backend in Docker and Angular locally.
-- `Database: Start` or `Database: Open psql` for database work.
+- `Database: Up`, `Database: Drop`, or `Database: Open psql` for database work. `Database: Drop` removes only PostgreSQL data; pgAdmin and its saved settings are preserved.
 - `Build: All` to build both applications.
 - `Backend: Test` and `Health: Check Backend` for quick verification.
 - `Docker: Follow Logs`, `Docker: Show Status`, and `Docker: Stop` for container management.

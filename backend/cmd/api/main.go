@@ -73,6 +73,21 @@ func main() {
 	student.DELETE("/internship-case/preferences/:id", internshipHandler.DeletePreference)
 	student.POST("/internship-case/submit", internshipHandler.SubmitCase)
 
+	university := authenticated.Group("/university")
+	university.Use(appmiddleware.RequireRole(model.RoleUniversitySupervisor))
+	university.GET("/internship-cases", internshipHandler.ListUniversityCases)
+	university.GET("/internship-cases/:id", internshipHandler.GetUniversityCase)
+	university.GET("/company-supervisors", internshipHandler.ListCompanySupervisors)
+	university.POST("/internship-cases/:id/send-to-company", internshipHandler.SendToCompany)
+	university.POST("/internship-cases/:id/approve", internshipHandler.ApproveUniversityCase)
+	university.POST("/internship-cases/:id/activate", internshipHandler.ActivateUniversityCase)
+
+	company := authenticated.Group("/company")
+	company.Use(appmiddleware.RequireRole(model.RoleCompanySupervisor))
+	company.GET("/internship-cases", internshipHandler.ListCompanyCases)
+	company.GET("/internship-cases/:id", internshipHandler.GetCompanyCase)
+	company.POST("/internship-cases/:id/confirm", internshipHandler.ConfirmCompanyCase)
+
 	server := &http.Server{
 		Addr:              ":" + cfg.AppPort,
 		Handler:           router,

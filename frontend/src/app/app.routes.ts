@@ -1,6 +1,12 @@
 import { Routes } from '@angular/router';
 
-import { authGuard, guestGuard, studentGuard } from './auth/auth.guard';
+import {
+  authGuard,
+  companySupervisorGuard,
+  guestGuard,
+  studentGuard,
+  universitySupervisorGuard
+} from './auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -24,6 +30,38 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/student-application/student-application.component').then(
             (module) => module.StudentApplicationComponent
+          )
+      },
+      {
+        path: 'university/applications',
+        canActivate: [universitySupervisorGuard],
+        loadComponent: () =>
+          import('./pages/university-applications/university-applications.component').then(
+            (module) => module.UniversityApplicationsComponent
+          )
+      },
+      {
+        path: 'university/applications/:id',
+        canActivate: [universitySupervisorGuard],
+        loadComponent: () =>
+          import('./pages/university-case/university-case.component').then(
+            (module) => module.UniversityCaseComponent
+          )
+      },
+      {
+        path: 'company/internships',
+        canActivate: [companySupervisorGuard],
+        loadComponent: () =>
+          import('./pages/company-internships/company-internships.component').then(
+            (module) => module.CompanyInternshipsComponent
+          )
+      },
+      {
+        path: 'company/internships/:id',
+        canActivate: [companySupervisorGuard],
+        loadComponent: () =>
+          import('./pages/company-case/company-case.component').then(
+            (module) => module.CompanyCaseComponent
           )
       }
     ]
