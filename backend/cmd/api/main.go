@@ -16,6 +16,7 @@ import (
 	"internship-management-system/backend/internal/database"
 	"internship-management-system/backend/internal/handler"
 	appmiddleware "internship-management-system/backend/internal/middleware"
+	"internship-management-system/backend/internal/model"
 	"internship-management-system/backend/internal/service"
 )
 
@@ -46,6 +47,8 @@ func main() {
 	healthService := service.NewHealthService(db)
 	healthHandler := handler.NewHealthHandler(healthService)
 	authHandler := handler.NewAuthHandler(db, cfg.JWT.Secret, time.Duration(cfg.JWT.ExpiresHours)*time.Hour)
+	internshipService := service.NewInternshipService(db)
+	internshipHandler := handler.NewInternshipHandler(internshipService)
 
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery(), appmiddleware.CORS(cfg.FrontendOrigin))
@@ -55,6 +58,20 @@ func main() {
 	api.POST("/auth/login", authHandler.Login)
 	api.GET("/auth/me", appmiddleware.RequireAuth(cfg.JWT.Secret), authHandler.Me)
 	api.GET("/protected", appmiddleware.RequireAuth(cfg.JWT.Secret), authHandler.Protected)
+
+	authenticated := api.Group("")
+	authenticated.Use(appmiddleware.RequireAuth(cfg.JWT.Secret))
+	authenticated.GET("/companies", internshipHandler.ListCompanies)
+
+	student := authenticated.Group("/student")
+	student.Use(appmiddleware.RequireRole(model.RoleStudent))
+	student.GET("/internship-case", internshipHandler.GetCurrentCase)
+	student.POST("/internship-case", internshipHandler.CreateOrGetCase)
+	student.PUT("/internship-case", internshipHandler.UpdateCase)
+	student.POST("/internship-case/preferences", internshipHandler.AddPreference)
+	student.PUT("/internship-case/preferences/:id", internshipHandler.UpdatePreference)
+	student.DELETE("/internship-case/preferences/:id", internshipHandler.DeletePreference)
+	student.POST("/internship-case/submit", internshipHandler.SubmitCase)
 
 	server := &http.Server{
 		Addr:              ":" + cfg.AppPort,

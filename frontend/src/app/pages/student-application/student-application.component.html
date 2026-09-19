@@ -1,0 +1,244 @@
+<p-confirmDialog [style]="{ width: 'min(92vw, 30rem)' }" />
+
+<section class="page-heading">
+  <div>
+    <span class="eyebrow">فرایند کارآموزی</span>
+    <h1>درخواست کارآموزی</h1>
+    <p>اطلاعات درخواست و محل‌های پیشنهادی خود را ثبت کنید.</p>
+  </div>
+  @if (internshipCase(); as currentCase) {
+    <p-tag [value]="statusLabel(currentCase.status)" [severity]="statusSeverity(currentCase.status)" />
+  }
+</section>
+
+@if (loading()) {
+  <div class="state-card">
+    <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+    <span>در حال دریافت اطلاعات درخواست...</span>
+  </div>
+} @else if (!internshipCase()) {
+  <p-card>
+    <div class="empty-state">
+      <span class="empty-icon"><i class="pi pi-file-plus" aria-hidden="true"></i></span>
+      <h2>هنوز درخواست کارآموزی ندارید</h2>
+      <p>برای شروع، یک پیش‌نویس درخواست ایجاد کنید. استاد راهنمای تعیین‌شده به‌صورت خودکار به درخواست اضافه می‌شود.</p>
+      <p-button
+        label="ایجاد درخواست کارآموزی"
+        icon="pi pi-plus"
+        [loading]="creating()"
+        (onClick)="createCase()"
+      />
+    </div>
+  </p-card>
+} @else if (internshipCase(); as currentCase) {
+  @if (!isDraft) {
+    <div class="review-notice">
+      <i class="pi pi-lock" aria-hidden="true"></i>
+      <span>درخواست ثبت نهایی شده و اکنون در حال بررسی است. امکان ویرایش وجود ندارد.</span>
+    </div>
+  }
+
+  <p-card header="اطلاعات درخواست">
+    <form class="application-grid" [formGroup]="applicationForm">
+      <label class="field readonly-field">
+        <span>نام دانشجو</span>
+        <input pInputText [value]="currentCase.student.fullName" disabled />
+      </label>
+      <label class="field readonly-field">
+        <span>شماره دانشجویی</span>
+        <input pInputText [value]="currentCase.student.studentNumber ?? '—'" disabled />
+      </label>
+      <label class="field readonly-field">
+        <span>رشته</span>
+        <input pInputText [value]="currentCase.student.major ?? '—'" disabled />
+      </label>
+      <label class="field readonly-field">
+        <span>استاد</span>
+        <input pInputText [value]="currentCase.professor.fullName" disabled />
+      </label>
+      <label class="field">
+        <span>تعداد واحد گذرانده <b>*</b></span>
+        <p-inputnumber formControlName="passedCredits" [min]="0" [max]="300" [useGrouping]="false" />
+        @if (applicationForm.controls.passedCredits.touched && applicationForm.controls.passedCredits.invalid) {
+          <small>تعداد واحد گذرانده را وارد کنید.</small>
+        }
+      </label>
+      <label class="field">
+        <span>شماره موبایل <b>*</b></span>
+        <input pInputText formControlName="mobile" dir="ltr" placeholder="09123456789" />
+        @if (applicationForm.controls.mobile.touched && applicationForm.controls.mobile.invalid) {
+          <small>شماره موبایل را وارد کنید.</small>
+        }
+      </label>
+    </form>
+    @if (isDraft) {
+      <ng-template #footer>
+        <div class="card-actions">
+          <p-button
+            label="ذخیره اطلاعات"
+            icon="pi pi-save"
+            [loading]="saving()"
+            (onClick)="saveApplication()"
+          />
+        </div>
+      </ng-template>
+    }
+  </p-card>
+
+  <p-card header="اولویت‌های محل کارآموزی">
+    <div class="preference-summary">
+      <p>حداقل یک و حداکثر سه محل کارآموزی را به ترتیب اولویت وارد کنید.</p>
+      <span>{{ currentCase.preferences.length }} از ۳ اولویت</span>
+    </div>
+
+    @if (currentCase.preferences.length === 0) {
+      <div class="inline-empty">هنوز اولویتی ثبت نشده است.</div>
+    } @else {
+      <div class="preference-list">
+        @for (preference of currentCase.preferences; track preference.id) {
+          <article class="preference-item">
+            <div class="priority-badge">اولویت {{ priorityLabel(preference.priority) }}</div>
+            <div class="preference-details">
+              <strong>{{ preference.company?.name ?? preference.proposedCompanyName }}</strong>
+              <span>
+                {{ preference.companyId ? 'شرکت مورد تأیید دانشگاه' : 'شرکت پیشنهادی جدید' }}
+              </span>
+              <span><i class="pi pi-map-marker"></i> {{ preference.city }}</span>
+              <span><i class="pi pi-briefcase"></i> {{ preference.workField }}</span>
+            </div>
+            @if (isDraft) {
+              <div class="item-actions">
+                <p-button
+                  icon="pi pi-pencil"
+                  label="ویرایش"
+                  severity="secondary"
+                  [text]="true"
+                  (onClick)="editPreference(preference)"
+                />
+                <p-button
+                  icon="pi pi-trash"
+                  label="حذف"
+                  severity="danger"
+                  [text]="true"
+                  (onClick)="deletePreference(preference)"
+                />
+              </div>
+            }
+          </article>
+        }
+      </div>
+    }
+
+    @if (isDraft && (canAddPreference || editingPreferenceID() !== null)) {
+      <form class="preference-editor" [formGroup]="preferenceForm" (ngSubmit)="savePreference()">
+        <div class="editor-title">
+          <h3>{{ editingPreferenceID() === null ? 'افزودن اولویت' : 'ویرایش اولویت' }}</h3>
+          @if (editingPreferenceID() !== null) {
+            <p-button label="انصراف" severity="secondary" [text]="true" type="button" (onClick)="cancelPreferenceEdit()" />
+          }
+        </div>
+
+        <div class="editor-grid">
+          <label class="field">
+            <span>اولویت <b>*</b></span>
+            <p-select
+              formControlName="priority"
+              [options]="[1, 2, 3]"
+              placeholder="انتخاب اولویت"
+              appendTo="body"
+            />
+          </label>
+
+          <fieldset class="company-type">
+            <legend>نوع محل کارآموزی <b>*</b></legend>
+            <label>
+              <p-radiobutton formControlName="companyType" value="approved" inputId="approved-company" />
+              شرکت مورد تأیید دانشگاه
+            </label>
+            <label>
+              <p-radiobutton formControlName="companyType" value="proposed" inputId="proposed-company" />
+              شرکت پیشنهادی جدید
+            </label>
+          </fieldset>
+
+          @if (preferenceForm.controls.companyType.value === 'approved') {
+            <label class="field full-width">
+              <span>شرکت مورد تأیید <b>*</b></span>
+              <p-select
+                formControlName="companyId"
+                [options]="companies()"
+                optionLabel="name"
+                optionValue="id"
+                placeholder="انتخاب شرکت"
+                appendTo="body"
+                [filter]="true"
+                filterBy="name"
+              />
+            </label>
+          } @else {
+            <label class="field full-width">
+              <span>نام شرکت <b>*</b></span>
+              <input pInputText formControlName="proposedCompanyName" />
+            </label>
+            <label class="field">
+              <span>وب‌سایت</span>
+              <input pInputText formControlName="proposedWebsite" dir="ltr" placeholder="https://example.com" />
+            </label>
+            <label class="field">
+              <span>تلفن</span>
+              <input pInputText formControlName="proposedPhone" dir="ltr" />
+            </label>
+            <label class="field">
+              <span>ایمیل</span>
+              <input pInputText formControlName="proposedEmail" dir="ltr" />
+            </label>
+            <label class="field">
+              <span>نام مسئول کارآموزی</span>
+              <input pInputText formControlName="proposedSupervisorName" />
+            </label>
+          }
+
+          <label class="field">
+            <span>شهر <b>*</b></span>
+            <input pInputText formControlName="city" />
+          </label>
+          <label class="field">
+            <span>زمینه فعالیت <b>*</b></span>
+            <input pInputText formControlName="workField" />
+          </label>
+        </div>
+
+        <div class="card-actions">
+          <p-button
+            type="submit"
+            [label]="editingPreferenceID() === null ? 'افزودن اولویت' : 'ذخیره تغییرات'"
+            icon="pi pi-check"
+            [loading]="preferenceSaving()"
+          />
+        </div>
+      </form>
+    } @else if (isDraft && !canAddPreference) {
+      <div class="limit-notice">
+        <i class="pi pi-info-circle"></i>
+        <span>حداکثر سه اولویت ثبت شده است.</span>
+        <p-button label="افزودن اولویت" icon="pi pi-plus" [disabled]="true" size="small" />
+      </div>
+    }
+  </p-card>
+
+  @if (isDraft) {
+    <div class="submit-panel">
+      <div>
+        <strong>ثبت نهایی درخواست</strong>
+        <p>پیش از ثبت نهایی، از کامل بودن اطلاعات و ترتیب اولویت‌ها مطمئن شوید.</p>
+      </div>
+      <p-button
+        label="ثبت نهایی درخواست"
+        icon="pi pi-send"
+        [loading]="saving()"
+        [disabled]="currentCase.preferences.length < 1"
+        (onClick)="confirmSubmit()"
+      />
+    </div>
+  }
+}

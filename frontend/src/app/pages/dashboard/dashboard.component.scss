@@ -1,52 +1,5 @@
 :host {
   display: block;
-  min-height: 100vh;
-}
-
-.dashboard-page {
-  min-height: 100vh;
-  background: #f6f8fb;
-}
-
-.topbar {
-  min-height: 4.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem clamp(1rem, 5vw, 4rem);
-  border-bottom: 1px solid #e2e8f0;
-  background: #fff;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  color: #15345b;
-  font-weight: 700;
-
-  i {
-    color: #2563eb;
-    font-size: 1.6rem;
-  }
-}
-
-.user-actions,
-.identity {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.identity {
-  padding-inline-end: 0.25rem;
-}
-
-.dashboard-content {
-  width: min(100% - 2rem, 70rem);
-  margin: 0 auto;
-  padding-block: clamp(1.5rem, 5vw, 3.5rem);
 }
 
 .welcome {
@@ -112,30 +65,53 @@
   }
 }
 
+.internship-state {
+  min-height: 8rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+
+  div {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 0.85rem;
+  }
+
+  strong {
+    color: #1e293b;
+    font-size: 1.15rem;
+  }
+}
+
+.state-icon {
+  display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  place-items: center;
+  border-radius: 0.8rem;
+  color: #2563eb !important;
+  background: #eff6ff;
+
+  i {
+    font-size: 1.5rem;
+  }
+}
+
 @media (max-width: 42rem) {
-  .topbar,
-  .user-actions {
-    align-items: stretch;
-  }
-
-  .topbar {
-    flex-direction: column;
-  }
-
-  .brand {
-    justify-content: center;
-    text-align: center;
-  }
-
-  .user-actions {
-    justify-content: space-between;
-  }
-
-  .identity {
-    flex-wrap: wrap;
-  }
-
   .welcome-icon {
     display: none;
+  }
+
+  .internship-state {
+    grid-template-columns: auto 1fr;
+
+    p-button {
+      grid-column: 1 / -1;
+    }
   }
 }

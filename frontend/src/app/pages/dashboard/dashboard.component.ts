@@ -1,38 +1,49 @@
-import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 
-import { UserRole } from '../../auth/auth.models';
 import { AuthService } from '../../auth/auth.service';
-
-const roleLabels: Record<UserRole, string> = {
-  STUDENT: 'دانشجو',
-  PROFESSOR: 'استاد',
-  COMPANY_SUPERVISOR: 'سرپرست شرکت',
-  UNIVERSITY_SUPERVISOR: 'مسئول دانشگاه',
-  ADMIN: 'مدیر سیستم'
-};
+import { InternshipCaseStatus } from '../../internship/internship.models';
+import { InternshipService } from '../../internship/internship.service';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [ButtonModule, CardModule, TagModule],
+  imports: [RouterLink, ButtonModule, CardModule, TagModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent {
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
+  private readonly internshipService = inject(InternshipService);
 
   readonly user = this.auth.user;
+  readonly internshipStatus = signal<InternshipCaseStatus | null>(null);
+  readonly statusLoading = signal(false);
 
-  roleLabel(role: UserRole): string {
-    return roleLabels[role];
+  constructor() {
+    if (this.auth.getCurrentUser()?.role === 'STUDENT') {
+      this.statusLoading.set(true);
+      this.internshipService.getCurrentCase().subscribe({
+        next: (internshipCase) => {
+          this.internshipStatus.set(internshipCase.status);
+          this.statusLoading.set(false);
+        },
+        error: (error: HttpErrorResponse) => {
+          if (error.status === 404) this.internshipStatus.set(null);
+          this.statusLoading.set(false);
+        }
+      });
+    }
   }
 
-  logout(): void {
-    this.auth.logout();
-    void this.router.navigateByUrl('/login');
+  statusLabel(status: InternshipCaseStatus | null): string {
+    if (status === 'DRAFT') return 'پیش‌نویس';
+    if (status === 'UNDER_REVIEW') return 'در حال بررسی';
+    if (status === 'ACTIVE') return 'فعال';
+    if (status === 'COMPLETED') return 'تکمیل شده';
+    return 'درخواستی ثبت نشده است';
   }
 }

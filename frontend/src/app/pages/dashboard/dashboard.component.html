@@ -1,47 +1,42 @@
-<div class="dashboard-page">
-  <header class="topbar">
-    <a class="brand" aria-label="سامانه مدیریت کارآموزی">
-      <i class="pi pi-graduation-cap" aria-hidden="true"></i>
-      <span>سامانه مدیریت کارآموزی دانشجویان</span>
-    </a>
+@if (user(); as currentUser) {
+  <section class="welcome" aria-labelledby="dashboard-title">
+    <div>
+      <span class="eyebrow">داشبورد</span>
+      <h1 id="dashboard-title">خوش آمدید، {{ currentUser.fullName }}</h1>
+      <p>از این بخش می‌توانید فرایند کارآموزی خود را پیگیری کنید.</p>
+    </div>
+    <span class="welcome-icon" aria-hidden="true"><i class="pi pi-sparkles"></i></span>
+  </section>
 
-    @if (user(); as currentUser) {
-      <div class="user-actions">
-        <div class="identity">
-          <strong>{{ currentUser.fullName }}</strong>
-          <p-tag [value]="roleLabel(currentUser.role)" severity="info" />
+  @if (currentUser.role === 'STUDENT') {
+    <p-card header="وضعیت کارآموزی">
+      <div class="internship-state">
+        <span class="state-icon"><i class="pi pi-file-check" aria-hidden="true"></i></span>
+        <div>
+          <span>وضعیت فعلی</span>
+          @if (statusLoading()) {
+            <strong>در حال دریافت...</strong>
+          } @else {
+            <strong>{{ statusLabel(internshipStatus()) }}</strong>
+          }
         </div>
         <p-button
-          label="خروج"
-          icon="pi pi-sign-out"
-          severity="secondary"
-          [outlined]="true"
-          (onClick)="logout()"
+          label="درخواست کارآموزی"
+          icon="pi pi-arrow-left"
+          iconPos="right"
+          routerLink="/student/application"
         />
       </div>
-    }
-  </header>
-
-  <main class="dashboard-content">
-    @if (user(); as currentUser) {
-      <section class="welcome" aria-labelledby="dashboard-title">
+    </p-card>
+  } @else {
+    <p-card header="نمای کلی">
+      <div class="placeholder">
+        <i class="pi pi-chart-line" aria-hidden="true"></i>
         <div>
-          <span class="eyebrow">داشبورد</span>
-          <h1 id="dashboard-title">خوش آمدید، {{ currentUser.fullName }}</h1>
-          <p>از این بخش می‌توانید فرایند کارآموزی خود را پیگیری کنید.</p>
+          <h2>داشبورد شما آماده است</h2>
+          <p>امکانات نقش شما در مراحل بعدی به این بخش افزوده می‌شود.</p>
         </div>
-        <span class="welcome-icon" aria-hidden="true"><i class="pi pi-sparkles"></i></span>
-      </section>
-
-      <p-card header="نمای کلی">
-        <div class="placeholder">
-          <i class="pi pi-chart-line" aria-hidden="true"></i>
-          <div>
-            <h2>داشبورد شما آماده است</h2>
-            <p>امکانات مدیریت دوره کارآموزی در مراحل بعدی به این بخش افزوده می‌شود.</p>
-          </div>
-        </div>
-      </p-card>
-    }
-  </main>
-</div>
+      </div>
+    </p-card>
+  }
+}

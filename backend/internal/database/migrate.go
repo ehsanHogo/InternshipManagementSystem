@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"internship-management-system/backend/internal/auth"
 	"internship-management-system/backend/internal/model"
@@ -14,8 +16,14 @@ import (
 const demoPassword = "Demo123!"
 
 func MigrateAndSeed(db *gorm.DB) error {
-	if err := db.AutoMigrate(&model.User{}); err != nil {
-		return fmt.Errorf("migrate users: %w", err)
+	if err := db.AutoMigrate(
+		&model.User{},
+		&model.Company{},
+		&model.ProfessorAssignment{},
+		&model.InternshipCase{},
+		&model.InternshipPreference{},
+	); err != nil {
+		return fmt.Errorf("migrate database: %w", err)
 	}
 
 	studentNumber := "40123456"
@@ -33,7 +41,51 @@ func MigrateAndSeed(db *gorm.DB) error {
 			return err
 		}
 	}
+	if err := seedCompanies(db); err != nil {
+		return err
+	}
+	if err := seedProfessorAssignment(db); err != nil {
+		return err
+	}
 
+	return nil
+}
+
+func seedCompanies(db *gorm.DB) error {
+	companies := []model.Company{
+		{Name: "شرکت داده‌پردازان نوین", IsApproved: true},
+		{Name: "شرکت فناوری سپهر", IsApproved: true},
+		{Name: "شرکت راهکارهای هوشمند پارس", IsApproved: true},
+	}
+	for i := range companies {
+		if err := db.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "name"}},
+			DoUpdates: clause.Assignments(map[string]any{"is_approved": true}),
+		}).Create(&companies[i]).Error; err != nil {
+			return fmt.Errorf("seed company %s: %w", companies[i].Name, err)
+		}
+	}
+	return nil
+}
+
+func seedProfessorAssignment(db *gorm.DB) error {
+	var student, professor model.User
+	if err := db.Where("email = ?", "student@demo.local").First(&student).Error; err != nil {
+		return fmt.Errorf("find demo student for assignment: %w", err)
+	}
+	if err := db.Where("email = ?", "professor@demo.local").First(&professor).Error; err != nil {
+		return fmt.Errorf("find demo professor for assignment: %w", err)
+	}
+
+	assignment := model.ProfessorAssignment{
+		StudentID: student.ID, ProfessorID: professor.ID, AssignedAt: time.Now(),
+	}
+	if err := db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "student_id"}},
+		DoUpdates: clause.Assignments(map[string]any{"professor_id": professor.ID}),
+	}).Create(&assignment).Error; err != nil {
+		return fmt.Errorf("seed professor assignment: %w", err)
+	}
 	return nil
 }
 

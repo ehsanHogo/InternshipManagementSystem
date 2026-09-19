@@ -1,0 +1,43 @@
+<div class="shell">
+  <header class="topbar">
+    <a class="brand" routerLink="/dashboard" aria-label="سامانه مدیریت کارآموزی">
+      <i class="pi pi-graduation-cap" aria-hidden="true"></i>
+      <span>سامانه مدیریت کارآموزی دانشجویان</span>
+    </a>
+
+    @if (user(); as currentUser) {
+      <div class="user-actions">
+        <div class="identity">
+          <strong>{{ currentUser.fullName }}</strong>
+          <p-tag [value]="roleLabel(currentUser.role)" severity="info" />
+        </div>
+        <p-button
+          label="خروج"
+          icon="pi pi-sign-out"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="logout()"
+        />
+      </div>
+    }
+  </header>
+
+  <div class="shell-body">
+    <nav class="navigation" aria-label="منوی اصلی">
+      <a routerLink="/dashboard" routerLinkActive="active">
+        <i class="pi pi-home" aria-hidden="true"></i>
+        داشبورد
+      </a>
+      @if (user()?.role === 'STUDENT') {
+        <a routerLink="/student/application" routerLinkActive="active">
+          <i class="pi pi-file-edit" aria-hidden="true"></i>
+          درخواست کارآموزی
+        </a>
+      }
+    </nav>
+
+    <main class="page-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
