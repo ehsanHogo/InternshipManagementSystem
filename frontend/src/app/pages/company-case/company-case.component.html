@@ -32,7 +32,7 @@
       <div class="detail"><span>شهر</span><strong>{{ item.selectedPreference?.city ?? '—' }}</strong></div>
       <div class="detail"><span>زمینه فعالیت</span><strong>{{ item.selectedPreference?.workField ?? '—' }}</strong></div>
       <div class="detail"><span>شماره نامه معرفی</span><strong>{{ item.letterNumber ?? '—' }}</strong></div>
-      <div class="detail"><span>تاریخ نامه</span><strong>{{ item.letterDate | date: 'yyyy/MM/dd' }}</strong></div>
+      <div class="detail"><span>تاریخ نامه</span><strong>{{ item.letterDate | jalaliDate }}</strong></div>
     </div>
   </p-card>
 
@@ -45,7 +45,7 @@
         </label>
         <label class="field">
           <span>تاریخ شروع <b>*</b></span>
-          <input pInputText type="date" formControlName="startDate" dir="ltr" />
+          <app-jalali-date-picker formControlName="startDate" />
         </label>
         <label class="field">
           <span>تلفن محل کارآموزی <b>*</b></span>
@@ -64,7 +64,7 @@
     <p-card header="اطلاعات تأییدشده محل کارآموزی">
       <div class="detail-grid">
         <div class="detail"><span>موضوع کارآموزی</span><strong>{{ item.internshipSubject ?? '—' }}</strong></div>
-        <div class="detail"><span>تاریخ شروع</span><strong>{{ item.startDate | date: 'yyyy/MM/dd' }}</strong></div>
+        <div class="detail"><span>تاریخ شروع</span><strong>{{ item.startDate | jalaliDate }}</strong></div>
         <div class="detail"><span>آدرس محل کارآموزی</span><strong>{{ item.workplaceAddress ?? '—' }}</strong></div>
         <div class="detail"><span>تلفن محل کارآموزی</span><strong dir="ltr">{{ item.workplacePhone ?? '—' }}</strong></div>
       </div>

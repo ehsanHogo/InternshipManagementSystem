@@ -190,5 +190,9 @@ func caseIDFromContext(ctx *gin.Context) (uint, bool) {
 }
 
 func parseDate(value string) (time.Time, error) {
-	return time.Parse("2006-01-02", strings.TrimSpace(value))
+	date, err := time.ParseInLocation("2006-01-02", strings.TrimSpace(value), time.UTC)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return date.UTC(), nil
 }

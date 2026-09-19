@@ -62,7 +62,7 @@
         </label>
         <label class="field">
           <span>تاریخ نامه <b>*</b></span>
-          <input pInputText type="date" formControlName="letterDate" dir="ltr" />
+          <app-jalali-date-picker formControlName="letterDate" />
         </label>
         <label class="field full-width">
           <span>سرپرست شرکت <b>*</b></span>
@@ -79,7 +79,7 @@
     <p-card header="نامه معرفی و سرپرست شرکت">
       <div class="detail-grid">
         <div class="detail"><span>شماره نامه</span><strong>{{ item.letterNumber }}</strong></div>
-        <div class="detail"><span>تاریخ نامه</span><strong>{{ item.letterDate | date: 'yyyy/MM/dd' }}</strong></div>
+        <div class="detail"><span>تاریخ نامه</span><strong>{{ item.letterDate | jalaliDate }}</strong></div>
         <div class="detail"><span>سرپرست شرکت</span><strong>{{ item.companySupervisor?.fullName ?? '—' }}</strong></div>
         <div class="detail"><span>محل انتخاب‌شده</span><strong>{{ item.selectedPreference ? preferenceName(item.selectedPreference) : '—' }}</strong></div>
       </div>
@@ -90,10 +90,10 @@
     <p-card header="اطلاعات تأییدشده توسط شرکت">
       <div class="detail-grid">
         <div class="detail"><span>موضوع کارآموزی</span><strong>{{ item.internshipSubject }}</strong></div>
-        <div class="detail"><span>تاریخ شروع</span><strong>{{ item.startDate | date: 'yyyy/MM/dd' }}</strong></div>
+        <div class="detail"><span>تاریخ شروع</span><strong>{{ item.startDate | jalaliDate }}</strong></div>
         <div class="detail"><span>آدرس محل کارآموزی</span><strong>{{ item.workplaceAddress }}</strong></div>
         <div class="detail"><span>تلفن محل کارآموزی</span><strong dir="ltr">{{ item.workplacePhone }}</strong></div>
-        <div class="detail"><span>زمان تأیید شرکت</span><strong>{{ item.companyConfirmedAt | date: 'yyyy/MM/dd HH:mm' }}</strong></div>
+        <div class="detail"><span>زمان تأیید شرکت</span><strong>{{ item.companyConfirmedAt | jalaliDate: true }}</strong></div>
       </div>
       @if (item.status === 'COMPANY_APPROVED') {
         <div class="card-actions">

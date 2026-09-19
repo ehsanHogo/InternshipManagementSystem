@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -15,10 +14,11 @@ import {
   internshipStatusLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
+import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 
 @Component({
   selector: 'app-university-applications',
-  imports: [DatePipe, FormsModule, RouterLink, ButtonModule, SelectModule, TableModule, TagModule],
+  imports: [JalaliDatePipe, FormsModule, RouterLink, ButtonModule, SelectModule, TableModule, TagModule],
   templateUrl: './university-applications.component.html',
   styleUrl: '../workflow-page.scss'
 })

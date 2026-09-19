@@ -41,7 +41,7 @@
         <td>{{ item.professor.fullName }}</td>
         <td>{{ placementName(item) }}</td>
         <td><p-tag [value]="statusLabel(item.status)" severity="info" /></td>
-        <td>{{ item.submittedAt ? (item.submittedAt | date: 'yyyy/MM/dd') : '—' }}</td>
+        <td>{{ item.submittedAt | jalaliDate }}</td>
         <td>
           <p-button label="بررسی" icon="pi pi-eye" [text]="true" [routerLink]="['/university/applications', item.id]" />
         </td>

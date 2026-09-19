@@ -29,7 +29,7 @@
         <td>{{ item.student.major ?? '—' }}</td>
         <td>{{ placementName(item) }}</td>
         <td>{{ item.letterNumber ?? '—' }}</td>
-        <td>{{ item.letterDate ? (item.letterDate | date: 'yyyy/MM/dd') : '—' }}</td>
+        <td>{{ item.letterDate | jalaliDate }}</td>
         <td><p-tag [value]="statusLabel(item.status)" severity="info" /></td>
         <td><p-button label="مشاهده" icon="pi pi-eye" [text]="true" [routerLink]="['/company/internships', item.id]" /></td>
       </tr>

@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -20,11 +19,14 @@ import {
   internshipStatusLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
+import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
+import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 
 @Component({
   selector: 'app-university-case',
   imports: [
-    DatePipe,
+    JalaliDatePipe,
+    JalaliDatePickerComponent,
     ReactiveFormsModule,
     RouterLink,
     ButtonModule,

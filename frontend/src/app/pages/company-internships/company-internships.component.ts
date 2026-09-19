@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
@@ -8,10 +7,11 @@ import { TagModule } from 'primeng/tag';
 
 import { InternshipCase, InternshipCaseStatus, internshipStatusLabels } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
+import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 
 @Component({
   selector: 'app-company-internships',
-  imports: [DatePipe, RouterLink, ButtonModule, TableModule, TagModule],
+  imports: [JalaliDatePipe, RouterLink, ButtonModule, TableModule, TagModule],
   templateUrl: './company-internships.component.html',
   styleUrl: '../workflow-page.scss'
 })
