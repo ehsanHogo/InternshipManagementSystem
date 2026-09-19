@@ -64,6 +64,9 @@ type internshipCaseResponse struct {
 	WeeklyReportCount          int                            `json:"weeklyReportCount"`
 	ConfirmedReportCount       int                            `json:"confirmedReportCount"`
 	CanSubmitCompanyEvaluation bool                           `json:"canSubmitCompanyEvaluation"`
+	FinalResult                *model.ProfessorFinalResult    `json:"finalResult,omitempty"`
+	ProfessorComment           *string                        `json:"professorComment,omitempty"`
+	CompletedAt                *time.Time                     `json:"completedAt,omitempty"`
 }
 
 type fileMetadataResponse struct {
@@ -244,11 +247,13 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 	case errors.Is(err, service.ErrAssignmentNotFound), errors.Is(err, service.ErrInvalidApplication),
 		errors.Is(err, service.ErrInvalidPreference), errors.Is(err, service.ErrInvalidCaseStatus),
 		errors.Is(err, service.ErrCompanySupervisor), errors.Is(err, service.ErrInvalidWeeklyReport),
-		errors.Is(err, service.ErrInvalidEvaluation):
+		errors.Is(err, service.ErrInvalidEvaluation), errors.Is(err, service.ErrInvalidProfessorResult):
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit), errors.Is(err, service.ErrDuplicatePriority),
 		errors.Is(err, service.ErrDuplicateWeeklyReport), errors.Is(err, service.ErrWeeklyReportConfirmed),
-		errors.Is(err, service.ErrDuplicateEvaluation), errors.Is(err, service.ErrWeeklyReportsIncomplete):
+		errors.Is(err, service.ErrDuplicateEvaluation), errors.Is(err, service.ErrWeeklyReportsIncomplete),
+		errors.Is(err, service.ErrProfessorCaseNotActive), errors.Is(err, service.ErrProfessorWeeklyReportsIncomplete),
+		errors.Is(err, service.ErrProfessorCompanyEvaluationRequired), errors.Is(err, service.ErrProfessorFinalReportRequired):
 		ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 	case errors.Is(err, service.ErrInvalidTransition):
 		ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
@@ -296,6 +301,8 @@ func caseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 		WorkplaceAddress: internshipCase.WorkplaceAddress, WorkplacePhone: internshipCase.WorkplacePhone,
 		CompanyConfirmedAt:   internshipCase.CompanyConfirmedAt,
 		UniversityApprovedAt: internshipCase.UniversityApprovedAt, ActivatedAt: internshipCase.ActivatedAt,
+		FinalResult: internshipCase.FinalResult, ProfessorComment: internshipCase.ProfessorComment,
+		CompletedAt: internshipCase.CompletedAt,
 	}
 	if internshipCase.SelectedPreference != nil {
 		selected := preferenceResponse(*internshipCase.SelectedPreference)

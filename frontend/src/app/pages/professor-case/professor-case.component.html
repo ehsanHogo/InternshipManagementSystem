@@ -1,0 +1,154 @@
+<p-confirmDialog [style]="{ width: 'min(92vw, 34rem)' }" />
+
+@if (loading()) {
+  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده...</span></div>
+} @else if (internshipCase(); as item) {
+  <section class="page-heading">
+    <div>
+      <span class="eyebrow">پرونده کارآموزی شماره {{ item.caseId }}</span>
+      <h1>بررسی پرونده کارآموزی</h1>
+      <p>{{ item.student.fullName }} · {{ item.student.studentNumber ?? '—' }}</p>
+    </div>
+    <div class="heading-actions">
+      <p-tag [value]="statusLabel(item)" [severity]="item.internship.status === 'COMPLETED' ? 'success' : 'info'" />
+      <p-button label="بازگشت" icon="pi pi-arrow-right" severity="secondary" [text]="true" routerLink="/professor/internships" />
+    </div>
+  </section>
+
+  @if (item.internship.status === 'COMPLETED') {
+    <div class="submit-panel">
+      <div>
+        <strong>نتیجه نهایی: {{ resultLabel(item.finalResult) }}</strong>
+        <p>این پرونده تکمیل شده و نتیجه نهایی قابل ویرایش نیست.</p>
+      </div>
+      <p-tag value="تکمیل شده" severity="success" />
+    </div>
+  }
+
+  <p-card header="اطلاعات دانشجو">
+    <div class="detail-grid">
+      <div class="detail"><span>نام و نام خانوادگی</span><strong>{{ item.student.fullName }}</strong></div>
+      <div class="detail"><span>شماره دانشجویی</span><strong>{{ item.student.studentNumber ?? '—' }}</strong></div>
+      <div class="detail"><span>رشته</span><strong>{{ item.student.major ?? '—' }}</strong></div>
+      <div class="detail"><span>تعداد واحد گذرانده</span><strong>{{ item.student.passedCredits ?? '—' }}</strong></div>
+      <div class="detail"><span>شماره موبایل</span><strong dir="ltr">{{ item.student.mobile ?? '—' }}</strong></div>
+    </div>
+  </p-card>
+
+  <p-card header="اطلاعات کارآموزی">
+    <div class="detail-grid">
+      <div class="detail"><span>شرکت</span><strong>{{ item.internship.company || '—' }}</strong></div>
+      <div class="detail"><span>موضوع کارآموزی</span><strong>{{ item.internship.internshipSubject ?? '—' }}</strong></div>
+      <div class="detail"><span>تاریخ شروع</span><strong>{{ item.internship.startDate | jalaliDate }}</strong></div>
+      <div class="detail"><span>سرپرست شرکت</span><strong>{{ item.internship.companySupervisor?.fullName ?? '—' }}</strong></div>
+      <div class="detail"><span>تلفن محل کارآموزی</span><strong dir="ltr">{{ item.internship.workplacePhone ?? '—' }}</strong></div>
+      <div class="detail full-width"><span>آدرس محل کارآموزی</span><strong>{{ item.internship.workplaceAddress ?? '—' }}</strong></div>
+    </div>
+  </p-card>
+
+  <p-card header="گزارش‌های هفتگی">
+    @if (item.weeklyReports.length === 0) {
+      <p class="muted">هنوز گزارش هفتگی ثبت نشده است.</p>
+    } @else {
+      <p-table [value]="item.weeklyReports" responsiveLayout="scroll">
+        <ng-template #header>
+          <tr>
+            <th>هفته</th>
+            <th>بازه زمانی</th>
+            <th>شرح فعالیت‌ها</th>
+            <th>وضعیت تأیید</th>
+            <th>نظر سرپرست شرکت</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-report>
+          <tr>
+            <td>هفته {{ report.weekNumber }}</td>
+            <td>{{ report.startDate | jalaliDate }} تا {{ report.endDate | jalaliDate }}</td>
+            <td style="white-space: pre-wrap; min-width: 16rem">{{ report.activityDescription }}</td>
+            <td><p-tag [value]="report.isConfirmed ? 'تأیید شده' : 'در انتظار تأیید'" [severity]="report.isConfirmed ? 'success' : 'warn'" /></td>
+            <td>{{ report.supervisorComment || '—' }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </p-card>
+
+  <p-card header="ارزیابی سرپرست شرکت">
+    @if (item.companyEvaluation; as evaluation) {
+      <div class="detail-grid">
+        @for (criterion of criteria; track criterion.key) {
+          <div class="detail"><span>{{ criterion.label }}</span><strong>{{ ratingLabel(evaluation, criterion.key) }}</strong></div>
+        }
+        <div class="detail"><span>تعداد روزهای مرخصی</span><strong>{{ evaluation.leaveDays }}</strong></div>
+        <div class="detail"><span>تعداد روزهای غیبت</span><strong>{{ evaluation.absenceDays }}</strong></div>
+        <div class="detail"><span>نام سرپرست شرکت</span><strong>{{ evaluation.companySupervisor?.fullName ?? '—' }}</strong></div>
+        <div class="detail"><span>تاریخ ثبت</span><strong>{{ evaluation.submittedAt | jalaliDate }}</strong></div>
+        <div class="detail full-width"><span>پیشنهادها و توضیحات</span><strong>{{ evaluation.suggestions || '—' }}</strong></div>
+      </div>
+    } @else {
+      <p class="muted">ارزیابی نهایی سرپرست شرکت هنوز ثبت نشده است.</p>
+    }
+  </p-card>
+
+  <p-card header="گزارش نهایی کارآموزی">
+    @if (item.finalReport; as file) {
+      <div class="detail-grid">
+        <div class="detail"><span>نام فایل</span><strong>{{ file.originalName }}</strong></div>
+        <div class="detail"><span>تاریخ بارگذاری</span><strong>{{ file.uploadedAt | jalaliDate }}</strong></div>
+      </div>
+      <div class="card-actions">
+        <p-button label="دانلود گزارش" icon="pi pi-download" (onClick)="downloadFinalReport()" />
+      </div>
+    } @else {
+      <p class="muted">گزارش نهایی هنوز توسط دانشجو بارگذاری نشده است.</p>
+    }
+  </p-card>
+
+  <p-card header="آمادگی ارزیابی نهایی">
+    <div class="detail-grid">
+      <div class="detail"><span>گزارش‌های هفتگی</span><strong>{{ item.weeklyReportCount }} از ۸</strong></div>
+      <div class="detail"><span>گزارش‌های تأییدشده</span><strong>{{ item.confirmedWeeklyReportCount }} از ۸</strong></div>
+      <div class="detail"><span>ارزیابی شرکت</span><strong>{{ item.hasCompanyEvaluation ? 'ثبت شده' : 'ثبت نشده' }}</strong></div>
+      <div class="detail"><span>گزارش نهایی</span><strong>{{ item.hasFinalReport ? 'ثبت شده' : 'ثبت نشده' }}</strong></div>
+    </div>
+    @if (!item.canProfessorComplete && item.internship.status !== 'COMPLETED') {
+      <div class="notice">ارزیابی نهایی پس از تکمیل تمام مدارک فعال خواهد شد.</div>
+    }
+  </p-card>
+
+  <p-card header="ارزیابی استاد">
+    @if (item.internship.status === 'COMPLETED') {
+      <div class="detail-grid">
+        <div class="detail"><span>نتیجه نهایی</span><strong>{{ resultLabel(item.finalResult) }}</strong></div>
+        <div class="detail"><span>تاریخ تکمیل</span><strong>{{ item.completedAt | jalaliDate }}</strong></div>
+        <div class="detail full-width"><span>نظر استاد</span><strong>{{ item.professorComment || '—' }}</strong></div>
+      </div>
+    } @else {
+      <form class="form-grid" [formGroup]="evaluationForm">
+        <label class="field">
+          <span>ارزیابی نهایی <b>*</b></span>
+          <p-select
+            formControlName="result"
+            [options]="resultOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="انتخاب نتیجه"
+          />
+        </label>
+        <label class="field full-width">
+          <span>نظر استاد</span>
+          <textarea pTextarea formControlName="comment" rows="5"></textarea>
+        </label>
+      </form>
+      <div class="card-actions">
+        <p-button
+          label="ثبت ارزیابی نهایی"
+          icon="pi pi-check-circle"
+          [loading]="submitting()"
+          [disabled]="!item.canProfessorComplete"
+          (onClick)="confirmCompletion()"
+        />
+      </div>
+    }
+  </p-card>
+}

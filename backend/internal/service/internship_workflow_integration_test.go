@@ -281,6 +281,185 @@ func TestWorkflow(t *testing.T) {
 			t.Fatalf("inactive report error = %v", err)
 		}
 	})
+
+	t.Run("professor final review validates readiness ownership and qualitative results", func(t *testing.T) {
+		otherProfessor := createTestUser(t, tx, suffix, "other-professor", model.RoleProfessor)
+
+		fewerReports := createProfessorReviewCase(t, tx, suffix+10, professor.ID, supervisor.ID, 7, 7, false, false)
+		if _, err := workflow.CompleteProfessorCase(professor.ID, fewerReports.ID, service.ProfessorCompletionInput{
+			Result: model.ProfessorFinalResultExcellent,
+		}); !errors.Is(err, service.ErrProfessorWeeklyReportsIncomplete) {
+			t.Fatalf("completion with fewer reports error = %v", err)
+		}
+
+		unconfirmed := createProfessorReviewCase(t, tx, suffix+20, professor.ID, supervisor.ID, 8, 7, false, false)
+		if _, err := workflow.CompleteProfessorCase(professor.ID, unconfirmed.ID, service.ProfessorCompletionInput{
+			Result: model.ProfessorFinalResultGood,
+		}); !errors.Is(err, service.ErrProfessorWeeklyReportsIncomplete) {
+			t.Fatalf("completion with an unconfirmed report error = %v", err)
+		}
+
+		withoutEvaluation := createProfessorReviewCase(t, tx, suffix+30, professor.ID, supervisor.ID, 8, 8, false, true)
+		if _, err := workflow.CompleteProfessorCase(professor.ID, withoutEvaluation.ID, service.ProfessorCompletionInput{
+			Result: model.ProfessorFinalResultFailed,
+		}); !errors.Is(err, service.ErrProfessorCompanyEvaluationRequired) {
+			t.Fatalf("completion without evaluation error = %v", err)
+		}
+
+		withoutFinalReport := createProfessorReviewCase(t, tx, suffix+40, professor.ID, supervisor.ID, 8, 8, true, false)
+		if _, err := workflow.CompleteProfessorCase(professor.ID, withoutFinalReport.ID, service.ProfessorCompletionInput{
+			Result: model.ProfessorFinalResultExcellent,
+		}); !errors.Is(err, service.ErrProfessorFinalReportRequired) {
+			t.Fatalf("completion without final report error = %v", err)
+		}
+
+		for _, invalid := range []model.ProfessorFinalResult{"18", "20", "AVERAGE", "WEAK", ""} {
+			if _, err := workflow.CompleteProfessorCase(professor.ID, withoutFinalReport.ID, service.ProfessorCompletionInput{
+				Result: invalid,
+			}); !errors.Is(err, service.ErrInvalidProfessorResult) {
+				t.Fatalf("invalid result %q error = %v", invalid, err)
+			}
+		}
+
+		for index, result := range []model.ProfessorFinalResult{
+			model.ProfessorFinalResultExcellent,
+			model.ProfessorFinalResultGood,
+			model.ProfessorFinalResultFailed,
+		} {
+			readyCase := createProfessorReviewCase(t, tx, suffix+100+int64(index), professor.ID, supervisor.ID, 8, 8, true, true)
+			comment := fmt.Sprintf("professor comment %d", index)
+			if _, err := workflow.GetProfessorCase(otherProfessor.ID, readyCase.ID); !errors.Is(err, service.ErrCaseAccessDenied) {
+				t.Fatalf("other professor access error = %v", err)
+			}
+			completed, err := workflow.CompleteProfessorCase(professor.ID, readyCase.ID, service.ProfessorCompletionInput{
+				Result: result, Comment: &comment,
+			})
+			if err != nil {
+				t.Fatalf("complete case with %s: %v", result, err)
+			}
+			if completed.Status != model.InternshipCaseStatusCompleted || completed.FinalResult == nil ||
+				*completed.FinalResult != result || completed.ProfessorComment == nil || *completed.ProfessorComment != comment ||
+				completed.CompletedAt == nil {
+				t.Fatalf("completion did not persist expected fields: %+v", completed)
+			}
+			if len(completed.WeeklyReports) != 8 || completed.CompanyEvaluation == nil || completed.FinalReportFile == nil {
+				t.Fatalf("completed professor detail is missing review data: %+v", completed)
+			}
+			if _, err := workflow.GetAccessibleFile(professor.ID, model.RoleProfessor, completed.FinalReportFile.ID); err != nil {
+				t.Fatalf("professor final report access: %v", err)
+			}
+			studentView, err := workflow.GetCurrentCase(readyCase.StudentID)
+			if err != nil || studentView.FinalResult == nil || *studentView.FinalResult != result {
+				t.Fatalf("student completed result: case=%+v err=%v", studentView, err)
+			}
+			if _, err := workflow.CompleteProfessorCase(professor.ID, readyCase.ID, service.ProfessorCompletionInput{
+				Result: result,
+			}); !errors.Is(err, service.ErrProfessorCaseNotActive) {
+				t.Fatalf("duplicate completion error = %v", err)
+			}
+
+			if index == 0 {
+				reports := completed.WeeklyReports
+				if len(reports) != 8 {
+					t.Fatalf("load completed reports: count=%d", len(reports))
+				}
+				if _, err := workflow.UpdateWeeklyReport(readyCase.StudentID, reports[0].ID, service.WeeklyReportInput{
+					WeekNumber: 1, StartDate: testDate(t, "2026-07-01"), EndDate: testDate(t, "2026-07-07"), ActivityDescription: "changed",
+				}); !errors.Is(err, service.ErrInvalidCaseStatus) {
+					t.Fatalf("student mutation after completion error = %v", err)
+				}
+				if _, err := workflow.ConfirmWeeklyReport(supervisor.ID, readyCase.ID, reports[0].ID, nil); !errors.Is(err, service.ErrInvalidCaseStatus) {
+					t.Fatalf("company report mutation after completion error = %v", err)
+				}
+				replacement := &model.File{
+					OriginalName: "replacement.pdf", StoredName: fmt.Sprintf("replacement-%d.pdf", suffix), Path: "/tmp/replacement.pdf",
+					MimeType: "application/pdf", SizeBytes: 100, UploadedBy: readyCase.StudentID, UploadedAt: time.Now(),
+				}
+				if _, _, err := workflow.AttachFinalReport(readyCase.StudentID, replacement); !errors.Is(err, service.ErrInvalidCaseStatus) {
+					t.Fatalf("student final report mutation after completion error = %v", err)
+				}
+				if _, err := workflow.CreateCompanyEvaluation(supervisor.ID, readyCase.ID, service.CompanyEvaluationInput{
+					AttendanceRating: model.EvaluationRatingGood, ParticipationRating: model.EvaluationRatingGood,
+					LearningRating: model.EvaluationRatingGood, InterestRating: model.EvaluationRatingGood,
+					PersistenceRating: model.EvaluationRatingGood, SuggestionRating: model.EvaluationRatingGood,
+					ResourceUsageRating: model.EvaluationRatingGood, ReportQualityRating: model.EvaluationRatingGood,
+					ProjectPerformanceRating: model.EvaluationRatingGood,
+				}); !errors.Is(err, service.ErrInvalidCaseStatus) {
+					t.Fatalf("company evaluation mutation after completion error = %v", err)
+				}
+			}
+		}
+
+		cases, err := workflow.ListProfessorCases(professor.ID)
+		if err != nil || len(cases) == 0 {
+			t.Fatalf("list professor cases: count=%d err=%v", len(cases), err)
+		}
+		otherCases, err := workflow.ListProfessorCases(otherProfessor.ID)
+		if err != nil || len(otherCases) != 0 {
+			t.Fatalf("other professor list: count=%d err=%v", len(otherCases), err)
+		}
+	})
+}
+
+func createProfessorReviewCase(
+	t *testing.T,
+	db *gorm.DB,
+	suffix int64,
+	professorID, supervisorID uint,
+	reportCount, confirmedCount int,
+	withEvaluation, withFinalReport bool,
+) model.InternshipCase {
+	t.Helper()
+	student := createTestStudent(t, db, suffix, "professor-review")
+	internshipCase := model.InternshipCase{
+		StudentID: student.ID, ProfessorID: professorID, CompanySupervisorID: &supervisorID,
+		Status: model.InternshipCaseStatusActive,
+	}
+	if err := db.Create(&internshipCase).Error; err != nil {
+		t.Fatalf("create professor review case: %v", err)
+	}
+	for week := 1; week <= reportCount; week++ {
+		report := model.WeeklyReport{
+			InternshipCaseID: internshipCase.ID, WeekNumber: week,
+			StartDate: testDate(t, "2026-07-01"), EndDate: testDate(t, "2026-07-07"),
+			ActivityDescription: fmt.Sprintf("week %d", week), SubmittedAt: time.Now(), IsConfirmed: week <= confirmedCount,
+		}
+		if report.IsConfirmed {
+			now := time.Now()
+			report.ConfirmedAt = &now
+		}
+		if err := db.Create(&report).Error; err != nil {
+			t.Fatalf("create professor review report %d: %v", week, err)
+		}
+	}
+	if withEvaluation {
+		evaluation := model.CompanyEvaluation{
+			InternshipCaseID: internshipCase.ID, CompanySupervisorID: supervisorID,
+			AttendanceRating: model.EvaluationRatingGood, ParticipationRating: model.EvaluationRatingGood,
+			LearningRating: model.EvaluationRatingGood, InterestRating: model.EvaluationRatingGood,
+			PersistenceRating: model.EvaluationRatingGood, SuggestionRating: model.EvaluationRatingGood,
+			ResourceUsageRating: model.EvaluationRatingGood, ReportQualityRating: model.EvaluationRatingGood,
+			ProjectPerformanceRating: model.EvaluationRatingGood, SubmittedAt: time.Now(),
+		}
+		if err := db.Create(&evaluation).Error; err != nil {
+			t.Fatalf("create professor review evaluation: %v", err)
+		}
+	}
+	if withFinalReport {
+		file := model.File{
+			OriginalName: "final.pdf", StoredName: fmt.Sprintf("professor-final-%d-%d.pdf", suffix, internshipCase.ID),
+			Path: "/tmp/final.pdf", MimeType: "application/pdf", SizeBytes: 100,
+			UploadedBy: student.ID, UploadedAt: time.Now(),
+		}
+		if err := db.Create(&file).Error; err != nil {
+			t.Fatalf("create professor review file: %v", err)
+		}
+		if err := db.Model(&internshipCase).Update("final_report_file_id", file.ID).Error; err != nil {
+			t.Fatalf("attach professor review file: %v", err)
+		}
+		internshipCase.FinalReportFileID = &file.ID
+	}
+	return internshipCase
 }
 
 func createTestUser(t *testing.T, db *gorm.DB, suffix int64, label string, role model.Role) model.User {

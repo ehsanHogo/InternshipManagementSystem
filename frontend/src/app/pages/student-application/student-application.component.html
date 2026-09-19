@@ -241,4 +241,14 @@
       />
     </div>
   }
+
+  @if (currentCase.status === 'COMPLETED') {
+    <p-card header="نتیجه نهایی کارآموزی">
+      <div class="detail-grid">
+        <div class="detail"><span>وضعیت</span><strong>تکمیل شده</strong></div>
+        <div class="detail"><span>نتیجه نهایی</span><strong>{{ finalResultLabel(currentCase) }}</strong></div>
+        <div class="detail full-width"><span>نظر استاد</span><strong>{{ currentCase.professorComment || '—' }}</strong></div>
+      </div>
+    </p-card>
+  }
 }

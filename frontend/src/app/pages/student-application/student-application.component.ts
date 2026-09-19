@@ -18,7 +18,8 @@ import {
   InternshipCaseStatus,
   InternshipPreference,
   PreferencePayload,
-  internshipStatusLabels
+  internshipStatusLabels,
+  professorFinalResultLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 
@@ -94,6 +95,10 @@ export class StudentApplicationComponent {
     if (status === 'ACTIVE') return 'success';
     if (status === 'COMPLETED') return 'contrast';
     return 'secondary';
+  }
+
+  finalResultLabel(internshipCase: InternshipCase): string {
+    return internshipCase.finalResult ? professorFinalResultLabels[internshipCase.finalResult] : '—';
   }
 
   priorityLabel(priority: number): string {

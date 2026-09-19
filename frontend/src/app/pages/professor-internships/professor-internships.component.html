@@ -1,0 +1,55 @@
+<section class="page-heading">
+  <div>
+    <span class="eyebrow">استاد راهنما</span>
+    <h1>دانشجویان کارآموز</h1>
+    <p>پرونده‌های فعال و تکمیل‌شده‌ای که به شما اختصاص یافته‌اند.</p>
+  </div>
+</section>
+
+@if (loading()) {
+  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده‌ها...</span></div>
+} @else {
+  <p-table [value]="cases()" [rowHover]="true" responsiveLayout="scroll">
+    <ng-template #header>
+      <tr>
+        <th>نام دانشجو</th>
+        <th>شماره دانشجویی</th>
+        <th>رشته</th>
+        <th>شرکت</th>
+        <th>موضوع کارآموزی</th>
+        <th>وضعیت مدارک</th>
+        <th>وضعیت پرونده</th>
+        <th>نتیجه نهایی</th>
+        <th>عملیات</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-item>
+      <tr>
+        <td>{{ item.student.fullName }}</td>
+        <td>{{ item.student.studentNumber ?? '—' }}</td>
+        <td>{{ item.student.major ?? '—' }}</td>
+        <td>{{ item.company || '—' }}</td>
+        <td>{{ item.internshipSubject ?? '—' }}</td>
+        <td>
+          <p-tag
+            [value]="readinessLabel(item)"
+            [severity]="item.status === 'COMPLETED' || item.canProfessorComplete ? 'success' : 'warn'"
+          />
+        </td>
+        <td><p-tag [value]="statusLabel(item.status)" [severity]="item.status === 'COMPLETED' ? 'success' : 'info'" /></td>
+        <td>{{ resultLabel(item) }}</td>
+        <td>
+          <p-button
+            label="مشاهده و ارزیابی"
+            icon="pi pi-eye"
+            [text]="true"
+            [routerLink]="['/professor/internships', item.caseId]"
+          />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr><td colspan="9" class="muted">پرونده‌ای به شما اختصاص نیافته است.</td></tr>
+    </ng-template>
+  </p-table>
+}

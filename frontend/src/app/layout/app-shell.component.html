@@ -54,6 +54,12 @@
           پرونده‌های کارآموزی
         </a>
       }
+      @if (user()?.role === 'PROFESSOR') {
+        <a routerLink="/professor/internships" routerLinkActive="active">
+          <i class="pi pi-users" aria-hidden="true"></i>
+          دانشجویان کارآموز
+        </a>
+      }
     </nav>
 
     <main class="page-content">

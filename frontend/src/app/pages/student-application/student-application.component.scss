@@ -95,10 +95,22 @@ p-card {
 }
 
 .application-grid,
-.editor-grid {
+.editor-grid,
+.detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.1rem;
+}
+
+.detail {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.85rem;
+  border-radius: 0.7rem;
+  background: #f8fafc;
+
+  span { color: #64748b; font-size: 0.82rem; }
+  strong { color: #1e293b; }
 }
 
 .field {
@@ -294,7 +306,8 @@ p-card {
 
 @media (max-width: 42rem) {
   .application-grid,
-  .editor-grid {
+  .editor-grid,
+  .detail-grid {
     grid-template-columns: 1fr;
   }
 

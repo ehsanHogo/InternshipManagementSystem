@@ -121,6 +121,25 @@
   strong { color: #1e293b; }
 }
 
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.detail {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.85rem;
+  border-radius: 0.7rem;
+  background: #f8fafc;
+
+  span { color: #64748b; font-size: 0.82rem; }
+  strong { color: #1e293b; }
+}
+
+.full-width { grid-column: 1 / -1; }
+
 @media (max-width: 42rem) {
   .welcome-icon {
     display: none;
@@ -134,5 +153,8 @@
     }
   }
 
-  .progress-grid { grid-template-columns: 1fr; }
+  .progress-grid,
+  .detail-grid { grid-template-columns: 1fr; }
+
+  .full-width { grid-column: auto; }
 }

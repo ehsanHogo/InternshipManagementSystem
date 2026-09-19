@@ -14,6 +14,9 @@ import {
   PreferencePayload,
   SendToCompanyPayload,
   FileMetadata,
+  ProfessorCaseDetail,
+  ProfessorCaseListItem,
+  ProfessorCompletionPayload,
   WeeklyReport,
   WeeklyReportPayload
 } from './internship.models';
@@ -130,5 +133,17 @@ export class InternshipService {
 
   createCompanyEvaluation(caseId: number, payload: CompanyEvaluationPayload): Observable<CompanyEvaluation> {
     return this.http.post<CompanyEvaluation>(`/api/company/internship-cases/${caseId}/evaluation`, payload);
+  }
+
+  listProfessorCases(): Observable<ProfessorCaseListItem[]> {
+    return this.http.get<ProfessorCaseListItem[]>('/api/professor/internship-cases');
+  }
+
+  getProfessorCase(id: number): Observable<ProfessorCaseDetail> {
+    return this.http.get<ProfessorCaseDetail>(`/api/professor/internship-cases/${id}`);
+  }
+
+  completeProfessorCase(id: number, payload: ProfessorCompletionPayload): Observable<ProfessorCaseDetail> {
+    return this.http.post<ProfessorCaseDetail>(`/api/professor/internship-cases/${id}/complete`, payload);
   }
 }

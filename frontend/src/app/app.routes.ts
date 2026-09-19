@@ -4,6 +4,7 @@ import {
   authGuard,
   companySupervisorGuard,
   guestGuard,
+  professorGuard,
   studentGuard,
   universitySupervisorGuard
 } from './auth/auth.guard';
@@ -62,6 +63,22 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/university-case/university-case.component').then(
             (module) => module.UniversityCaseComponent
+          )
+      },
+      {
+        path: 'professor/internships',
+        canActivate: [professorGuard],
+        loadComponent: () =>
+          import('./pages/professor-internships/professor-internships.component').then(
+            (module) => module.ProfessorInternshipsComponent
+          )
+      },
+      {
+        path: 'professor/internships/:id',
+        canActivate: [professorGuard],
+        loadComponent: () =>
+          import('./pages/professor-case/professor-case.component').then(
+            (module) => module.ProfessorCaseComponent
           )
       },
       {

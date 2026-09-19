@@ -19,6 +19,23 @@ const (
 	InternshipCaseStatusCompleted                 InternshipCaseStatus = "COMPLETED"
 )
 
+type ProfessorFinalResult string
+
+const (
+	ProfessorFinalResultExcellent ProfessorFinalResult = "EXCELLENT"
+	ProfessorFinalResultGood      ProfessorFinalResult = "GOOD"
+	ProfessorFinalResultFailed    ProfessorFinalResult = "FAILED"
+)
+
+func (result ProfessorFinalResult) Valid() bool {
+	switch result {
+	case ProfessorFinalResultExcellent, ProfessorFinalResultGood, ProfessorFinalResultFailed:
+		return true
+	default:
+		return false
+	}
+}
+
 type Company struct {
 	ID         uint      `gorm:"primaryKey" json:"id"`
 	Name       string    `gorm:"size:250;uniqueIndex;not null" json:"name"`
@@ -60,8 +77,8 @@ type InternshipCase struct {
 	WorkplaceAddress     *string `gorm:"size:1000"`
 	WorkplacePhone       *string `gorm:"size:50"`
 	FinalReportFileID    *uint
-	FinalGrade           *float64
-	ProfessorComment     *string `gorm:"size:2000"`
+	FinalResult          *ProfessorFinalResult `gorm:"type:varchar(16);check:final_result IS NULL OR final_result IN ('EXCELLENT','GOOD','FAILED')"`
+	ProfessorComment     *string               `gorm:"size:2000"`
 
 	Student            User                   `gorm:"foreignKey:StudentID"`
 	Professor          User                   `gorm:"foreignKey:ProfessorID"`

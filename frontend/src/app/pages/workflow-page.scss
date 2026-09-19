@@ -163,6 +163,21 @@ p-card {
   margin-top: 1.25rem;
 }
 
+.submit-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 1.15rem;
+  border: 1px solid #bbf7d0;
+  border-radius: 0.85rem;
+  background: #f0fdf4;
+
+  strong { color: #166534; }
+  p { margin: 0.35rem 0 0; color: #475569; }
+}
+
 .selected-place {
   color: #334155;
   font-weight: 600;
@@ -174,7 +189,8 @@ p-card {
 
 @media (max-width: 44rem) {
   .page-heading,
-  .filter-row {
+  .filter-row,
+  .submit-panel {
     align-items: stretch;
     flex-direction: column;
   }

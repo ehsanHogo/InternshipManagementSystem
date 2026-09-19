@@ -32,3 +32,9 @@ export const companySupervisorGuard: CanActivateFn = () => {
   const router = inject(Router);
   return auth.getCurrentUser()?.role === 'COMPANY_SUPERVISOR' ? true : router.createUrlTree(['/dashboard']);
 };
+
+export const professorGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return auth.getCurrentUser()?.role === 'PROFESSOR' ? true : router.createUrlTree(['/dashboard']);
+};

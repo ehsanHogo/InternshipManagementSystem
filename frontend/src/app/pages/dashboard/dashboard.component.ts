@@ -6,7 +6,12 @@ import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 
 import { AuthService } from '../../auth/auth.service';
-import { InternshipCase, InternshipCaseStatus, internshipStatusLabels } from '../../internship/internship.models';
+import {
+  InternshipCase,
+  InternshipCaseStatus,
+  internshipStatusLabels,
+  professorFinalResultLabels
+} from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 
 @Component({
@@ -43,5 +48,9 @@ export class DashboardComponent {
 
   statusLabel(status: InternshipCaseStatus | null): string {
     return status ? internshipStatusLabels[status] : 'درخواستی ثبت نشده است';
+  }
+
+  finalResultLabel(internshipCase: InternshipCase): string {
+    return internshipCase.finalResult ? professorFinalResultLabels[internshipCase.finalResult] : '—';
   }
 }

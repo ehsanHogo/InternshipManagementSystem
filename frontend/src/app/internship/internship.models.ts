@@ -61,6 +61,9 @@ export interface InternshipCase {
   weeklyReportCount: number;
   confirmedReportCount: number;
   canSubmitCompanyEvaluation: boolean;
+  finalResult?: ProfessorFinalResult;
+  professorComment?: string;
+  completedAt?: string;
 }
 
 export interface FileMetadata {
@@ -121,6 +124,72 @@ export const evaluationRatingLabels: Record<EvaluationRating, string> = {
   WEAK: 'ضعیف',
   FAILED: 'مردود'
 };
+
+export type ProfessorFinalResult = 'EXCELLENT' | 'GOOD' | 'FAILED';
+
+export const professorFinalResultLabels: Record<ProfessorFinalResult, string> = {
+  EXCELLENT: 'عالی',
+  GOOD: 'خوب',
+  FAILED: 'مردود'
+};
+
+export interface ProfessorCaseListItem {
+  caseId: number;
+  student: User;
+  company: string;
+  internshipSubject?: string;
+  status: InternshipCaseStatus;
+  weeklyReportCount: number;
+  confirmedWeeklyReportCount: number;
+  hasCompanyEvaluation: boolean;
+  hasFinalReport: boolean;
+  canProfessorComplete: boolean;
+  finalResult?: ProfessorFinalResult;
+}
+
+export interface ProfessorStudentInformation {
+  fullName: string;
+  studentNumber?: string;
+  major?: string;
+  passedCredits: number | null;
+  mobile?: string;
+}
+
+export interface ProfessorInternshipInformation {
+  company: string;
+  internshipSubject?: string;
+  startDate?: string;
+  workplaceAddress?: string;
+  workplacePhone?: string;
+  companySupervisor?: User;
+  status: InternshipCaseStatus;
+}
+
+export interface ProfessorCompanyEvaluation extends CompanyEvaluation {
+  companySupervisor?: User;
+}
+
+export interface ProfessorCaseDetail {
+  caseId: number;
+  student: ProfessorStudentInformation;
+  internship: ProfessorInternshipInformation;
+  weeklyReports: WeeklyReport[];
+  companyEvaluation?: ProfessorCompanyEvaluation;
+  finalReport?: FileMetadata;
+  weeklyReportCount: number;
+  confirmedWeeklyReportCount: number;
+  hasCompanyEvaluation: boolean;
+  hasFinalReport: boolean;
+  canProfessorComplete: boolean;
+  finalResult?: ProfessorFinalResult;
+  professorComment?: string;
+  completedAt?: string;
+}
+
+export interface ProfessorCompletionPayload {
+  result: ProfessorFinalResult;
+  comment?: string;
+}
 
 export interface SendToCompanyPayload {
   preferenceId: number;

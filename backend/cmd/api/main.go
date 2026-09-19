@@ -96,6 +96,12 @@ func main() {
 	company.GET("/internship-cases/:id/evaluation", internshipHandler.GetCompanyEvaluation)
 	company.POST("/internship-cases/:id/evaluation", internshipHandler.CreateCompanyEvaluation)
 
+	professor := authenticated.Group("/professor")
+	professor.Use(appmiddleware.RequireRole(model.RoleProfessor))
+	professor.GET("/internship-cases", internshipHandler.ListProfessorCases)
+	professor.GET("/internship-cases/:id", internshipHandler.GetProfessorCase)
+	professor.POST("/internship-cases/:id/complete", internshipHandler.CompleteProfessorCase)
+
 	authenticated.GET("/files/:id/download", internshipHandler.DownloadFile)
 
 	server := &http.Server{
