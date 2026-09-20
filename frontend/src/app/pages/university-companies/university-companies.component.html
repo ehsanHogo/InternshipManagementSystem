@@ -16,7 +16,7 @@
   </p-table>
 }
 
-<p-dialog header="افزودن شرکت" [visible]="dialogVisible()" (visibleChange)="dialogVisible.set($event)" [modal]="true" [style]="{ width: 'min(92vw, 42rem)' }">
+<p-dialog header="افزودن شرکت" [visible]="dialogVisible()" (visibleChange)="dialogVisible.set($event)" [modal]="true" appendTo="body" [baseZIndex]="1200" [style]="{ width: 'min(92vw, 42rem)' }">
   <form class="form-grid" [formGroup]="form" (ngSubmit)="submit()">
     <label class="field full-width">نام شرکت<input pInputText formControlName="name" /></label>
     <label class="field">وب‌سایت<input pInputText dir="ltr" formControlName="website" /></label>

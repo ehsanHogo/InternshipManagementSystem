@@ -10,7 +10,7 @@
 
 .topbar {
   position: sticky;
-  z-index: 10;
+  z-index: var(--layer-navigation);
   top: 0;
   min-height: 4.75rem;
   display: flex;

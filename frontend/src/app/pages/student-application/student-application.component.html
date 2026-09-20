@@ -1,4 +1,4 @@
-<p-confirmDialog [style]="{ width: 'min(92vw, 30rem)' }" />
+<p-confirmDialog [baseZIndex]="1300" [style]="{ width: 'min(92vw, 30rem)' }" />
 
 <section class="page-heading">
   <div>
@@ -39,38 +39,33 @@
   }
 
   <p-card header="اطلاعات درخواست">
-    <form class="application-grid" [formGroup]="applicationForm">
-      <label class="field readonly-field">
-        <span>نام دانشجو</span>
-        <input pInputText [value]="currentCase.student.fullName" disabled />
-      </label>
-      <label class="field readonly-field">
-        <span>شماره دانشجویی</span>
-        <input pInputText [value]="currentCase.student.studentNumber ?? '—'" disabled />
-      </label>
-      <label class="field readonly-field">
-        <span>رشته</span>
-        <input pInputText [value]="currentCase.student.major ?? '—'" disabled />
-      </label>
-      <label class="field readonly-field">
-        <span>استاد</span>
-        <input pInputText [value]="currentCase.professor.fullName" disabled />
-      </label>
-      <label class="field">
-        <span>تعداد واحد گذرانده <b>*</b></span>
-        <p-inputnumber formControlName="passedCredits" [min]="0" [max]="300" [useGrouping]="false" />
-        @if (applicationForm.controls.passedCredits.touched && applicationForm.controls.passedCredits.invalid) {
-          <small>تعداد واحد گذرانده را وارد کنید.</small>
-        }
-      </label>
-      <label class="field">
-        <span>شماره موبایل <b>*</b></span>
-        <input pInputText formControlName="mobile" dir="ltr" placeholder="09123456789" />
-        @if (applicationForm.controls.mobile.touched && applicationForm.controls.mobile.invalid) {
-          <small>شماره موبایل را وارد کنید.</small>
-        }
-      </label>
-    </form>
+    @if (isDraft) {
+      <form class="application-grid" [formGroup]="applicationForm">
+        <label class="field readonly-field"><span>نام دانشجو</span><input pInputText [value]="currentCase.student.fullName" disabled /></label>
+        <label class="field readonly-field"><span>شماره دانشجویی</span><input pInputText [value]="currentCase.student.studentNumber ?? '—'" disabled /></label>
+        <label class="field readonly-field"><span>رشته</span><input pInputText [value]="currentCase.student.major ?? '—'" disabled /></label>
+        <label class="field readonly-field"><span>استاد</span><input pInputText [value]="currentCase.professor.fullName" disabled /></label>
+        <label class="field">
+          <span>تعداد واحد گذرانده <b>*</b></span>
+          <p-inputnumber formControlName="passedCredits" [min]="0" [max]="300" [useGrouping]="false" />
+          @if (applicationForm.controls.passedCredits.touched && applicationForm.controls.passedCredits.invalid) { <small>این فیلد الزامی است.</small> }
+        </label>
+        <label class="field">
+          <span>شماره موبایل <b>*</b></span>
+          <input pInputText formControlName="mobile" dir="ltr" placeholder="09123456789" />
+          @if (applicationForm.controls.mobile.touched && applicationForm.controls.mobile.invalid) { <small>این فیلد الزامی است.</small> }
+        </label>
+      </form>
+    } @else {
+      <div class="detail-grid">
+        <div class="detail"><span>نام دانشجو</span><strong>{{ currentCase.student.fullName }}</strong></div>
+        <div class="detail"><span>شماره دانشجویی</span><strong>{{ currentCase.student.studentNumber ?? '—' }}</strong></div>
+        <div class="detail"><span>رشته</span><strong>{{ currentCase.student.major ?? '—' }}</strong></div>
+        <div class="detail"><span>استاد</span><strong>{{ currentCase.professor.fullName }}</strong></div>
+        <div class="detail"><span>تعداد واحد گذرانده</span><strong>{{ currentCase.passedCredits ?? '—' }}</strong></div>
+        <div class="detail"><span>شماره موبایل</span><strong dir="ltr">{{ currentCase.mobile ?? '—' }}</strong></div>
+      </div>
+    }
     @if (isDraft) {
       <ng-template #footer>
         <div class="card-actions">

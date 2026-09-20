@@ -11,6 +11,7 @@ import { TextareaModule } from 'primeng/textarea';
 
 import { Company } from '../../internship/internship.models';
 import { UniversityManagementService } from '../../university-management/university-management.service';
+import { userErrorMessage } from '../../shared/http-error-message';
 
 @Component({
   selector: 'app-university-companies',
@@ -65,6 +66,6 @@ export class UniversityCompaniesComponent {
   }
 
   private showError(error: HttpErrorResponse, fallback: string): void {
-    this.messages.add({ severity: 'error', summary: 'خطا', detail: error.status === 0 ? 'ارتباط با سرور برقرار نشد.' : (error.error?.error || fallback) });
+    this.messages.add({ severity: 'error', summary: 'خطا', detail: userErrorMessage(error, fallback) });
   }
 }

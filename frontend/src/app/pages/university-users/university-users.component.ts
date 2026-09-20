@@ -13,6 +13,7 @@ import { TagModule } from 'primeng/tag';
 import { User } from '../../auth/auth.models';
 import { CreatedAccount, ImportResult, ImportRowResult } from '../../university-management/university-management.models';
 import { UniversityManagementService } from '../../university-management/university-management.service';
+import { userErrorMessage } from '../../shared/http-error-message';
 
 type ManagedKind = 'students' | 'professors';
 
@@ -148,7 +149,7 @@ export class UniversityUsersComponent {
   }
 
   private showError(error: HttpErrorResponse, fallback: string): void {
-    const detail = error.status === 0 ? 'ارتباط با سرور برقرار نشد.' : (error.error?.error || fallback);
+    const detail = userErrorMessage(error, fallback);
     this.messages.add({ severity: 'error', summary: 'خطا', detail });
   }
 }

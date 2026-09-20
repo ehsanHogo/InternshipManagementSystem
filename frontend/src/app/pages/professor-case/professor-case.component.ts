@@ -22,6 +22,7 @@ import {
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
+import { userErrorMessage } from '../../shared/http-error-message';
 
 type EvaluationField =
   | 'attendanceRating' | 'participationRating' | 'learningRating'
@@ -163,7 +164,7 @@ export class ProfessorCaseComponent {
     let detail = 'انجام عملیات ناموفق بود.';
     if (error.status === 0) detail = 'ارتباط با سرور برقرار نشد.';
     if (error.status === 403) detail = 'این پرونده به شما اختصاص نیافته است.';
-    if (error.status === 409) detail = error.error?.error ?? 'مدارک پرونده کامل نیست یا پرونده قبلاً تکمیل شده است.';
+    if (error.status === 409) detail = userErrorMessage(error, 'مدارک پرونده کامل نیست یا پرونده قبلاً تکمیل شده است.');
     this.messages.add({ severity: 'error', summary: 'خطا', detail });
   }
 }

@@ -1,4 +1,4 @@
-<p-confirmDialog [style]="{ width: 'min(92vw, 32rem)' }" />
+<p-confirmDialog [baseZIndex]="1300" [style]="{ width: 'min(92vw, 32rem)' }" />
 
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده...</span></div>
@@ -55,7 +55,7 @@
 
   @if (item.status === 'PENDING_UNIVERSITY_APPROVAL') {
     <p-card header="ارسال برای تأیید شرکت">
-      <form class="form-grid" [formGroup]="reviewForm" (ngSubmit)="sendToCompany()">
+      <form class="form-grid" [formGroup]="reviewForm" (ngSubmit)="confirmSendToCompany()">
         <label class="field">
           <span>شماره نامه معرفی <b>*</b></span>
           <input pInputText formControlName="letterNumber" />
@@ -66,11 +66,11 @@
         </label>
         <label class="field full-width">
           <span>سرپرست شرکت <b>*</b></span>
-          <p-select formControlName="companySupervisorId" [options]="supervisors()" optionLabel="fullName" optionValue="id" placeholder="انتخاب سرپرست شرکت" />
+          <p-select formControlName="companySupervisorId" [options]="supervisors()" optionLabel="fullName" optionValue="id" placeholder="انتخاب سرپرست شرکت" appendTo="body" />
         </label>
       </form>
       <div class="card-actions">
-        <p-button label="ارسال برای تأیید شرکت" icon="pi pi-send" [loading]="saving()" (onClick)="sendToCompany()" />
+        <p-button label="ارسال برای تأیید شرکت" icon="pi pi-send" [loading]="saving()" (onClick)="confirmSendToCompany()" />
       </div>
     </p-card>
   }
@@ -112,50 +112,48 @@
     </p-card>
   }
 
-  @if (item.weeklyReports.length > 0) {
+  @if (item.status === 'ACTIVE' || item.status === 'COMPLETED') {
     <p-card header="گزارش‌های هفتگی">
-      <div class="preference-list">
-        @for (report of item.weeklyReports; track report.id) {
-          <div class="detail">
-            <div class="status-line">
-              <strong>هفته {{ report.weekNumber }}</strong>
-              <p-tag [value]="report.isConfirmed ? 'تأیید شده' : 'در انتظار تأیید'" [severity]="report.isConfirmed ? 'success' : 'warn'" />
+      @if (item.weeklyReports.length === 0) {
+        <p class="muted">هنوز گزارش هفتگی ثبت نشده است.</p>
+      } @else {
+        <div class="preference-list">
+          @for (report of item.weeklyReports; track report.id) {
+            <div class="detail">
+              <div class="status-line">
+                <strong>هفته {{ report.weekNumber }}</strong>
+                <p-tag [value]="report.isConfirmed ? 'تأیید شده' : 'در انتظار تأیید'" [severity]="report.isConfirmed ? 'success' : 'warn'" />
+              </div>
+              <span>{{ report.startDate | jalaliDate }} تا {{ report.endDate | jalaliDate }}</span>
+              <p style="white-space: pre-wrap; line-height: 1.9">{{ report.activityDescription }}</p>
+              @if (report.supervisorComment) { <span>نظر سرپرست شرکت: {{ report.supervisorComment }}</span> }
             </div>
-            <span>{{ report.startDate | jalaliDate }} تا {{ report.endDate | jalaliDate }}</span>
-            <p style="white-space: pre-wrap; line-height: 1.9">{{ report.activityDescription }}</p>
-            @if (report.supervisorComment) {
-              <span>نظر سرپرست شرکت: {{ report.supervisorComment }}</span>
-            }
-          </div>
-        }
-      </div>
+          }
+        </div>
+      }
     </p-card>
-  }
 
-  @if (item.companyEvaluation; as evaluation) {
     <p-card header="ارزیابی سرپرست شرکت">
-      <div class="detail-grid">
-        @for (criterion of criteria; track criterion.key) {
-          <div class="detail"><span>{{ criterion.label }}</span><strong>{{ ratingLabel(evaluation[criterion.key]) }}</strong></div>
-        }
-        <div class="detail"><span>تعداد روزهای مرخصی</span><strong>{{ evaluation.leaveDays }}</strong></div>
-        <div class="detail"><span>تعداد روزهای غیبت</span><strong>{{ evaluation.absenceDays }}</strong></div>
-        <div class="detail"><span>نام سرپرست شرکت</span><strong>{{ item.companySupervisor?.fullName ?? '—' }}</strong></div>
-        <div class="detail"><span>تاریخ ثبت</span><strong>{{ evaluation.submittedAt | jalaliDate }}</strong></div>
-        <div class="detail full-width"><span>پیشنهادها و توضیحات</span><strong>{{ evaluation.suggestions || '—' }}</strong></div>
-      </div>
+      @if (item.companyEvaluation; as evaluation) {
+        <div class="detail-grid">
+          @for (criterion of criteria; track criterion.key) { <div class="detail"><span>{{ criterion.label }}</span><strong>{{ ratingLabel(evaluation[criterion.key]) }}</strong></div> }
+          <div class="detail"><span>تعداد روزهای مرخصی</span><strong>{{ evaluation.leaveDays }}</strong></div>
+          <div class="detail"><span>تعداد روزهای غیبت</span><strong>{{ evaluation.absenceDays }}</strong></div>
+          <div class="detail"><span>نام سرپرست شرکت</span><strong>{{ item.companySupervisor?.fullName ?? '—' }}</strong></div>
+          <div class="detail"><span>تاریخ ثبت</span><strong>{{ evaluation.submittedAt | jalaliDate }}</strong></div>
+          <div class="detail full-width"><span>پیشنهادها و توضیحات</span><strong>{{ evaluation.suggestions || '—' }}</strong></div>
+        </div>
+      } @else { <p class="muted">ارزیابی شرکت هنوز ثبت نشده است.</p> }
     </p-card>
-  }
 
-  @if (item.finalReport; as report) {
     <p-card header="گزارش نهایی کارآموزی">
-      <div class="detail-grid">
-        <div class="detail"><span>نام فایل</span><strong>{{ report.originalName }}</strong></div>
-        <div class="detail"><span>تاریخ بارگذاری</span><strong>{{ report.uploadedAt | jalaliDate }}</strong></div>
-      </div>
-      <div class="card-actions">
-        <p-button label="دانلود گزارش" icon="pi pi-download" [loading]="downloading()" (onClick)="downloadFinalReport()" />
-      </div>
+      @if (item.finalReport; as report) {
+        <div class="detail-grid">
+          <div class="detail"><span>نام فایل</span><strong>{{ report.originalName }}</strong></div>
+          <div class="detail"><span>تاریخ بارگذاری</span><strong>{{ report.uploadedAt | jalaliDate }}</strong></div>
+        </div>
+        <div class="card-actions"><p-button label="دانلود گزارش" icon="pi pi-download" [loading]="downloading()" (onClick)="downloadFinalReport()" /></div>
+      } @else { <p class="muted">گزارش نهایی هنوز بارگذاری نشده است.</p> }
     </p-card>
   }
 

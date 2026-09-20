@@ -135,12 +135,23 @@ export class UniversityCaseComponent {
     this.reviewForm.controls.preferenceId.setValue(preferenceID);
   }
 
-  sendToCompany(): void {
+  confirmSendToCompany(): void {
     if (this.reviewForm.invalid) {
       this.reviewForm.markAllAsTouched();
       this.messages.add({ severity: 'warn', summary: 'اطلاعات ناقص', detail: 'محل کارآموزی، سرپرست شرکت و اطلاعات نامه را وارد کنید.' });
       return;
     }
+    this.confirmation.confirm({
+      header: 'ارسال پرونده به شرکت',
+      message: 'پس از ارسال، اطلاعات نامه، محل انتخابی و سرپرست شرکت در این مرحله قابل ویرایش نیست. آیا ادامه می‌دهید؟',
+      acceptLabel: 'بله، ارسال شود',
+      rejectLabel: 'انصراف',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => this.sendToCompany()
+    });
+  }
+
+  private sendToCompany(): void {
     const value = this.reviewForm.getRawValue();
     this.saving.set(true);
     this.internshipService.sendToCompany(this.caseID, {

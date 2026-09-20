@@ -11,7 +11,7 @@ const roleLabels: Record<UserRole, string> = {
   PROFESSOR: 'استاد',
   COMPANY_SUPERVISOR: 'سرپرست شرکت',
   UNIVERSITY_SUPERVISOR: 'مسئول آموزش',
-  ADMIN: 'مدیر سیستم'
+  ADMIN: 'مدیر سامانه'
 };
 
 @Component({

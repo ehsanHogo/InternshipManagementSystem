@@ -14,17 +14,17 @@
   </p-table>
 }
 
-<p-dialog header="افزودن سرپرست شرکت" [visible]="dialogVisible()" (visibleChange)="dialogVisible.set($event)" [modal]="true" [style]="{ width: 'min(92vw, 38rem)' }">
+<p-dialog header="افزودن سرپرست شرکت" [visible]="dialogVisible()" (visibleChange)="dialogVisible.set($event)" [modal]="true" appendTo="body" [baseZIndex]="1200" [style]="{ width: 'min(92vw, 38rem)' }">
   <form class="form-grid" [formGroup]="form" (ngSubmit)="submit()">
     <label class="field full-width">نام و نام خانوادگی<input pInputText formControlName="fullName" /></label>
     <label class="field full-width">ایمیل<input pInputText dir="ltr" formControlName="email" /></label>
-    <label class="field full-width">شرکت<p-select formControlName="companyId" [options]="companies()" optionLabel="name" optionValue="id" placeholder="انتخاب شرکت" /></label>
+    <label class="field full-width">شرکت<p-select formControlName="companyId" [options]="companies()" optionLabel="name" optionValue="id" placeholder="انتخاب شرکت" appendTo="body" /></label>
     <div class="dialog-actions full-width"><p-button label="انصراف" severity="secondary" [outlined]="true" type="button" (onClick)="dialogVisible.set(false)" /><p-button label="ایجاد حساب" type="submit" [loading]="submitting" /></div>
   </form>
 </p-dialog>
 
-<p-dialog header="اطلاعات ورود موقت" [visible]="credentials() !== null" (visibleChange)="closeCredentials($event)" [modal]="true" [style]="{ width: 'min(92vw, 32rem)' }">
+<p-dialog header="اطلاعات ورود موقت" [visible]="credentials() !== null" (visibleChange)="closeCredentials($event)" [modal]="true" appendTo="body" [baseZIndex]="1200" [style]="{ width: 'min(92vw, 32rem)' }">
   @if (credentials(); as account) {
-    <div class="credential-box"><strong>حساب کاربری با موفقیت ایجاد شد.</strong><p>نام کاربری: <b dir="ltr">{{ account.user.email }}</b></p><p>رمز عبور موقت: <b dir="ltr">{{ account.temporaryPassword }}</b></p><p class="notice">این رمز فقط اکنون نمایش داده می‌شود.</p><p-button label="کپی اطلاعات ورود" icon="pi pi-copy" (onClick)="copyCredentials(account)" /></div>
+    <div class="credential-box"><strong>حساب کاربری با موفقیت ایجاد شد.</strong><p>نام کاربری: <b dir="ltr">{{ account.user.email }}</b></p><p>رمز عبور موقت: <b dir="ltr">{{ account.temporaryPassword }}</b></p><p class="notice">رمز عبور موقت فقط در این مرحله نمایش داده می‌شود.</p><p-button label="کپی اطلاعات ورود" icon="pi pi-copy" (onClick)="copyCredentials(account)" /></div>
   }
 </p-dialog>

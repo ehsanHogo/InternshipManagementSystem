@@ -1,5 +1,13 @@
 @import 'primeicons/primeicons.css';
 
+:root {
+  --layer-navigation: 100;
+  --layer-overlay: 1100;
+  --layer-dialog: 1200;
+  --layer-critical: 1300;
+  --layer-toast: 1400;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -8,6 +16,7 @@ html,
 body {
   min-height: 100%;
   margin: 0;
+  overflow-x: hidden;
 }
 
 a {
@@ -19,16 +28,90 @@ body {
   direction: rtl;
   color: #1f2937;
   background: #f5f7fa;
-  font-family: Tahoma, Arial, sans-serif;
+  font-family: 'Vazirmatn Variable', 'Vazirmatn', sans-serif;
+  font-weight: 400;
 }
 
 button,
-input {
+input,
+select,
+textarea,
+.p-component {
   font: inherit;
+  font-family: inherit;
+}
+
+label,
+button,
+.p-button,
+.p-select-label {
+  font-weight: 500;
+}
+
+h1,
+h2,
+h3,
+h4,
+.p-card-title,
+.p-dialog-title {
+  font-weight: 700;
 }
 
 .p-inputnumber,
 .p-inputnumber-input,
 .p-select {
   width: 100%;
+}
+
+/* Keep historical/read-only values legible while retaining a disabled cue. */
+.p-disabled,
+.p-component:disabled,
+input:disabled,
+textarea:disabled {
+  color: #475569;
+  opacity: 1;
+  background: #f1f5f9;
+}
+
+.p-select.p-disabled .p-select-label,
+.p-inputnumber-input:disabled {
+  color: #475569;
+  opacity: 1;
+}
+
+/* PrimeNG overlays are appended to body; these values document the shared stack. */
+.p-select-overlay,
+.p-dropdown-panel,
+.p-multiselect-overlay,
+.p-autocomplete-overlay,
+.p-datepicker,
+.p-menu-overlay,
+.p-popover {
+  z-index: var(--layer-overlay);
+}
+
+.p-dialog-mask {
+  z-index: var(--layer-dialog);
+}
+
+.p-confirmdialog-mask {
+  z-index: var(--layer-critical) !important;
+}
+
+.p-toast {
+  z-index: var(--layer-toast) !important;
+}
+
+.p-dialog {
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2rem);
+}
+
+/* The local Jalali picker lives in two compact forms; let its calendar escape dialog scrolling. */
+.p-dialog:has(app-jalali-date-picker) .p-dialog-content {
+  overflow: visible;
+}
+
+.p-datatable-table-container {
+  overflow-x: auto;
 }

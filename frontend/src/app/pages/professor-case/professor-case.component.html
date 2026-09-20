@@ -1,4 +1,4 @@
-<p-confirmDialog [style]="{ width: 'min(92vw, 34rem)' }" />
+<p-confirmDialog [baseZIndex]="1300" [style]="{ width: 'min(92vw, 34rem)' }" />
 
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده...</span></div>
@@ -123,7 +123,7 @@
         <div class="detail"><span>تاریخ تکمیل</span><strong>{{ item.completedAt | jalaliDate }}</strong></div>
         <div class="detail full-width"><span>نظر استاد</span><strong>{{ item.professorComment || '—' }}</strong></div>
       </div>
-    } @else {
+    } @else if (item.canProfessorComplete) {
       <form class="form-grid" [formGroup]="evaluationForm">
         <label class="field">
           <span>ارزیابی نهایی <b>*</b></span>
@@ -133,6 +133,7 @@
             optionLabel="label"
             optionValue="value"
             placeholder="انتخاب نتیجه"
+            appendTo="body"
           />
         </label>
         <label class="field full-width">
@@ -145,10 +146,11 @@
           label="ثبت ارزیابی نهایی"
           icon="pi pi-check-circle"
           [loading]="submitting()"
-          [disabled]="!item.canProfessorComplete"
           (onClick)="confirmCompletion()"
         />
       </div>
+    } @else {
+      <div class="notice">ثبت ارزیابی نهایی پس از ثبت و تأیید هر ۸ گزارش، ثبت ارزیابی شرکت و بارگذاری گزارش نهایی فعال می‌شود.</div>
     }
   </p-card>
 }

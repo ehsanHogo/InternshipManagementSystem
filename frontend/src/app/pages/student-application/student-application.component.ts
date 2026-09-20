@@ -216,6 +216,19 @@ export class StudentApplicationComponent {
   }
 
   deletePreference(preference: InternshipPreference): void {
+    this.confirmation.confirm({
+      header: 'حذف اولویت',
+      message: `آیا از حذف اولویت ${this.priorityLabel(preference.priority)} اطمینان دارید؟`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'بله، حذف شود',
+      rejectLabel: 'انصراف',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text p-button-secondary',
+      accept: () => this.removePreference(preference)
+    });
+  }
+
+  private removePreference(preference: InternshipPreference): void {
     this.internshipService
       .deletePreference(preference.id)
       .pipe(switchMap(() => this.internshipService.getCurrentCase()))

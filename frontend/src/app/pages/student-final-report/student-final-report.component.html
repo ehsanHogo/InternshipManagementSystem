@@ -1,8 +1,8 @@
 <section class="page-heading">
   <div>
-    <span class="eyebrow">کارآموزی فعال</span>
+    <span class="eyebrow">{{ internshipCase()?.status === 'COMPLETED' ? 'پرونده تکمیل‌شده' : 'کارآموزی فعال' }}</span>
     <h1>گزارش نهایی کارآموزی</h1>
-    <p>نسخه PDF گزارش نهایی خود را بارگذاری کنید.</p>
+    <p>نسخه پی‌دی‌اف گزارش نهایی خود را بارگذاری کنید.</p>
   </div>
 </section>
 
@@ -28,7 +28,7 @@
     <p-card [header]="internshipCase()?.finalReport ? 'جایگزینی گزارش نهایی' : 'بارگذاری گزارش نهایی'">
       <div class="upload-box">
         <i class="pi pi-cloud-upload"></i>
-        <strong>{{ selectedFile()?.name ?? 'یک فایل PDF انتخاب کنید' }}</strong>
+        <strong>{{ selectedFile()?.name ?? 'یک فایل پی‌دی‌اف انتخاب کنید' }}</strong>
         <span>حداکثر حجم مجاز: ۱۰ مگابایت</span>
         <input #fileInput type="file" accept="application/pdf,.pdf" (change)="fileChanged($event)" hidden />
         <div class="upload-actions">

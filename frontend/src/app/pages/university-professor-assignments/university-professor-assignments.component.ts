@@ -10,6 +10,7 @@ import { TableModule } from 'primeng/table';
 import { User } from '../../auth/auth.models';
 import { ProfessorAssignment } from '../../university-management/university-management.models';
 import { UniversityManagementService } from '../../university-management/university-management.service';
+import { userErrorMessage } from '../../shared/http-error-message';
 
 @Component({
   selector: 'app-university-professor-assignments',
@@ -61,6 +62,6 @@ export class UniversityProfessorAssignmentsComponent {
   }
 
   private showError(error: HttpErrorResponse): void {
-    this.messages.add({ severity: 'error', summary: 'خطا', detail: error.status === 0 ? 'ارتباط با سرور برقرار نشد.' : (error.error?.error || 'ثبت تخصیص استاد ناموفق بود.') });
+    this.messages.add({ severity: 'error', summary: 'خطا', detail: userErrorMessage(error, 'ثبت تخصیص استاد ناموفق بود.') });
   }
 }

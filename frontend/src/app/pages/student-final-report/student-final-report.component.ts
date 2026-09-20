@@ -41,7 +41,7 @@ export class StudentFinalReportComponent {
     if (!file) return;
     if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf') || file.size > 10 * 1024 * 1024) {
       this.selectedFile.set(null);
-      this.messages.add({ severity: 'warn', summary: 'فایل نامعتبر', detail: 'فقط فایل PDF با حداکثر حجم ۱۰ مگابایت مجاز است.' });
+      this.messages.add({ severity: 'warn', summary: 'فایل نامعتبر', detail: 'فقط فایل پی‌دی‌اف با حداکثر حجم ۱۰ مگابایت مجاز است.' });
       return;
     }
     this.selectedFile.set(file);
@@ -50,7 +50,7 @@ export class StudentFinalReportComponent {
   upload(): void {
     const file = this.selectedFile();
     if (!file) {
-      this.messages.add({ severity: 'warn', summary: 'انتخاب فایل', detail: 'ابتدا فایل PDF گزارش را انتخاب کنید.' });
+      this.messages.add({ severity: 'warn', summary: 'انتخاب فایل', detail: 'ابتدا فایل پی‌دی‌اف گزارش را انتخاب کنید.' });
       return;
     }
     this.uploading.set(true);
@@ -65,7 +65,7 @@ export class StudentFinalReportComponent {
       },
       error: (error: HttpErrorResponse) => {
         this.uploading.set(false);
-        const detail = error.status === 400 ? 'فایل باید PDF و حداکثر ۱۰ مگابایت باشد.' : 'بارگذاری گزارش نهایی ناموفق بود.';
+        const detail = error.status === 400 ? 'فایل باید پی‌دی‌اف و حداکثر ۱۰ مگابایت باشد.' : 'بارگذاری گزارش نهایی ناموفق بود.';
         this.messages.add({ severity: 'error', summary: 'خطا', detail });
       }
     });

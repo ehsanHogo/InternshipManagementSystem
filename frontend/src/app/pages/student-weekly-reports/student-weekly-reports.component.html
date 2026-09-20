@@ -1,6 +1,6 @@
 <section class="page-heading">
   <div>
-    <span class="eyebrow">کارآموزی فعال</span>
+    <span class="eyebrow">{{ internshipCase()?.status === 'COMPLETED' ? 'پرونده تکمیل‌شده' : 'کارآموزی فعال' }}</span>
     <h1>گزارش‌های هفتگی</h1>
     <p>فعالیت‌های انجام‌شده در هر هفته را ثبت و وضعیت تأیید آن‌ها را پیگیری کنید.</p>
   </div>
@@ -46,6 +46,8 @@
   [visible]="dialogVisible()"
   (visibleChange)="dialogVisible.set($event)"
   [modal]="true"
+  appendTo="body"
+  [baseZIndex]="1200"
   [style]="{ width: 'min(94vw, 42rem)' }"
 >
   <form class="form-grid" [formGroup]="reportForm">

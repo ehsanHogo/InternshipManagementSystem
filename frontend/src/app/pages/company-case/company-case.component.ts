@@ -21,7 +21,8 @@ import {
   EvaluationRating,
   WeeklyReport,
   evaluationRatingLabels,
-  internshipStatusLabels
+  internshipStatusLabels,
+  professorFinalResultLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
@@ -51,6 +52,7 @@ export class CompanyCaseComponent {
   readonly evaluationLoading = signal(false);
   readonly confirmingReport = signal(false);
   readonly evaluationSaving = signal(false);
+  readonly downloading = signal(false);
   readonly reportDialogVisible = signal(false);
   readonly selectedReport = signal<WeeklyReport | null>(null);
   readonly confirmedReportCount = computed(() => this.reports().filter((report) => report.isConfirmed).length);
@@ -115,6 +117,31 @@ export class CompanyCaseComponent {
 
   ratingLabel(rating: EvaluationRating): string {
     return evaluationRatingLabels[rating];
+  }
+
+  finalResultLabel(item: InternshipCase): string {
+    return item.finalResult ? professorFinalResultLabels[item.finalResult] : '—';
+  }
+
+  downloadFinalReport(): void {
+    const report = this.internshipCase()?.finalReport;
+    if (!report) return;
+    this.downloading.set(true);
+    this.internshipService.downloadFile(report.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = report.originalName;
+        anchor.click();
+        URL.revokeObjectURL(url);
+        this.downloading.set(false);
+      },
+      error: () => {
+        this.downloading.set(false);
+        this.messages.add({ severity: 'error', summary: 'خطا', detail: 'دانلود گزارش نهایی ناموفق بود.' });
+      }
+    });
   }
 
   openReportConfirmation(report: WeeklyReport): void {

@@ -1,28 +1,53 @@
 # Internship Management System
 
-## Stack
+## Project Overview
 
-- Go, Gin, GORM, PostgreSQL
-- Angular, TypeScript, SCSS, PrimeNG, PrimeIcons
-- Docker and Docker Compose
+A Persian, RTL internship workflow for students, university supervisors, company supervisors, professors, and a minimal administrator role. The application preserves the complete record as a case advances from draft through university/company approval, active reporting, final evaluations, and completion.
+
+## Technology Stack
+
+- Angular 20, TypeScript, SCSS, PrimeNG, PrimeIcons, Vazirmatn
+- Go 1.24, Gin, GORM
+- PostgreSQL 16
+- Docker Compose and Nginx
 
 ## Prerequisites
 
-- Docker with Docker Compose
-- Node.js 20.19+ or 22.12+
-- npm
+For the all-Docker setup, install Docker with Docker Compose. For local development, also install Node.js 20.19+ or 22.12+, npm, and Go 1.24+.
 
-Go is only required when running or building the backend outside Docker.
+## Environment Configuration
 
-## Run the project
+Docker Compose reads optional values from a root `.env` file. Copy `.env.example` and replace the development-only defaults when needed:
 
-From this directory, start PostgreSQL and the backend:
+```bash
+cp .env.example .env
+```
+
+The backend supports `APP_PORT`, `FRONTEND_ORIGIN`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SSLMODE`, `JWT_SECRET`, `JWT_EXPIRES_HOURS`, and `UPLOAD_DIR`. See `backend/.env.example` for local-backend defaults. The Go process reads environment variables directly and does not load `.env` files itself.
+
+Host ports can be changed with `POSTGRES_PORT`, `BACKEND_PORT`, `FRONTEND_PORT`, and `PGADMIN_PORT`. Never use the included demo database password, pgAdmin password, or JWT secret in production.
+
+## Docker Setup
+
+Start PostgreSQL, the API, the Angular/Nginx frontend, and pgAdmin:
 
 ```bash
 docker compose up --build
 ```
 
-For development, keep PostgreSQL in Docker and run the Go backend locally:
+Open:
+
+- Application: <http://localhost:4200>
+- API health check: <http://localhost:8082/api/health>
+- pgAdmin: <http://localhost:5050>
+
+The frontend sends relative `/api` requests. In Docker, Nginx proxies them to the backend service; in local development, Angular's `proxy.conf.json` proxies them to `http://localhost:8082`. No machine-specific API URL is compiled into the application.
+
+PostgreSQL data, pgAdmin settings, and uploaded final reports use the `postgres_data`, `pgadmin_data`, and `final_reports` named volumes.
+
+## Local Development
+
+Start infrastructure and run the backend locally:
 
 ```bash
 docker compose up -d postgres pgadmin
@@ -30,148 +55,130 @@ cd backend
 APP_PORT=8082 DB_HOST=localhost DB_PORT=5433 go run ./cmd/api
 ```
 
-Restart `go run` after changing backend code. PostgreSQL and its data volume keep
-running, so restarting the backend does not remove any data.
-
-In another terminal, install and start the Angular development server:
+In another terminal:
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm start
 ```
 
-Open the login page at <http://localhost:4200/login>. The backend is available at <http://localhost:8082>, and its health endpoint is:
+Open <http://localhost:4200/login>. Restart `go run` after backend changes. Database and uploaded-file volumes survive backend restarts.
+
+## Main Roles
+
+- Student: creates and submits an application, maintains unconfirmed weekly reports, uploads/replaces the final PDF while active, and views the completed result.
+- University supervisor: manages users/companies/assignments and advances submitted cases through university workflow stages.
+- Company supervisor: confirms assigned placements and weekly reports, then submits one final company evaluation.
+- Professor: reviews assigned active/completed cases and records the final qualitative result when every prerequisite is complete.
+- Admin: retains a deliberately minimal dashboard and receives no workflow mutation permissions.
+
+Frontend route guards improve navigation UX; backend role middleware and case-ownership checks remain the authorization boundary.
+
+## Workflow
+
+The statuses are:
 
 ```text
-GET http://localhost:8082/api/health
+DRAFT
+→ PENDING_UNIVERSITY_APPROVAL
+→ PENDING_COMPANY_APPROVAL
+→ COMPANY_APPROVED
+→ UNIVERSITY_APPROVED
+→ ACTIVE
+→ COMPLETED
 ```
 
-Expected response:
+Recommended demonstration order:
 
-```json
-{ "status": "ok" }
-```
+1. Sign in as the student, create the application, add one to three preferences, and submit it.
+2. Sign in as the university supervisor, select a preference and company supervisor, enter letter details, and send the case to the company.
+3. Sign in as the company supervisor and confirm placement details. A student-proposed company is approved and added to the company table only at this point.
+4. Sign in as the university supervisor, approve the company-confirmed case, and activate it.
+5. Sign in as the student and submit weeks 1–8 plus a final PDF.
+6. Sign in as the company supervisor, confirm all eight reports, and submit the company evaluation.
+7. Sign in as the professor, review the historical record and final PDF, choose `عالی`, `خوب`, or `مردود`, optionally comment, and complete the case.
+8. Sign in as the student and verify the completed status, final result, comment, reports, and final file remain visible.
 
-The Angular development server proxies `/api` requests to the backend. The backend CORS policy separately permits only `http://localhost:4200` by default.
+## Excel Import Format
 
-## Authentication
+Only `.xlsx` files up to 10 MB are accepted. Header spelling is Persian; header order is flexible.
 
-The backend stores bcrypt password hashes and issues one HMAC-SHA256 access JWT after a successful login. Tokens contain the user ID, role, email, issue time, and expiry. The Angular client stores the demo token in `localStorage`, adds it to authenticated API requests, and validates an existing token against `/api/auth/me` whenever the application starts.
-
-The available roles are `STUDENT`, `PROFESSOR`, `COMPANY_SUPERVISOR`, `UNIVERSITY_SUPERVISOR`, and `ADMIN`. Each user has one role. There are deliberately no refresh tokens, role/permission tables, or password recovery flow in this MVP.
-
-These development environment variables configure token signing:
+Student import headers:
 
 ```text
-JWT_SECRET=replace-with-a-long-random-secret
-JWT_EXPIRES_HOURS=24
-UPLOAD_DIR=uploads
+نام و نام خانوادگی
+ایمیل
+شماره دانشجویی
+رشته
 ```
 
-Docker Compose supplies a development-only secret. Replace it outside local demos. When running the backend directly, use the values in `backend/.env.example` as a guide; the Go application reads environment variables but does not load the file automatically.
+Professor import headers:
 
-## Demo accounts
+```text
+نام و نام خانوادگی
+ایمیل
+```
 
-The backend runs GORM `AutoMigrate` and an idempotent seed on startup. Each account is looked up by email before insertion, so restarting the backend does not create duplicates. All five accounts use the explicitly non-production password `Demo123!`.
+Each successful row returns a temporary password. It is shown only in that result and cannot be retrieved later, so copy it before leaving the page.
 
-After changing `backend/internal/database/migrate.go` or a model, apply the
-migration to the existing database without deleting volumes or restarting the
-whole stack:
+## File Upload Rules
+
+- Final reports must be non-empty PDF files no larger than 10 MB.
+- The server validates extension and MIME type and generates a unique storage name.
+- Files are downloaded only through an authenticated, case-authorized endpoint.
+- Filesystem paths and stored filenames are not exposed by the API.
+- A student may replace a final report only while the case is `ACTIVE`; completed cases are immutable.
+
+## How to Run
+
+The shortest demo command is:
+
+```bash
+docker compose up --build
+```
+
+Useful verification commands:
+
+```bash
+cd backend
+go test ./...
+go vet ./...
+go build ./...
+
+cd ../frontend
+npm ci
+npm run build
+```
+
+To apply idempotent migrations/seeds to the local Docker database without deleting data:
 
 ```bash
 cd backend
 DB_HOST=localhost DB_PORT=5433 go run ./cmd/migrate
 ```
 
-This updates the existing PostgreSQL database directly. It does not restart
-containers or delete the database volume.
+## How to Stop
 
-| Role                  | Email                   | Name            | Additional details                               |
-| --------------------- | ----------------------- | --------------- | ------------------------------------------------ |
-| Student               | `student@demo.local`    | علی رضایی       | Student number `40123456`, major مهندسی کامپیوتر |
-| Professor             | `professor@demo.local`  | دکتر محمد احمدی | —                                                |
-| University supervisor | `university@demo.local` | کارشناس آموزش   | —                                                |
-| Company supervisor    | `company@demo.local`    | رضا محمدی       | —                                                |
-| Admin                 | `admin@demo.local`      | مدیر سیستم      | —                                                |
-
-After login, the frontend redirects to <http://localhost:4200/dashboard>. Visiting the dashboard without a valid authenticated session redirects back to the login page. Logging out removes the stored token.
-
-## Test authentication from the command line
-
-Log in and copy the returned `token` value:
-
-```bash
-curl -X POST http://localhost:8082/api/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"student@demo.local","password":"Demo123!"}'
-```
-
-Use that token to request the current user:
-
-```bash
-curl http://localhost:8082/api/auth/me \
-  -H 'Authorization: Bearer YOUR_TOKEN'
-```
-
-The same header can be used with `GET /api/protected`, the small authenticated verification endpoint. Missing, malformed, expired, or incorrectly signed tokens receive HTTP 401. Invalid login credentials also receive HTTP 401 without revealing which credential was wrong.
-
-Stop the Docker services with:
+Stop containers while retaining persistent data:
 
 ```bash
 docker compose down
 ```
 
-PostgreSQL data remains in the `postgres_data` Docker volume. To also remove that development data, explicitly run `docker compose down --volumes`.
-Final report PDFs are stored on local disk. Docker Compose persists them in the `final_reports` volume and the database stores only protected metadata and the generated storage name.
-
-## Active internship reporting
-
-Milestone 5 keeps an internship case in `ACTIVE` while the student submits up to eight weekly reports and a PDF final report. The assigned company supervisor can confirm each weekly report once and submit one read-only final company evaluation. Final-report downloads require authentication and access to the related internship case.
-
-Student pages:
-
-- `/student/weekly-reports`
-- `/student/final-report`
-
-Company reporting is available inside each assigned ACTIVE case at `/company/internships/:id`.
-
-## Useful development commands
+To intentionally remove the database, pgAdmin state, and uploaded reports as well:
 
 ```bash
-# Build the backend locally
-cd backend
-go build ./cmd/api
-
-# Run backend tests
-go test ./...
-
-# Build the frontend
-cd frontend
-npm run build
-
-# View service logs
-docker compose logs backend postgres
+docker compose down --volumes
 ```
 
-## VS Code tasks
-
-When this repository is open as the VS Code workspace, run tasks from **Terminal → Run Task**. The most useful entries are:
-
-- `Setup: Install Dependencies` for first-time setup.
-- `Development: Start` to start PostgreSQL in Docker, the Go backend locally, and Angular locally.
-- `Backend: Run Locally` to start only PostgreSQL and the local Go backend.
-- `Database: Up`, `Database: Apply Migrations`, `Database: Drop`, or `Database: Open psql` for database work. `Database: Apply Migrations` preserves all PostgreSQL data. `Database: Drop` removes only PostgreSQL data; pgAdmin and its saved settings are preserved.
-- `Build: All` to build both applications.
-- `Backend: Test` and `Health: Check Backend` for quick verification.
-- `Docker: Follow Logs`, `Docker: Show Status`, and `Docker: Stop` for container management.
-
-`Ctrl+Shift+B` runs the default `Build: All` task.
+The second command is destructive and should not be used when demo data must be preserved.
 
 ## Troubleshooting
 
-- Docker Compose exposes PostgreSQL on host port `5433` and the backend on `8082` to avoid common conflicts with locally installed services. Inside Docker, they still use ports `5432` and `8080`.
-- If port `5433`, `8082`, or `4200` is already in use, stop the conflicting local service before starting this project.
-- If the frontend shows that the server is unavailable, check `docker compose ps`, then inspect `docker compose logs backend postgres`.
-- The backend waits for PostgreSQL's health check before starting. If it exits, its log includes the database connection error rather than continuing without a database.
-- When running the backend directly instead of with Docker, copy values from `backend/.env.example` into your shell environment and ensure PostgreSQL is reachable at `localhost:5433`.
+- Ports used on the host are `4200` (frontend), `8082` (backend), `5433` (PostgreSQL), and `5050` (pgAdmin). Stop any conflicting local service or change the port mapping.
+- Run `docker compose ps` and `docker compose logs backend postgres frontend` if the UI cannot reach the API.
+- The backend waits for PostgreSQL health; the frontend waits for backend health.
+- A 401 clears the local session and returns the browser to login. Sign in again if a demo JWT expires.
+- Local frontend development requires the backend on port `8082`, matching `frontend/proxy.conf.json`.
+- Uploaded reports missing after a container restart usually indicates the `final_reports` volume was removed.

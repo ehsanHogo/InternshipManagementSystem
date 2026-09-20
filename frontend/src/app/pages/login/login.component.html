@@ -1,7 +1,9 @@
 <main class="login-page">
   <section class="login-shell" aria-labelledby="application-title">
     <header class="brand">
-      <span class="brand-icon" aria-hidden="true"><i class="pi pi-graduation-cap"></i></span>
+      <span class="brand-icon" aria-hidden="true"
+        ><i class="pi pi-graduation-cap"></i
+      ></span>
       <h1 id="application-title">سامانه مدیریت کارآموزی دانشجویان</h1>
       <p>دانشگاه، دانشجو و محیط کار؛ یکپارچه و هماهنگ</p>
     </header>
@@ -29,9 +31,15 @@
               placeholder="student@demo.local"
             />
           </span>
-          @if (loginForm.controls.email.touched && loginForm.controls.email.hasError('required')) {
+          @if (
+            loginForm.controls.email.touched &&
+            loginForm.controls.email.hasError("required")
+          ) {
             <small class="validation-error">وارد کردن ایمیل الزامی است</small>
-          } @else if (loginForm.controls.email.touched && loginForm.controls.email.hasError('email')) {
+          } @else if (
+            loginForm.controls.email.touched &&
+            loginForm.controls.email.hasError("email")
+          ) {
             <small class="validation-error">فرمت ایمیل صحیح نیست</small>
           }
         </div>
@@ -47,8 +55,13 @@
             [fluid]="true"
             placeholder="رمز عبور"
           />
-          @if (loginForm.controls.password.touched && loginForm.controls.password.hasError('required')) {
-            <small class="validation-error">وارد کردن رمز عبور الزامی است</small>
+          @if (
+            loginForm.controls.password.touched &&
+            loginForm.controls.password.hasError("required")
+          ) {
+            <small class="validation-error"
+              >وارد کردن رمز عبور الزامی است</small
+            >
           }
         </div>
 
@@ -63,7 +76,5 @@
         />
       </form>
     </p-card>
-
-    <p class="demo-hint">حساب آزمایشی دانشجو: student@demo.local</p>
   </section>
 </main>
