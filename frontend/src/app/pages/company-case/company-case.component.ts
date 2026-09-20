@@ -27,10 +27,11 @@ import {
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
+import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 @Component({
   selector: 'app-company-case',
-  imports: [JalaliDatePipe, JalaliDatePickerComponent, ReactiveFormsModule, RouterLink, ButtonModule, CardModule, ConfirmDialogModule, DialogModule, InputNumberModule, InputTextModule, SelectModule, TagModule, TextareaModule],
+  imports: [JalaliDatePipe, PersianDigitsPipe, JalaliDatePickerComponent, ReactiveFormsModule, RouterLink, ButtonModule, CardModule, ConfirmDialogModule, DialogModule, InputNumberModule, InputTextModule, SelectModule, TagModule, TextareaModule],
   providers: [ConfirmationService],
   templateUrl: './company-case.component.html',
   styleUrl: '../workflow-page.scss'

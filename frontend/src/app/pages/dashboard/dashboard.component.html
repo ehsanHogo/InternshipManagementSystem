@@ -3,15 +3,21 @@
     <div>
       <span class="eyebrow">داشبورد</span>
       <h1 id="dashboard-title">خوش آمدید، {{ currentUser.fullName }}</h1>
-      <p>از این بخش می‌توانید فرایند کارآموزی را متناسب با نقش خود پیگیری کنید.</p>
+      <p>
+        از این بخش می‌توانید فرایند کارآموزی را متناسب با نقش خود پیگیری کنید.
+      </p>
     </div>
-    <span class="welcome-icon" aria-hidden="true"><i class="pi pi-sparkles"></i></span>
+    <span class="welcome-icon" aria-hidden="true"
+      ><i class="pi pi-sparkles"></i
+    ></span>
   </section>
 
-  @if (currentUser.role === 'STUDENT') {
+  @if (currentUser.role === "STUDENT") {
     <p-card header="وضعیت کارآموزی">
       <div class="internship-state">
-        <span class="state-icon"><i class="pi pi-file-check" aria-hidden="true"></i></span>
+        <span class="state-icon"
+          ><i class="pi pi-file-check" aria-hidden="true"></i
+        ></span>
         <div>
           <span>وضعیت فعلی</span>
           @if (statusLoading()) {
@@ -29,63 +35,105 @@
       </div>
     </p-card>
     @if (internshipCase(); as item) {
-      @if (item.status === 'ACTIVE') {
+      @if (item.status === "ACTIVE") {
         <p-card header="پیشرفت کارآموزی">
           <div class="progress-grid">
             <a routerLink="/student/weekly-reports">
-              <i class="pi pi-file-edit"></i><span>گزارش‌های ثبت‌شده</span><strong>{{ item.weeklyReportCount }} از ۸</strong>
+              <i class="pi pi-file-edit"></i><span>گزارش‌های ثبت‌شده</span
+              ><strong>{{ item.weeklyReportCount | persianDigits }} از ۸</strong>
             </a>
             <a routerLink="/student/weekly-reports">
-              <i class="pi pi-check-circle"></i><span>گزارش‌های تأییدشده</span><strong>{{ item.confirmedReportCount }} از ۸</strong>
+              <i class="pi pi-check-circle"></i><span>گزارش‌های تأییدشده</span
+              ><strong>{{ item.confirmedReportCount | persianDigits }} از ۸</strong>
             </a>
             <a routerLink="/student/final-report">
-              <i class="pi pi-file-pdf"></i><span>گزارش نهایی</span><strong>{{ item.finalReport ? 'ثبت شده' : 'ثبت نشده' }}</strong>
+              <i class="pi pi-file-pdf"></i><span>گزارش نهایی</span
+              ><strong>{{ item.finalReport ? "ثبت شده" : "ثبت نشده" }}</strong>
             </a>
           </div>
         </p-card>
-      } @else if (item.status === 'COMPLETED') {
+      } @else if (item.status === "COMPLETED") {
         <p-card header="نتیجه نهایی کارآموزی">
           <div class="detail-grid">
-            <div class="detail"><span>وضعیت</span><strong>تکمیل شده</strong></div>
-            <div class="detail"><span>نتیجه نهایی</span><strong>{{ finalResultLabel(item) }}</strong></div>
-            <div class="detail full-width"><span>نظر استاد</span><strong>{{ item.professorComment || '—' }}</strong></div>
+            <div class="detail">
+              <span>وضعیت</span><strong>تکمیل شده</strong>
+            </div>
+            <div class="detail">
+              <span>نتیجه نهایی</span
+              ><strong>{{ finalResultLabel(item) }}</strong>
+            </div>
+            <div class="detail full-width">
+              <span>نظر استاد</span
+              ><strong>{{ item.professorComment || "—" }}</strong>
+            </div>
           </div>
         </p-card>
       }
     }
   } @else {
     <p-card header="نمای کلی">
-      @if (currentUser.role === 'COMPANY_SUPERVISOR') {
+      @if (currentUser.role === "COMPANY_SUPERVISOR") {
         <div class="placeholder">
           <i class="pi pi-briefcase" aria-hidden="true"></i>
-          <div>
+          <div class="more-info-card">
             <h2>پرونده‌های کارآموزی</h2>
-            <p>گزارش‌های هفتگی کارآموزان فعال و ارزیابی نهایی را در پرونده هر دانشجو بررسی کنید.</p>
-            <p-button label="مشاهده پرونده‌ها" icon="pi pi-arrow-left" iconPos="right" routerLink="/company/internships" />
+            <p>
+              گزارش‌های هفتگی کارآموزان فعال و ارزیابی نهایی را در پرونده هر
+              دانشجو بررسی کنید.
+            </p>
+            <p-button
+              label="مشاهده پرونده‌ها"
+              icon="pi pi-arrow-left"
+              iconPos="right"
+              routerLink="/company/internships"
+            />
           </div>
         </div>
-      } @else if (currentUser.role === 'PROFESSOR') {
+      } @else if (currentUser.role === "PROFESSOR") {
         <div class="placeholder">
           <i class="pi pi-users" aria-hidden="true"></i>
-          <div>
+          <div class="more-info-card">
             <h2>دانشجویان کارآموز</h2>
-            <p>پرونده‌ها، گزارش‌ها و مدارک دانشجویان تحت راهنمایی خود را بررسی کنید.</p>
-            <p-button label="مشاهده پرونده‌ها" icon="pi pi-arrow-left" iconPos="right" routerLink="/professor/internships" />
+            <p>
+              پرونده‌ها، گزارش‌ها و مدارک دانشجویان تحت راهنمایی خود را بررسی
+              کنید.
+            </p>
+            <p-button
+              label="مشاهده پرونده‌ها"
+              icon="pi pi-arrow-left"
+              iconPos="right"
+              routerLink="/professor/internships"
+            />
           </div>
         </div>
-      } @else if (currentUser.role === 'UNIVERSITY_SUPERVISOR') {
+      } @else if (currentUser.role === "UNIVERSITY_SUPERVISOR") {
         <div class="placeholder">
           <i class="pi pi-file-check" aria-hidden="true"></i>
-          <div>
+          <div class="more-info-card">
             <h2>مدیریت فرایند کارآموزی</h2>
-            <p>درخواست‌ها، مراحل تأیید و پرونده‌های فعال یا تکمیل‌شده را پیگیری کنید.</p>
-            <p-button label="مشاهده درخواست‌ها" icon="pi pi-arrow-left" iconPos="right" routerLink="/university/applications" />
+            <p>
+              درخواست‌ها، مراحل تأیید و پرونده‌های فعال یا تکمیل‌شده را پیگیری
+              کنید.
+            </p>
+            <p-button
+              class="button-more-info"
+              label="مشاهده درخواست‌ها"
+              icon="pi pi-arrow-left"
+              iconPos="right"
+              routerLink="/university/applications"
+            />
           </div>
         </div>
       } @else {
         <div class="placeholder">
           <i class="pi pi-shield" aria-hidden="true"></i>
-          <div><h2>داشبورد مدیر سامانه</h2><p>این نسخه برای نقش مدیر، داشبوردی ساده و بدون دسترسی تغییر فرایند ارائه می‌کند.</p></div>
+          <div>
+            <h2>داشبورد مدیر سامانه</h2>
+            <p>
+              این نسخه برای نقش مدیر، داشبوردی ساده و بدون دسترسی تغییر فرایند
+              ارائه می‌کند.
+            </p>
+          </div>
         </div>
       }
     </p-card>

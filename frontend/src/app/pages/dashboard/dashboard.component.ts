@@ -13,10 +13,11 @@ import {
   professorFinalResultLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
+import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink, ButtonModule, CardModule, TagModule],
+  imports: [RouterLink, ButtonModule, CardModule, TagModule, PersianDigitsPipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })

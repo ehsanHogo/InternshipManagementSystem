@@ -21,7 +21,7 @@
       <p-card>
         <ng-template #header>
           <div class="report-header">
-            <strong>هفته {{ report.weekNumber }}</strong>
+            <strong>هفته {{ report.weekNumber | persianDigits }}</strong>
             <p-tag [value]="report.isConfirmed ? 'تأیید شده' : 'در انتظار تأیید'" [severity]="report.isConfirmed ? 'success' : 'warn'" />
           </div>
         </ng-template>

@@ -1,28 +1,53 @@
 <p-confirmDialog [baseZIndex]="1300" [style]="{ width: 'min(92vw, 32rem)' }" />
 
 @if (loading()) {
-  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده...</span></div>
+  <div class="state-card">
+    <span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده...</span>
+  </div>
 } @else if (internshipCase(); as item) {
   <section class="page-heading">
     <div>
-      <span class="eyebrow">بررسی پرونده شماره {{ item.id }}</span>
+      <span class="eyebrow">بررسی پرونده شماره {{ item.id | persianDigits }}</span>
       <h1>{{ item.student.fullName }}</h1>
-      <p>{{ item.student.studentNumber ?? '—' }} · {{ item.student.major ?? '—' }}</p>
+      <p>
+        {{ item.student.studentNumber ?? "—" }} ·
+        {{ item.student.major ?? "—" }}
+      </p>
     </div>
     <div class="heading-actions">
       <p-tag [value]="statusLabel(item.status)" severity="info" />
-      <p-button label="بازگشت" icon="pi pi-arrow-right" severity="secondary" [text]="true" routerLink="/university/applications" />
+      <p-button
+        label="بازگشت"
+        icon="pi pi-arrow-right"
+        severity="secondary"
+        [text]="true"
+        routerLink="/university/applications"
+      />
     </div>
   </section>
 
   <p-card header="اطلاعات دانشجو و استاد">
     <div class="detail-grid">
-      <div class="detail"><span>نام دانشجو</span><strong>{{ item.student.fullName }}</strong></div>
-      <div class="detail"><span>شماره دانشجویی</span><strong>{{ item.student.studentNumber ?? '—' }}</strong></div>
-      <div class="detail"><span>رشته</span><strong>{{ item.student.major ?? '—' }}</strong></div>
-      <div class="detail"><span>استاد</span><strong>{{ item.professor.fullName }}</strong></div>
-      <div class="detail"><span>واحد گذرانده</span><strong>{{ item.passedCredits ?? '—' }}</strong></div>
-      <div class="detail"><span>شماره موبایل</span><strong dir="ltr">{{ item.mobile ?? '—' }}</strong></div>
+      <div class="detail">
+        <span>نام دانشجو</span><strong>{{ item.student.fullName }}</strong>
+      </div>
+      <div class="detail">
+        <span>شماره دانشجویی</span
+        ><strong>{{ item.student.studentNumber ?? "—" }}</strong>
+      </div>
+      <div class="detail">
+        <span>رشته</span><strong>{{ item.student.major ?? "—" }}</strong>
+      </div>
+      <div class="detail">
+        <span>استاد</span><strong>{{ item.professor.fullName }}</strong>
+      </div>
+      <div class="detail">
+        <span>واحد گذرانده</span
+        ><strong>{{ item.passedCredits | persianDigits }}</strong>
+      </div>
+      <div class="detail">
+        <span>شماره موبایل</span><strong>{{ item.mobile ?? "—" }}</strong>
+      </div>
     </div>
   </p-card>
 
@@ -31,20 +56,42 @@
       @for (preference of item.preferences; track preference.id) {
         <label
           class="preference-item"
-          [class.selected]="(item.status === 'PENDING_UNIVERSITY_APPROVAL' && reviewForm.controls.preferenceId.value === preference.id) || item.selectedPreferenceId === preference.id"
+          [class.selected]="
+            (item.status === 'PENDING_UNIVERSITY_APPROVAL' &&
+              reviewForm.controls.preferenceId.value === preference.id) ||
+            item.selectedPreferenceId === preference.id
+          "
         >
-          @if (item.status === 'PENDING_UNIVERSITY_APPROVAL') {
-            <input type="radio" name="preference" [checked]="reviewForm.controls.preferenceId.value === preference.id" (change)="selectPreference(preference.id)" />
+          @if (item.status === "PENDING_UNIVERSITY_APPROVAL") {
+            <input
+              type="radio"
+              name="preference"
+              [checked]="
+                reviewForm.controls.preferenceId.value === preference.id
+              "
+              (change)="selectPreference(preference.id)"
+            />
           } @else {
-            <i class="pi" [class.pi-check-circle]="item.selectedPreferenceId === preference.id" [class.pi-circle]="item.selectedPreferenceId !== preference.id"></i>
+            <i
+              class="pi"
+              [class.pi-check-circle]="
+                item.selectedPreferenceId === preference.id
+              "
+              [class.pi-circle]="item.selectedPreferenceId !== preference.id"
+            ></i>
           }
           <div>
-            <strong>اولویت {{ preference.priority }} — {{ preferenceName(preference) }}</strong>
+            <strong
+              >اولویت {{ preference.priority | persianDigits }} —
+              {{ preferenceName(preference) }}</strong
+            >
             <span>{{ preference.city }} · {{ preference.workField }}</span>
             @if (!preference.companyId) {
               <div class="notice">
-                این شرکت توسط دانشجو پیشنهاد شده و هنوز در فهرست شرکت‌های مورد تأیید دانشگاه ثبت نشده است.<br />
-                در صورت تأیید پذیرش دانشجو توسط شرکت، شرکت به فهرست شرکت‌های تأییدشده اضافه خواهد شد.
+                این شرکت توسط دانشجو پیشنهاد شده و هنوز در فهرست شرکت‌های مورد
+                تأیید دانشگاه ثبت نشده است.<br />
+                در صورت تأیید پذیرش دانشجو توسط شرکت، شرکت به فهرست شرکت‌های
+                تأییدشده اضافه خواهد شد.
               </div>
             }
           </div>
@@ -53,9 +100,13 @@
     </div>
   </p-card>
 
-  @if (item.status === 'PENDING_UNIVERSITY_APPROVAL') {
+  @if (item.status === "PENDING_UNIVERSITY_APPROVAL") {
     <p-card header="ارسال برای تأیید شرکت">
-      <form class="form-grid" [formGroup]="reviewForm" (ngSubmit)="confirmSendToCompany()">
+      <form
+        class="form-grid"
+        [formGroup]="reviewForm"
+        (ngSubmit)="confirmSendToCompany()"
+      >
         <label class="field">
           <span>شماره نامه معرفی <b>*</b></span>
           <input pInputText formControlName="letterNumber" />
@@ -66,11 +117,23 @@
         </label>
         <label class="field full-width">
           <span>سرپرست شرکت <b>*</b></span>
-          <p-select formControlName="companySupervisorId" [options]="supervisors()" optionLabel="fullName" optionValue="id" placeholder="انتخاب سرپرست شرکت" appendTo="body" />
+          <p-select
+            formControlName="companySupervisorId"
+            [options]="supervisors()"
+            optionLabel="fullName"
+            optionValue="id"
+            placeholder="انتخاب سرپرست شرکت"
+            appendTo="body"
+          />
         </label>
       </form>
       <div class="card-actions">
-        <p-button label="ارسال برای تأیید شرکت" icon="pi pi-send" [loading]="saving()" (onClick)="confirmSendToCompany()" />
+        <p-button
+          label="ارسال برای تأیید شرکت"
+          icon="pi pi-send"
+          [loading]="saving()"
+          (onClick)="confirmSendToCompany()"
+        />
       </div>
     </p-card>
   }
@@ -78,10 +141,25 @@
   @if (item.letterNumber || item.companySupervisor || item.selectedPreference) {
     <p-card header="نامه معرفی و سرپرست شرکت">
       <div class="detail-grid">
-        <div class="detail"><span>شماره نامه</span><strong>{{ item.letterNumber }}</strong></div>
-        <div class="detail"><span>تاریخ نامه</span><strong>{{ item.letterDate | jalaliDate }}</strong></div>
-        <div class="detail"><span>سرپرست شرکت</span><strong>{{ item.companySupervisor?.fullName ?? '—' }}</strong></div>
-        <div class="detail"><span>محل انتخاب‌شده</span><strong>{{ item.selectedPreference ? preferenceName(item.selectedPreference) : '—' }}</strong></div>
+        <div class="detail">
+          <span>شماره نامه</span><strong>{{ item.letterNumber }}</strong>
+        </div>
+        <div class="detail">
+          <span>تاریخ نامه</span
+          ><strong>{{ item.letterDate | jalaliDate }}</strong>
+        </div>
+        <div class="detail">
+          <span>سرپرست شرکت</span
+          ><strong>{{ item.companySupervisor?.fullName ?? "—" }}</strong>
+        </div>
+        <div class="detail">
+          <span>محل انتخاب‌شده</span
+          ><strong>{{
+            item.selectedPreference
+              ? preferenceName(item.selectedPreference)
+              : "—"
+          }}</strong>
+        </div>
       </div>
     </p-card>
   }
@@ -89,30 +167,59 @@
   @if (item.companyConfirmedAt) {
     <p-card header="اطلاعات تأییدشده توسط شرکت">
       <div class="detail-grid">
-        <div class="detail"><span>موضوع کارآموزی</span><strong>{{ item.internshipSubject }}</strong></div>
-        <div class="detail"><span>تاریخ شروع</span><strong>{{ item.startDate | jalaliDate }}</strong></div>
-        <div class="detail"><span>آدرس محل کارآموزی</span><strong>{{ item.workplaceAddress }}</strong></div>
-        <div class="detail"><span>تلفن محل کارآموزی</span><strong dir="ltr">{{ item.workplacePhone }}</strong></div>
-        <div class="detail"><span>زمان تأیید شرکت</span><strong>{{ item.companyConfirmedAt | jalaliDate: true }}</strong></div>
+        <div class="detail">
+          <span>موضوع کارآموزی</span
+          ><strong>{{ item.internshipSubject }}</strong>
+        </div>
+        <div class="detail">
+          <span>تاریخ شروع</span
+          ><strong>{{ item.startDate | jalaliDate }}</strong>
+        </div>
+        <div class="detail">
+          <span>آدرس محل کارآموزی</span
+          ><strong>{{ item.workplaceAddress }}</strong>
+        </div>
+        <div class="detail">
+          <span>تلفن محل کارآموزی</span
+          ><strong>{{ item.workplacePhone }}</strong>
+        </div>
+        <div class="detail">
+          <span>زمان تأیید شرکت</span
+          ><strong>{{ item.companyConfirmedAt | jalaliDate: true }}</strong>
+        </div>
       </div>
-      @if (item.status === 'COMPANY_APPROVED') {
+      @if (item.status === "COMPANY_APPROVED") {
         <div class="card-actions">
-          <p-button label="تأیید نهایی آموزش" icon="pi pi-check-circle" [loading]="saving()" (onClick)="confirmApprove()" />
+          <p-button
+            label="تأیید نهایی آموزش"
+            icon="pi pi-check-circle"
+            [loading]="saving()"
+            (onClick)="confirmApprove()"
+          />
         </div>
       }
     </p-card>
   }
 
-  @if (item.status === 'UNIVERSITY_APPROVED') {
+  @if (item.status === "UNIVERSITY_APPROVED") {
     <p-card header="فعال‌سازی کارآموزی">
-      <p class="muted">تمام تأییدهای لازم انجام شده است. در این مرحله می‌توانید کارآموزی را فعال کنید.</p>
+      <p class="muted">
+        تمام تأییدهای لازم انجام شده است. در این مرحله می‌توانید کارآموزی را
+        فعال کنید.
+      </p>
       <div class="card-actions">
-        <p-button label="فعال‌سازی کارآموزی" icon="pi pi-play" severity="success" [loading]="saving()" (onClick)="confirmActivate()" />
+        <p-button
+          label="فعال‌سازی کارآموزی"
+          icon="pi pi-play"
+          severity="success"
+          [loading]="saving()"
+          (onClick)="confirmActivate()"
+        />
       </div>
     </p-card>
   }
 
-  @if (item.status === 'ACTIVE' || item.status === 'COMPLETED') {
+  @if (item.status === "ACTIVE" || item.status === "COMPLETED") {
     <p-card header="گزارش‌های هفتگی">
       @if (item.weeklyReports.length === 0) {
         <p class="muted">هنوز گزارش هفتگی ثبت نشده است.</p>
@@ -121,12 +228,22 @@
           @for (report of item.weeklyReports; track report.id) {
             <div class="detail">
               <div class="status-line">
-                <strong>هفته {{ report.weekNumber }}</strong>
-                <p-tag [value]="report.isConfirmed ? 'تأیید شده' : 'در انتظار تأیید'" [severity]="report.isConfirmed ? 'success' : 'warn'" />
+                <strong>هفته {{ report.weekNumber | persianDigits }}</strong>
+                <p-tag
+                  [value]="report.isConfirmed ? 'تأیید شده' : 'در انتظار تأیید'"
+                  [severity]="report.isConfirmed ? 'success' : 'warn'"
+                />
               </div>
-              <span>{{ report.startDate | jalaliDate }} تا {{ report.endDate | jalaliDate }}</span>
-              <p style="white-space: pre-wrap; line-height: 1.9">{{ report.activityDescription }}</p>
-              @if (report.supervisorComment) { <span>نظر سرپرست شرکت: {{ report.supervisorComment }}</span> }
+              <span
+                >{{ report.startDate | jalaliDate }} تا
+                {{ report.endDate | jalaliDate }}</span
+              >
+              <p style="white-space: pre-wrap; line-height: 1.9">
+                {{ report.activityDescription }}
+              </p>
+              @if (report.supervisorComment) {
+                <span>نظر سرپرست شرکت: {{ report.supervisorComment }}</span>
+              }
             </div>
           }
         </div>
@@ -136,33 +253,78 @@
     <p-card header="ارزیابی سرپرست شرکت">
       @if (item.companyEvaluation; as evaluation) {
         <div class="detail-grid">
-          @for (criterion of criteria; track criterion.key) { <div class="detail"><span>{{ criterion.label }}</span><strong>{{ ratingLabel(evaluation[criterion.key]) }}</strong></div> }
-          <div class="detail"><span>تعداد روزهای مرخصی</span><strong>{{ evaluation.leaveDays }}</strong></div>
-          <div class="detail"><span>تعداد روزهای غیبت</span><strong>{{ evaluation.absenceDays }}</strong></div>
-          <div class="detail"><span>نام سرپرست شرکت</span><strong>{{ item.companySupervisor?.fullName ?? '—' }}</strong></div>
-          <div class="detail"><span>تاریخ ثبت</span><strong>{{ evaluation.submittedAt | jalaliDate }}</strong></div>
-          <div class="detail full-width"><span>پیشنهادها و توضیحات</span><strong>{{ evaluation.suggestions || '—' }}</strong></div>
+          @for (criterion of criteria; track criterion.key) {
+            <div class="detail">
+              <span>{{ criterion.label }}</span
+              ><strong>{{ ratingLabel(evaluation[criterion.key]) }}</strong>
+            </div>
+          }
+          <div class="detail">
+            <span>تعداد روزهای مرخصی</span
+            ><strong>{{ evaluation.leaveDays | persianDigits }}</strong>
+          </div>
+          <div class="detail">
+            <span>تعداد روزهای غیبت</span
+            ><strong>{{ evaluation.absenceDays | persianDigits }}</strong>
+          </div>
+          <div class="detail">
+            <span>نام سرپرست شرکت</span
+            ><strong>{{ item.companySupervisor?.fullName ?? "—" }}</strong>
+          </div>
+          <div class="detail">
+            <span>تاریخ ثبت</span
+            ><strong>{{ evaluation.submittedAt | jalaliDate }}</strong>
+          </div>
+          <div class="detail full-width">
+            <span>پیشنهادها و توضیحات</span
+            ><strong>{{ evaluation.suggestions || "—" }}</strong>
+          </div>
         </div>
-      } @else { <p class="muted">ارزیابی شرکت هنوز ثبت نشده است.</p> }
+      } @else {
+        <p class="muted">ارزیابی شرکت هنوز ثبت نشده است.</p>
+      }
     </p-card>
 
     <p-card header="گزارش نهایی کارآموزی">
       @if (item.finalReport; as report) {
         <div class="detail-grid">
-          <div class="detail"><span>نام فایل</span><strong>{{ report.originalName }}</strong></div>
-          <div class="detail"><span>تاریخ بارگذاری</span><strong>{{ report.uploadedAt | jalaliDate }}</strong></div>
+          <div class="detail">
+            <span>نام فایل</span><strong>{{ report.originalName }}</strong>
+          </div>
+          <div class="detail">
+            <span>تاریخ بارگذاری</span
+            ><strong>{{ report.uploadedAt | jalaliDate }}</strong>
+          </div>
         </div>
-        <div class="card-actions"><p-button label="دانلود گزارش" icon="pi pi-download" [loading]="downloading()" (onClick)="downloadFinalReport()" /></div>
-      } @else { <p class="muted">گزارش نهایی هنوز بارگذاری نشده است.</p> }
+        <div class="card-actions">
+          <p-button
+            label="دانلود گزارش"
+            icon="pi pi-download"
+            [loading]="downloading()"
+            (onClick)="downloadFinalReport()"
+          />
+        </div>
+      } @else {
+        <p class="muted">گزارش نهایی هنوز بارگذاری نشده است.</p>
+      }
     </p-card>
   }
 
-  @if (item.status === 'COMPLETED') {
+  @if (item.status === "COMPLETED") {
     <p-card header="نتیجه نهایی استاد">
       <div class="detail-grid">
-        <div class="detail"><span>نتیجه نهایی</span><strong>{{ finalResultLabel(item.finalResult) }}</strong></div>
-        <div class="detail"><span>تاریخ تکمیل پرونده</span><strong>{{ item.completedAt | jalaliDate }}</strong></div>
-        <div class="detail full-width"><span>نظر استاد</span><strong>{{ item.professorComment || '—' }}</strong></div>
+        <div class="detail">
+          <span>نتیجه نهایی</span
+          ><strong>{{ finalResultLabel(item.finalResult) }}</strong>
+        </div>
+        <div class="detail">
+          <span>تاریخ تکمیل پرونده</span
+          ><strong>{{ item.completedAt | jalaliDate }}</strong>
+        </div>
+        <div class="detail full-width">
+          <span>نظر استاد</span
+          ><strong>{{ item.professorComment || "—" }}</strong>
+        </div>
       </div>
     </p-card>
   }

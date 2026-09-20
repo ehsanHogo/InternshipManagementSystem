@@ -1,42 +1,86 @@
 <p-confirmDialog [baseZIndex]="1300" [style]="{ width: 'min(92vw, 32rem)' }" />
 
 @if (loading()) {
-  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده...</span></div>
+  <div class="state-card">
+    <span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده...</span>
+  </div>
 } @else if (internshipCase(); as item) {
   <section class="page-heading">
     <div>
-      <span class="eyebrow">پرونده کارآموزی شماره {{ item.id }}</span>
+      <span class="eyebrow">پرونده کارآموزی شماره {{ item.id | persianDigits }}</span>
       <h1>{{ item.student.fullName }}</h1>
-      <p>{{ item.student.studentNumber ?? '—' }} · {{ item.student.major ?? '—' }}</p>
+      <p>
+        {{ item.student.studentNumber ?? "—" }} ·
+        {{ item.student.major ?? "—" }}
+      </p>
     </div>
     <div class="heading-actions">
       <p-tag [value]="statusLabel(item.status)" severity="info" />
-      <p-button label="بازگشت" icon="pi pi-arrow-right" severity="secondary" [text]="true" routerLink="/company/internships" />
+      <p-button
+        label="بازگشت"
+        icon="pi pi-arrow-right"
+        severity="secondary"
+        [text]="true"
+        routerLink="/company/internships"
+      />
     </div>
   </section>
 
   <p-card header="اطلاعات دانشجو و استاد">
     <div class="detail-grid">
-      <div class="detail"><span>نام دانشجو</span><strong>{{ item.student.fullName }}</strong></div>
-      <div class="detail"><span>شماره دانشجویی</span><strong>{{ item.student.studentNumber ?? '—' }}</strong></div>
-      <div class="detail"><span>رشته</span><strong>{{ item.student.major ?? '—' }}</strong></div>
-      <div class="detail"><span>استاد</span><strong>{{ item.professor.fullName }}</strong></div>
-      <div class="detail"><span>شماره موبایل</span><strong dir="ltr">{{ item.mobile ?? '—' }}</strong></div>
+      <div class="detail">
+        <span>نام دانشجو</span><strong>{{ item.student.fullName }}</strong>
+      </div>
+      <div class="detail">
+        <span>شماره دانشجویی</span
+        ><strong>{{ item.student.studentNumber ?? "—" }}</strong>
+      </div>
+      <div class="detail">
+        <span>رشته</span><strong>{{ item.student.major ?? "—" }}</strong>
+      </div>
+      <div class="detail">
+        <span>استاد</span><strong>{{ item.professor.fullName }}</strong>
+      </div>
+      <div class="detail">
+        <span>شماره موبایل</span><strong>{{ item.mobile ?? "—" }}</strong>
+      </div>
     </div>
   </p-card>
 
   <p-card header="شرکت و نامه معرفی">
     <div class="detail-grid">
-      <div class="detail"><span>شرکت / محل پیشنهادی</span><strong>{{ preferenceName(item.selectedPreference) }}</strong></div>
-      <div class="detail"><span>نوع شرکت</span><strong>{{ item.selectedPreference?.companyId ? 'مورد تأیید دانشگاه' : 'پیشنهادی دانشجو' }}</strong></div>
-      <div class="detail"><span>شهر</span><strong>{{ item.selectedPreference?.city ?? '—' }}</strong></div>
-      <div class="detail"><span>زمینه فعالیت</span><strong>{{ item.selectedPreference?.workField ?? '—' }}</strong></div>
-      <div class="detail"><span>شماره نامه معرفی</span><strong>{{ item.letterNumber ?? '—' }}</strong></div>
-      <div class="detail"><span>تاریخ نامه</span><strong>{{ item.letterDate | jalaliDate }}</strong></div>
+      <div class="detail">
+        <span>شرکت / محل پیشنهادی</span
+        ><strong>{{ preferenceName(item.selectedPreference) }}</strong>
+      </div>
+      <div class="detail">
+        <span>نوع شرکت</span
+        ><strong>{{
+          item.selectedPreference?.companyId
+            ? "مورد تأیید دانشگاه"
+            : "پیشنهادی دانشجو"
+        }}</strong>
+      </div>
+      <div class="detail">
+        <span>شهر</span
+        ><strong>{{ item.selectedPreference?.city ?? "—" }}</strong>
+      </div>
+      <div class="detail">
+        <span>زمینه فعالیت</span
+        ><strong>{{ item.selectedPreference?.workField ?? "—" }}</strong>
+      </div>
+      <div class="detail">
+        <span>شماره نامه معرفی</span
+        ><strong>{{ item.letterNumber ?? "—" }}</strong>
+      </div>
+      <div class="detail">
+        <span>تاریخ نامه</span
+        ><strong>{{ item.letterDate | jalaliDate }}</strong>
+      </div>
     </div>
   </p-card>
 
-  @if (item.status === 'PENDING_COMPANY_APPROVAL') {
+  @if (item.status === "PENDING_COMPANY_APPROVAL") {
     <p-card header="تأیید پذیرش دانشجو">
       <form class="form-grid" [formGroup]="confirmationForm">
         <label class="field full-width">
@@ -57,21 +101,38 @@
         </label>
       </form>
       <div class="card-actions">
-        <p-button label="تأیید پذیرش دانشجو" icon="pi pi-check" [loading]="saving()" (onClick)="confirmSubmission()" />
+        <p-button
+          label="تأیید پذیرش دانشجو"
+          icon="pi pi-check"
+          [loading]="saving()"
+          (onClick)="confirmSubmission()"
+        />
       </div>
     </p-card>
   } @else {
     <p-card header="اطلاعات تأییدشده محل کارآموزی">
       <div class="detail-grid">
-        <div class="detail"><span>موضوع کارآموزی</span><strong>{{ item.internshipSubject ?? '—' }}</strong></div>
-        <div class="detail"><span>تاریخ شروع</span><strong>{{ item.startDate | jalaliDate }}</strong></div>
-        <div class="detail"><span>آدرس محل کارآموزی</span><strong>{{ item.workplaceAddress ?? '—' }}</strong></div>
-        <div class="detail"><span>تلفن محل کارآموزی</span><strong dir="ltr">{{ item.workplacePhone ?? '—' }}</strong></div>
+        <div class="detail">
+          <span>موضوع کارآموزی</span
+          ><strong>{{ item.internshipSubject ?? "—" }}</strong>
+        </div>
+        <div class="detail">
+          <span>تاریخ شروع</span
+          ><strong>{{ item.startDate | jalaliDate }}</strong>
+        </div>
+        <div class="detail">
+          <span>آدرس محل کارآموزی</span
+          ><strong>{{ item.workplaceAddress ?? "—" }}</strong>
+        </div>
+        <div class="detail">
+          <span>تلفن محل کارآموزی</span
+          ><strong>{{ item.workplacePhone ?? "—" }}</strong>
+        </div>
       </div>
     </p-card>
   }
 
-  @if (item.status === 'ACTIVE' || item.status === 'COMPLETED') {
+  @if (item.status === "ACTIVE" || item.status === "COMPLETED") {
     <p-card header="گزارش‌های هفتگی">
       @if (reportsLoading()) {
         <p class="muted">در حال دریافت گزارش‌ها...</p>
@@ -82,14 +143,30 @@
           @for (report of reports(); track report.id) {
             <div class="detail">
               <div class="status-line">
-                <strong>هفته {{ report.weekNumber }}</strong>
-                <p-tag [value]="report.isConfirmed ? 'تأیید شده' : 'در انتظار تأیید'" [severity]="report.isConfirmed ? 'success' : 'warn'" />
+                <strong>هفته {{ report.weekNumber | persianDigits }}</strong>
+                <p-tag
+                  [value]="report.isConfirmed ? 'تأیید شده' : 'در انتظار تأیید'"
+                  [severity]="report.isConfirmed ? 'success' : 'warn'"
+                />
               </div>
-              <span>{{ report.startDate | jalaliDate }} تا {{ report.endDate | jalaliDate }}</span>
-              <p style="white-space: pre-wrap; line-height: 1.9">{{ report.activityDescription }}</p>
-              @if (report.supervisorComment) { <span>نظر سرپرست: {{ report.supervisorComment }}</span> }
-              @if (item.status === 'ACTIVE' && !report.isConfirmed) {
-                <div class="card-actions"><p-button label="تأیید گزارش" icon="pi pi-check" (onClick)="openReportConfirmation(report)" /></div>
+              <span
+                >{{ report.startDate | jalaliDate }} تا
+                {{ report.endDate | jalaliDate }}</span
+              >
+              <p style="white-space: pre-wrap; line-height: 1.9">
+                {{ report.activityDescription }}
+              </p>
+              @if (report.supervisorComment) {
+                <span>نظر سرپرست: {{ report.supervisorComment }}</span>
+              }
+              @if (item.status === "ACTIVE" && !report.isConfirmed) {
+                <div class="card-actions">
+                  <p-button
+                    label="تأیید گزارش"
+                    icon="pi pi-check"
+                    (onClick)="openReportConfirmation(report)"
+                  />
+                </div>
               }
             </div>
           }
@@ -103,32 +180,91 @@
       } @else if (evaluation(); as submittedEvaluation) {
         <div class="detail-grid">
           @for (criterion of criteria; track criterion.key) {
-            <div class="detail"><span>{{ criterion.label }}</span><strong>{{ ratingLabel(submittedEvaluation[criterion.key]) }}</strong></div>
+            <div class="detail">
+              <span>{{ criterion.label }}</span
+              ><strong>{{
+                ratingLabel(submittedEvaluation[criterion.key])
+              }}</strong>
+            </div>
           }
-          <div class="detail"><span>تعداد روزهای مرخصی</span><strong>{{ submittedEvaluation.leaveDays }}</strong></div>
-          <div class="detail"><span>تعداد روزهای غیبت</span><strong>{{ submittedEvaluation.absenceDays }}</strong></div>
-          <div class="detail full-width"><span>پیشنهادها و توضیحات</span><strong>{{ submittedEvaluation.suggestions || '—' }}</strong></div>
+          <div class="detail">
+            <span>تعداد روزهای مرخصی</span
+            ><strong>{{ submittedEvaluation.leaveDays | persianDigits }}</strong>
+          </div>
+          <div class="detail">
+            <span>تعداد روزهای غیبت</span
+            ><strong>{{ submittedEvaluation.absenceDays | persianDigits }}</strong>
+          </div>
+          <div class="detail full-width">
+            <span>پیشنهادها و توضیحات</span
+            ><strong>{{ submittedEvaluation.suggestions || "—" }}</strong>
+          </div>
         </div>
       } @else {
         <div class="detail-grid">
-          <div class="detail"><span>گزارش‌های ثبت‌شده</span><strong>{{ reports().length }} از ۸</strong></div>
-          <div class="detail"><span>گزارش‌های تأییدشده</span><strong>{{ confirmedReportCount() }} از ۸</strong></div>
+          <div class="detail">
+            <span>گزارش‌های ثبت‌شده</span
+            ><strong>{{ reports().length | persianDigits }} از ۸</strong>
+          </div>
+          <div class="detail">
+            <span>گزارش‌های تأییدشده</span
+            ><strong>{{ confirmedReportCount() | persianDigits }} از ۸</strong>
+          </div>
         </div>
-        @if (item.status === 'ACTIVE' && !canSubmitEvaluation()) {
-          <div class="notice">ارزیابی نهایی پس از ثبت و تأیید هر ۸ گزارش هفتگی فعال خواهد شد.</div>
-        } @else if (item.status === 'ACTIVE') {
-          <form class="form-grid" [formGroup]="evaluationForm" style="margin-top: 1rem">
+        @if (item.status === "ACTIVE" && !canSubmitEvaluation()) {
+          <div class="notice">
+            ارزیابی نهایی پس از ثبت و تأیید هر ۸ گزارش هفتگی فعال خواهد شد.
+          </div>
+        } @else if (item.status === "ACTIVE") {
+          <form
+            class="form-grid"
+            [formGroup]="evaluationForm"
+            style="margin-top: 1rem"
+          >
             @for (criterion of criteria; track criterion.key) {
               <label class="field">
                 <span>{{ criterion.label }} <b>*</b></span>
-                <p-select [formControlName]="criterion.key" [options]="ratingOptions" optionLabel="label" optionValue="value" placeholder="انتخاب کنید" appendTo="body" />
+                <p-select
+                  [formControlName]="criterion.key"
+                  [options]="ratingOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="انتخاب کنید"
+                  appendTo="body"
+                />
               </label>
             }
-            <label class="field"><span>تعداد روزهای مرخصی <b>*</b></span><p-inputnumber formControlName="leaveDays" [min]="0" [useGrouping]="false" /></label>
-            <label class="field"><span>تعداد روزهای غیبت <b>*</b></span><p-inputnumber formControlName="absenceDays" [min]="0" [useGrouping]="false" /></label>
-            <label class="field full-width"><span>پیشنهادها و توضیحات</span><textarea pTextarea formControlName="suggestions" rows="5"></textarea></label>
+            <label class="field"
+              ><span>تعداد روزهای مرخصی <b>*</b></span
+              ><p-inputnumber
+                formControlName="leaveDays"
+                [min]="0"
+                [useGrouping]="false"
+            /></label>
+            <label class="field"
+              ><span>تعداد روزهای غیبت <b>*</b></span
+              ><p-inputnumber
+                formControlName="absenceDays"
+                [min]="0"
+                [useGrouping]="false"
+            /></label>
+            <label class="field full-width"
+              ><span>پیشنهادها و توضیحات</span
+              ><textarea
+                pTextarea
+                formControlName="suggestions"
+                rows="5"
+              ></textarea>
+            </label>
           </form>
-          <div class="card-actions"><p-button label="ثبت ارزیابی نهایی" icon="pi pi-check-circle" [loading]="evaluationSaving()" (onClick)="confirmEvaluationSubmission()" /></div>
+          <div class="card-actions">
+            <p-button
+              label="ثبت ارزیابی نهایی"
+              icon="pi pi-check-circle"
+              [loading]="evaluationSaving()"
+              (onClick)="confirmEvaluationSubmission()"
+            />
+          </div>
         }
       }
     </p-card>
@@ -136,33 +272,75 @@
     <p-card header="گزارش نهایی کارآموزی">
       @if (item.finalReport; as report) {
         <div class="detail-grid">
-          <div class="detail"><span>نام فایل</span><strong>{{ report.originalName }}</strong></div>
-          <div class="detail"><span>تاریخ بارگذاری</span><strong>{{ report.uploadedAt | jalaliDate }}</strong></div>
+          <div class="detail">
+            <span>نام فایل</span><strong>{{ report.originalName }}</strong>
+          </div>
+          <div class="detail">
+            <span>تاریخ بارگذاری</span
+            ><strong>{{ report.uploadedAt | jalaliDate }}</strong>
+          </div>
         </div>
-        <div class="card-actions"><p-button label="دانلود گزارش" icon="pi pi-download" [loading]="downloading()" (onClick)="downloadFinalReport()" /></div>
+        <div class="card-actions">
+          <p-button
+            label="دانلود گزارش"
+            icon="pi pi-download"
+            [loading]="downloading()"
+            (onClick)="downloadFinalReport()"
+          />
+        </div>
       } @else {
         <p class="muted">گزارش نهایی هنوز بارگذاری نشده است.</p>
       }
     </p-card>
 
-    @if (item.status === 'COMPLETED') {
+    @if (item.status === "COMPLETED") {
       <p-card header="نتیجه نهایی استاد">
         <div class="detail-grid">
-          <div class="detail"><span>نتیجه نهایی</span><strong>{{ finalResultLabel(item) }}</strong></div>
-          <div class="detail"><span>تاریخ تکمیل پرونده</span><strong>{{ item.completedAt | jalaliDate }}</strong></div>
-          <div class="detail full-width"><span>نظر استاد</span><strong>{{ item.professorComment || '—' }}</strong></div>
+          <div class="detail">
+            <span>نتیجه نهایی</span
+            ><strong>{{ finalResultLabel(item) }}</strong>
+          </div>
+          <div class="detail">
+            <span>تاریخ تکمیل پرونده</span
+            ><strong>{{ item.completedAt | jalaliDate }}</strong>
+          </div>
+          <div class="detail full-width">
+            <span>نظر استاد</span
+            ><strong>{{ item.professorComment || "—" }}</strong>
+          </div>
         </div>
       </p-card>
     }
   }
 }
 
-<p-dialog header="تأیید گزارش هفتگی" [visible]="reportDialogVisible()" (visibleChange)="reportDialogVisible.set($event)" [modal]="true" appendTo="body" [baseZIndex]="1200" [style]="{ width: 'min(92vw, 34rem)' }">
+<p-dialog
+  header="تأیید گزارش هفتگی"
+  [visible]="reportDialogVisible()"
+  (visibleChange)="reportDialogVisible.set($event)"
+  [modal]="true"
+  appendTo="body"
+  [baseZIndex]="1200"
+  [style]="{ width: 'min(92vw, 34rem)' }"
+>
   <form [formGroup]="reportConfirmationForm">
-    <label class="field"><span>نظر سرپرست (اختیاری)</span><textarea pTextarea formControlName="comment" rows="4"></textarea></label>
+    <label class="field"
+      ><span>نظر سرپرست (اختیاری)</span
+      ><textarea pTextarea formControlName="comment" rows="4"></textarea>
+    </label>
   </form>
   <ng-template #footer>
-    <p-button label="انصراف" severity="secondary" [text]="true" (onClick)="reportDialogVisible.set(false)" />
-    <p-button label="تأیید گزارش" icon="pi pi-check" [loading]="confirmingReport()" (onClick)="confirmWeeklyReport()" />
+    <p-button
+      label="انصراف"
+      severity="secondary"
+      [text]="true"
+      (onClick)="reportDialogVisible.set(false)"
+    />
+    <p-button
+      label="تأیید گزارش"
+      icon="pi pi-check"
+      [loading]="confirmingReport()"
+      (onClick)="confirmWeeklyReport()"
+    />
   </ng-template>
 </p-dialog>

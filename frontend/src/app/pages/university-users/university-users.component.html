@@ -48,12 +48,12 @@
 @if (importResult(); as result) {
   <section class="result-section">
     <h2>نتیجه ورود فایل</h2>
-    <p>{{ result.created }} ایجاد شده، {{ result.skipped }} رد شده</p>
+    <p>{{ result.created | persianDigits }} ایجاد شده، {{ result.skipped | persianDigits }} رد شده</p>
     <p-table [value]="result.results" responsiveLayout="scroll">
       <ng-template #header><tr><th>ردیف</th><th>نام</th><th>ایمیل</th><th>وضعیت</th><th>رمز عبور موقت</th><th>پیام</th><th></th></tr></ng-template>
       <ng-template #body let-row>
         <tr>
-          <td>{{ row.row }}</td><td>{{ row.name || '—' }}</td><td dir="ltr">{{ row.email || '—' }}</td>
+          <td>{{ row.row | persianDigits }}</td><td>{{ row.name || '—' }}</td><td dir="ltr">{{ row.email || '—' }}</td>
           <td><p-tag [value]="importStatusLabel(row.status)" [severity]="importStatusSeverity(row.status)" /></td>
           <td dir="ltr">{{ row.temporaryPassword || '—' }}</td><td>{{ row.message || '—' }}</td>
           <td>@if (row.temporaryPassword) { <p-button icon="pi pi-copy" [text]="true" (onClick)="copyImportRow(row.email, row.temporaryPassword)" /> }</td>

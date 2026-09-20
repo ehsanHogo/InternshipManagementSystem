@@ -13,10 +13,11 @@ import { InternshipCase, WeeklyReport } from '../../internship/internship.models
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
+import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 @Component({
   selector: 'app-student-weekly-reports',
-  imports: [ReactiveFormsModule, JalaliDatePickerComponent, JalaliDatePipe, ButtonModule, CardModule, DialogModule, InputNumberModule, TagModule, TextareaModule],
+  imports: [ReactiveFormsModule, JalaliDatePickerComponent, JalaliDatePipe, PersianDigitsPipe, ButtonModule, CardModule, DialogModule, InputNumberModule, TagModule, TextareaModule],
   templateUrl: './student-weekly-reports.component.html',
   styleUrls: ['../workflow-page.scss', './student-weekly-reports.component.scss']
 })

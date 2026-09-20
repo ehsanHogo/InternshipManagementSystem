@@ -25,11 +25,13 @@ import {
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
+import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 @Component({
   selector: 'app-university-case',
   imports: [
     JalaliDatePipe,
+    PersianDigitsPipe,
     JalaliDatePickerComponent,
     ReactiveFormsModule,
     RouterLink,

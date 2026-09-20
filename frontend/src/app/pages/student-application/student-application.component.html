@@ -7,7 +7,10 @@
     <p>اطلاعات درخواست و محل‌های پیشنهادی خود را ثبت کنید.</p>
   </div>
   @if (internshipCase(); as currentCase) {
-    <p-tag [value]="statusLabel(currentCase.status)" [severity]="statusSeverity(currentCase.status)" />
+    <p-tag
+      [value]="statusLabel(currentCase.status)"
+      [severity]="statusSeverity(currentCase.status)"
+    />
   }
 </section>
 
@@ -19,9 +22,14 @@
 } @else if (!internshipCase()) {
   <p-card>
     <div class="empty-state">
-      <span class="empty-icon"><i class="pi pi-file-plus" aria-hidden="true"></i></span>
+      <span class="empty-icon"
+        ><i class="pi pi-file-plus" aria-hidden="true"></i
+      ></span>
       <h2>هنوز درخواست کارآموزی ندارید</h2>
-      <p>برای شروع، یک پیش‌نویس درخواست ایجاد کنید. استاد راهنمای تعیین‌شده به‌صورت خودکار به درخواست اضافه می‌شود.</p>
+      <p>
+        برای شروع، یک پیش‌نویس درخواست ایجاد کنید. استاد راهنمای تعیین‌شده
+        به‌صورت خودکار به درخواست اضافه می‌شود.
+      </p>
       <p-button
         label="ایجاد درخواست کارآموزی"
         icon="pi pi-plus"
@@ -34,36 +42,95 @@
   @if (!isDraft) {
     <div class="review-notice">
       <i class="pi pi-lock" aria-hidden="true"></i>
-      <span>درخواست ثبت نهایی شده است. وضعیت جاری: {{ statusLabel(currentCase.status) }}. امکان ویرایش وجود ندارد.</span>
+      <span
+        >درخواست ثبت نهایی شده است. وضعیت جاری:
+        {{ statusLabel(currentCase.status) }}. امکان ویرایش وجود ندارد.</span
+      >
     </div>
   }
 
   <p-card header="اطلاعات درخواست">
     @if (isDraft) {
       <form class="application-grid" [formGroup]="applicationForm">
-        <label class="field readonly-field"><span>نام دانشجو</span><input pInputText [value]="currentCase.student.fullName" disabled /></label>
-        <label class="field readonly-field"><span>شماره دانشجویی</span><input pInputText [value]="currentCase.student.studentNumber ?? '—'" disabled /></label>
-        <label class="field readonly-field"><span>رشته</span><input pInputText [value]="currentCase.student.major ?? '—'" disabled /></label>
-        <label class="field readonly-field"><span>استاد</span><input pInputText [value]="currentCase.professor.fullName" disabled /></label>
+        <label class="field readonly-field"
+          ><span>نام دانشجو</span
+          ><input pInputText [value]="currentCase.student.fullName" disabled
+        /></label>
+        <label class="field readonly-field"
+          ><span>شماره دانشجویی</span
+          ><input
+            pInputText
+            [value]="currentCase.student.studentNumber ?? '—'"
+            disabled
+        /></label>
+        <label class="field readonly-field"
+          ><span>رشته</span
+          ><input
+            pInputText
+            [value]="currentCase.student.major ?? '—'"
+            disabled
+        /></label>
+        <label class="field readonly-field"
+          ><span>استاد</span
+          ><input pInputText [value]="currentCase.professor.fullName" disabled
+        /></label>
         <label class="field">
           <span>تعداد واحد گذرانده <b>*</b></span>
-          <p-inputnumber formControlName="passedCredits" [min]="0" [max]="300" [useGrouping]="false" />
-          @if (applicationForm.controls.passedCredits.touched && applicationForm.controls.passedCredits.invalid) { <small>این فیلد الزامی است.</small> }
+          <p-inputnumber
+            formControlName="passedCredits"
+            [min]="0"
+            [max]="300"
+            [useGrouping]="false"
+          />
+          @if (
+            applicationForm.controls.passedCredits.touched &&
+            applicationForm.controls.passedCredits.invalid
+          ) {
+            <small>این فیلد الزامی است.</small>
+          }
         </label>
         <label class="field">
           <span>شماره موبایل <b>*</b></span>
-          <input pInputText formControlName="mobile" dir="ltr" placeholder="09123456789" />
-          @if (applicationForm.controls.mobile.touched && applicationForm.controls.mobile.invalid) { <small>این فیلد الزامی است.</small> }
+          <input
+            pInputText
+            formControlName="mobile"
+            dir="ltr"
+            placeholder="09123456789"
+          />
+          @if (
+            applicationForm.controls.mobile.touched &&
+            applicationForm.controls.mobile.invalid
+          ) {
+            <small>این فیلد الزامی است.</small>
+          }
         </label>
       </form>
     } @else {
       <div class="detail-grid">
-        <div class="detail"><span>نام دانشجو</span><strong>{{ currentCase.student.fullName }}</strong></div>
-        <div class="detail"><span>شماره دانشجویی</span><strong>{{ currentCase.student.studentNumber ?? '—' }}</strong></div>
-        <div class="detail"><span>رشته</span><strong>{{ currentCase.student.major ?? '—' }}</strong></div>
-        <div class="detail"><span>استاد</span><strong>{{ currentCase.professor.fullName }}</strong></div>
-        <div class="detail"><span>تعداد واحد گذرانده</span><strong>{{ currentCase.passedCredits ?? '—' }}</strong></div>
-        <div class="detail"><span>شماره موبایل</span><strong dir="ltr">{{ currentCase.mobile ?? '—' }}</strong></div>
+        <div class="detail">
+          <span>نام دانشجو</span
+          ><strong>{{ currentCase.student.fullName }}</strong>
+        </div>
+        <div class="detail">
+          <span>شماره دانشجویی</span
+          ><strong>{{ currentCase.student.studentNumber ?? "—" }}</strong>
+        </div>
+        <div class="detail">
+          <span>رشته</span
+          ><strong>{{ currentCase.student.major ?? "—" }}</strong>
+        </div>
+        <div class="detail">
+          <span>استاد</span
+          ><strong>{{ currentCase.professor.fullName }}</strong>
+        </div>
+        <div class="detail">
+          <span>تعداد واحد گذرانده</span
+          ><strong>{{ currentCase.passedCredits | persianDigits }}</strong>
+        </div>
+        <div class="detail">
+          <span>شماره موبایل</span
+          ><strong>{{ currentCase.mobile ?? "—" }}</strong>
+        </div>
       </div>
     }
     @if (isDraft) {
@@ -83,7 +150,7 @@
   <p-card header="اولویت‌های محل کارآموزی">
     <div class="preference-summary">
       <p>حداقل یک و حداکثر سه محل کارآموزی را به ترتیب اولویت وارد کنید.</p>
-      <span>{{ currentCase.preferences.length }} از ۳ اولویت</span>
+      <span>{{ currentCase.preferences.length | persianDigits }} از ۳ اولویت</span>
     </div>
 
     @if (currentCase.preferences.length === 0) {
@@ -92,14 +159,27 @@
       <div class="preference-list">
         @for (preference of currentCase.preferences; track preference.id) {
           <article class="preference-item">
-            <div class="priority-badge">اولویت {{ priorityLabel(preference.priority) }}</div>
+            <div class="priority-badge">
+              اولویت {{ priorityLabel(preference.priority) }}
+            </div>
             <div class="preference-details">
-              <strong>{{ preference.company?.name ?? preference.proposedCompanyName }}</strong>
+              <strong>{{
+                preference.company?.name ?? preference.proposedCompanyName
+              }}</strong>
               <span>
-                {{ preference.companyId ? 'شرکت مورد تأیید دانشگاه' : 'شرکت پیشنهادی جدید' }}
+                {{
+                  preference.companyId
+                    ? "شرکت مورد تأیید دانشگاه"
+                    : "شرکت پیشنهادی جدید"
+                }}
               </span>
-              <span><i class="pi pi-map-marker"></i> {{ preference.city }}</span>
-              <span><i class="pi pi-briefcase"></i> {{ preference.workField }}</span>
+              <span
+                ><i class="pi pi-map-marker"></i> {{ preference.city }}</span
+              >
+              <span
+                ><i class="pi pi-briefcase"></i>
+                {{ preference.workField }}</span
+              >
             </div>
             @if (isDraft) {
               <div class="item-actions">
@@ -125,11 +205,25 @@
     }
 
     @if (isDraft && (canAddPreference || editingPreferenceID() !== null)) {
-      <form class="preference-editor" [formGroup]="preferenceForm" (ngSubmit)="savePreference()">
+      <form
+        class="preference-editor"
+        [formGroup]="preferenceForm"
+        (ngSubmit)="savePreference()"
+      >
         <div class="editor-title">
-          <h3>{{ editingPreferenceID() === null ? 'افزودن اولویت' : 'ویرایش اولویت' }}</h3>
+          <h3>
+            {{
+              editingPreferenceID() === null ? "افزودن اولویت" : "ویرایش اولویت"
+            }}
+          </h3>
           @if (editingPreferenceID() !== null) {
-            <p-button label="انصراف" severity="secondary" [text]="true" type="button" (onClick)="cancelPreferenceEdit()" />
+            <p-button
+              label="انصراف"
+              severity="secondary"
+              [text]="true"
+              type="button"
+              (onClick)="cancelPreferenceEdit()"
+            />
           }
         </div>
 
@@ -147,16 +241,24 @@
           <fieldset class="company-type">
             <legend>نوع محل کارآموزی <b>*</b></legend>
             <label>
-              <p-radiobutton formControlName="companyType" value="approved" inputId="approved-company" />
+              <p-radiobutton
+                formControlName="companyType"
+                value="approved"
+                inputId="approved-company"
+              />
               شرکت مورد تأیید دانشگاه
             </label>
             <label>
-              <p-radiobutton formControlName="companyType" value="proposed" inputId="proposed-company" />
+              <p-radiobutton
+                formControlName="companyType"
+                value="proposed"
+                inputId="proposed-company"
+              />
               شرکت پیشنهادی جدید
             </label>
           </fieldset>
 
-          @if (preferenceForm.controls.companyType.value === 'approved') {
+          @if (preferenceForm.controls.companyType.value === "approved") {
             <label class="field full-width">
               <span>شرکت مورد تأیید <b>*</b></span>
               <p-select
@@ -177,7 +279,12 @@
             </label>
             <label class="field">
               <span>وب‌سایت</span>
-              <input pInputText formControlName="proposedWebsite" dir="ltr" placeholder="https://example.com" />
+              <input
+                pInputText
+                formControlName="proposedWebsite"
+                dir="ltr"
+                placeholder="https://example.com"
+              />
             </label>
             <label class="field">
               <span>تلفن</span>
@@ -206,7 +313,9 @@
         <div class="card-actions">
           <p-button
             type="submit"
-            [label]="editingPreferenceID() === null ? 'افزودن اولویت' : 'ذخیره تغییرات'"
+            [label]="
+              editingPreferenceID() === null ? 'افزودن اولویت' : 'ذخیره تغییرات'
+            "
             icon="pi pi-check"
             [loading]="preferenceSaving()"
           />
@@ -216,7 +325,12 @@
       <div class="limit-notice">
         <i class="pi pi-info-circle"></i>
         <span>حداکثر سه اولویت ثبت شده است.</span>
-        <p-button label="افزودن اولویت" icon="pi pi-plus" [disabled]="true" size="small" />
+        <p-button
+          label="افزودن اولویت"
+          icon="pi pi-plus"
+          [disabled]="true"
+          size="small"
+        />
       </div>
     }
   </p-card>
@@ -225,7 +339,9 @@
     <div class="submit-panel">
       <div>
         <strong>ثبت نهایی درخواست</strong>
-        <p>پیش از ثبت نهایی، از کامل بودن اطلاعات و ترتیب اولویت‌ها مطمئن شوید.</p>
+        <p>
+          پیش از ثبت نهایی، از کامل بودن اطلاعات و ترتیب اولویت‌ها مطمئن شوید.
+        </p>
       </div>
       <p-button
         label="ثبت نهایی درخواست"
@@ -237,12 +353,18 @@
     </div>
   }
 
-  @if (currentCase.status === 'COMPLETED') {
+  @if (currentCase.status === "COMPLETED") {
     <p-card header="نتیجه نهایی کارآموزی">
       <div class="detail-grid">
         <div class="detail"><span>وضعیت</span><strong>تکمیل شده</strong></div>
-        <div class="detail"><span>نتیجه نهایی</span><strong>{{ finalResultLabel(currentCase) }}</strong></div>
-        <div class="detail full-width"><span>نظر استاد</span><strong>{{ currentCase.professorComment || '—' }}</strong></div>
+        <div class="detail">
+          <span>نتیجه نهایی</span
+          ><strong>{{ finalResultLabel(currentCase) }}</strong>
+        </div>
+        <div class="detail full-width">
+          <span>نظر استاد</span
+          ><strong>{{ currentCase.professorComment || "—" }}</strong>
+        </div>
       </div>
     </p-card>
   }

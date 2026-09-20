@@ -22,6 +22,7 @@ import {
   professorFinalResultLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
+import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 @Component({
   selector: 'app-student-application',
@@ -34,7 +35,8 @@ import { InternshipService } from '../../internship/internship.service';
     InputTextModule,
     RadioButtonModule,
     SelectModule,
-    TagModule
+    TagModule,
+    PersianDigitsPipe
   ],
   providers: [ConfirmationService],
   templateUrl: './student-application.component.html',

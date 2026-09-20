@@ -23,6 +23,7 @@ import {
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 import { userErrorMessage } from '../../shared/http-error-message';
+import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 type EvaluationField =
   | 'attendanceRating' | 'participationRating' | 'learningRating'
@@ -32,7 +33,7 @@ type EvaluationField =
 @Component({
   selector: 'app-professor-case',
   imports: [
-    JalaliDatePipe, ReactiveFormsModule, RouterLink, ButtonModule, CardModule,
+    JalaliDatePipe, PersianDigitsPipe, ReactiveFormsModule, RouterLink, ButtonModule, CardModule,
     ConfirmDialogModule, SelectModule, TableModule, TagModule, TextareaModule
   ],
   providers: [ConfirmationService],

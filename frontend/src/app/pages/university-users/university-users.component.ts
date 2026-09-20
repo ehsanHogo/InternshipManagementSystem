@@ -14,12 +14,13 @@ import { User } from '../../auth/auth.models';
 import { CreatedAccount, ImportResult, ImportRowResult } from '../../university-management/university-management.models';
 import { UniversityManagementService } from '../../university-management/university-management.service';
 import { userErrorMessage } from '../../shared/http-error-message';
+import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 type ManagedKind = 'students' | 'professors';
 
 @Component({
   selector: 'app-university-users',
-  imports: [ReactiveFormsModule, ButtonModule, DialogModule, InputTextModule, TableModule, TagModule],
+  imports: [ReactiveFormsModule, ButtonModule, DialogModule, InputTextModule, TableModule, TagModule, PersianDigitsPipe],
   templateUrl: './university-users.component.html',
   styleUrl: '../workflow-page.scss'
 })

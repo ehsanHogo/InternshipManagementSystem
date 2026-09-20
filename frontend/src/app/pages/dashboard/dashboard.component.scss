@@ -140,6 +140,17 @@
 
 .full-width { grid-column: 1 / -1; }
 
+.more-info-card{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  
+}
+
+
+
 @media (max-width: 42rem) {
   .welcome-icon {
     display: none;
