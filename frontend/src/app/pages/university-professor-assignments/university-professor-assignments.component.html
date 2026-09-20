@@ -1,0 +1,18 @@
+<section class="page-heading">
+  <div><span class="eyebrow">مدیریت آموزشی</span><h1>تخصیص استاد</h1><p>استاد فعلی هر دانشجو را برای پرونده‌های آینده تعیین کنید.</p></div>
+</section>
+<p class="notice">تغییر استاد، پرونده‌های کارآموزی موجود را تغییر نمی‌دهد و فقط هنگام ساخت پرونده جدید اعمال می‌شود.</p>
+
+@if (loading()) {
+  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت تخصیص‌ها...</span></div>
+} @else {
+  <p-table [value]="assignments()" [rowHover]="true" responsiveLayout="scroll">
+    <ng-template #header><tr><th>دانشجو</th><th>شماره دانشجویی</th><th>استاد فعلی</th><th>عملیات</th></tr></ng-template>
+    <ng-template #body let-assignment><tr>
+      <td>{{ assignment.student.fullName }}</td><td>{{ assignment.student.studentNumber || '—' }}</td>
+      <td><p-select [options]="professors()" optionLabel="fullName" optionValue="id" [ngModel]="selectedProfessors[assignment.student.id]" (ngModelChange)="selectionChanged(assignment.student.id, $event)" placeholder="انتخاب استاد" appendTo="body" /></td>
+      <td><p-button [label]="assignment.id ? 'تغییر استاد' : 'تخصیص استاد'" icon="pi pi-check" [disabled]="!selectedProfessors[assignment.student.id]" [loading]="savingStudentId() === assignment.student.id" (onClick)="save(assignment)" /></td>
+    </tr></ng-template>
+    <ng-template #emptymessage><tr><td colspan="4" class="muted">دانشجویی ثبت نشده است.</td></tr></ng-template>
+  </p-table>
+}

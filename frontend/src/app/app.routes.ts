@@ -66,6 +66,48 @@ export const routes: Routes = [
           )
       },
       {
+        path: 'university/students',
+        canActivate: [universitySupervisorGuard],
+        data: { kind: 'students' },
+        loadComponent: () =>
+          import('./pages/university-users/university-users.component').then(
+            (module) => module.UniversityUsersComponent
+          )
+      },
+      {
+        path: 'university/professors',
+        canActivate: [universitySupervisorGuard],
+        data: { kind: 'professors' },
+        loadComponent: () =>
+          import('./pages/university-users/university-users.component').then(
+            (module) => module.UniversityUsersComponent
+          )
+      },
+      {
+        path: 'university/companies',
+        canActivate: [universitySupervisorGuard],
+        loadComponent: () =>
+          import('./pages/university-companies/university-companies.component').then(
+            (module) => module.UniversityCompaniesComponent
+          )
+      },
+      {
+        path: 'university/company-supervisors',
+        canActivate: [universitySupervisorGuard],
+        loadComponent: () =>
+          import('./pages/university-company-supervisors/university-company-supervisors.component').then(
+            (module) => module.UniversityCompanySupervisorsComponent
+          )
+      },
+      {
+        path: 'university/professor-assignments',
+        canActivate: [universitySupervisorGuard],
+        loadComponent: () =>
+          import('./pages/university-professor-assignments/university-professor-assignments.component').then(
+            (module) => module.UniversityProfessorAssignmentsComponent
+          )
+      },
+      {
         path: 'professor/internships',
         canActivate: [professorGuard],
         loadComponent: () =>

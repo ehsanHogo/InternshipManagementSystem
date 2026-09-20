@@ -47,6 +47,26 @@
           <i class="pi pi-file-check" aria-hidden="true"></i>
           درخواست‌های کارآموزی
         </a>
+        <a routerLink="/university/students" routerLinkActive="active">
+          <i class="pi pi-user" aria-hidden="true"></i>
+          دانشجویان
+        </a>
+        <a routerLink="/university/professors" routerLinkActive="active">
+          <i class="pi pi-users" aria-hidden="true"></i>
+          اساتید
+        </a>
+        <a routerLink="/university/companies" routerLinkActive="active">
+          <i class="pi pi-building" aria-hidden="true"></i>
+          شرکت‌ها
+        </a>
+        <a routerLink="/university/company-supervisors" routerLinkActive="active">
+          <i class="pi pi-id-card" aria-hidden="true"></i>
+          سرپرستان شرکت
+        </a>
+        <a routerLink="/university/professor-assignments" routerLinkActive="active">
+          <i class="pi pi-link" aria-hidden="true"></i>
+          تخصیص استاد
+        </a>
       }
       @if (user()?.role === 'COMPANY_SUPERVISOR') {
         <a routerLink="/company/internships" routerLinkActive="active">

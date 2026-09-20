@@ -1,0 +1,92 @@
+<section class="page-heading">
+  <div>
+    <span class="eyebrow">مدیریت کاربران آموزشی</span>
+    <h1>{{ title }}</h1>
+    <p>حساب‌ها را به‌صورت دستی یا از فایل اکسل ایجاد کنید.</p>
+  </div>
+  <p-button [label]="createLabel" icon="pi pi-plus" (onClick)="openCreateDialog()" />
+</section>
+
+<section class="import-panel">
+  <div>
+    <strong>ورود از فایل اکسل</strong>
+    <p>فایل اکسل {{ isStudent ? 'دانشجویان' : 'اساتید' }} باید شامل ستون‌های زیر باشد:</p>
+    <ul>
+      @for (column of expectedColumns; track column) {
+        <li>{{ column }}</li>
+      }
+    </ul>
+  </div>
+  <div class="file-picker">
+    <input type="file" accept=".xlsx" (change)="fileChanged($event)" />
+    <p-button label="ورود فایل" icon="pi pi-upload" [disabled]="!selectedFile()" [loading]="importing" (onClick)="importFile()" />
+  </div>
+</section>
+
+@if (loading()) {
+  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت اطلاعات...</span></div>
+} @else {
+  <p-table [value]="users()" [rowHover]="true" responsiveLayout="scroll">
+    <ng-template #header>
+      <tr>
+        <th>نام و نام خانوادگی</th>
+        @if (isStudent) { <th>شماره دانشجویی</th><th>رشته</th> }
+        <th>ایمیل</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-user>
+      <tr>
+        <td>{{ user.fullName }}</td>
+        @if (isStudent) { <td>{{ user.studentNumber }}</td><td>{{ user.major }}</td> }
+        <td dir="ltr">{{ user.email }}</td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage><tr><td [attr.colspan]="isStudent ? 4 : 2" class="muted">موردی ثبت نشده است.</td></tr></ng-template>
+  </p-table>
+}
+
+@if (importResult(); as result) {
+  <section class="result-section">
+    <h2>نتیجه ورود فایل</h2>
+    <p>{{ result.created }} ایجاد شده، {{ result.skipped }} رد شده</p>
+    <p-table [value]="result.results" responsiveLayout="scroll">
+      <ng-template #header><tr><th>ردیف</th><th>نام</th><th>ایمیل</th><th>وضعیت</th><th>رمز عبور موقت</th><th>پیام</th><th></th></tr></ng-template>
+      <ng-template #body let-row>
+        <tr>
+          <td>{{ row.row }}</td><td>{{ row.name || '—' }}</td><td dir="ltr">{{ row.email || '—' }}</td>
+          <td><p-tag [value]="importStatusLabel(row.status)" [severity]="importStatusSeverity(row.status)" /></td>
+          <td dir="ltr">{{ row.temporaryPassword || '—' }}</td><td>{{ row.message || '—' }}</td>
+          <td>@if (row.temporaryPassword) { <p-button icon="pi pi-copy" [text]="true" (onClick)="copyImportRow(row.email, row.temporaryPassword)" /> }</td>
+        </tr>
+      </ng-template>
+    </p-table>
+    <p class="notice">رمزهای عبور موقت فقط در همین نتیجه نمایش داده می‌شوند. پیش از ترک صفحه آن‌ها را کپی کنید.</p>
+  </section>
+}
+
+<p-dialog [header]="createLabel" [visible]="createDialogVisible()" (visibleChange)="createDialogVisible.set($event)" [modal]="true" [style]="{ width: 'min(92vw, 38rem)' }">
+  <form class="form-grid" [formGroup]="userForm" (ngSubmit)="submit()">
+    <label class="field full-width">نام و نام خانوادگی<input pInputText formControlName="fullName" /></label>
+    @if (isStudent) {
+      <label class="field">شماره دانشجویی<input pInputText formControlName="studentNumber" /></label>
+      <label class="field">رشته<input pInputText formControlName="major" /></label>
+    }
+    <label class="field full-width">ایمیل<input pInputText dir="ltr" formControlName="email" /></label>
+    <div class="dialog-actions full-width">
+      <p-button label="انصراف" severity="secondary" [outlined]="true" type="button" (onClick)="createDialogVisible.set(false)" />
+      <p-button label="ایجاد حساب" type="submit" [loading]="submitting" />
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog header="اطلاعات ورود موقت" [visible]="credentials() !== null" (visibleChange)="closeCredentials($event)" [modal]="true" [closable]="true" [style]="{ width: 'min(92vw, 32rem)' }">
+  @if (credentials(); as account) {
+    <div class="credential-box">
+      <strong>حساب کاربری با موفقیت ایجاد شد.</strong>
+      <p>نام کاربری: <b dir="ltr">{{ account.user.email }}</b></p>
+      <p>رمز عبور موقت: <b dir="ltr">{{ account.temporaryPassword }}</b></p>
+      <p class="notice">این رمز فقط اکنون نمایش داده می‌شود.</p>
+      <p-button label="کپی اطلاعات ورود" icon="pi pi-copy" (onClick)="copyCredentials(account)" />
+    </div>
+  }
+</p-dialog>

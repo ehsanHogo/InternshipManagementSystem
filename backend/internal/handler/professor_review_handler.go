@@ -122,7 +122,7 @@ func (handler *InternshipHandler) CompleteProfessorCase(ctx *gin.Context) {
 	}
 	var request completeProfessorCaseRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اطلاعات درخواست معتبر نیست."})
 		return
 	}
 	internshipCase, err := handler.service.CompleteProfessorCase(professorID, caseID, service.ProfessorCompletionInput{
@@ -142,7 +142,7 @@ func professorCaseRequest(ctx *gin.Context) (uint, uint, bool) {
 	}
 	caseID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid internship case id"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه پرونده کارآموزی معتبر نیست."})
 		return 0, 0, false
 	}
 	return professorID, caseID, true

@@ -145,7 +145,7 @@ func (handler *InternshipHandler) UpdateCase(ctx *gin.Context) {
 	}
 	var request updateCaseRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اطلاعات درخواست معتبر نیست."})
 		return
 	}
 	internshipCase, err := handler.service.UpdateCase(studentID, request.PassedCredits, request.Mobile)
@@ -176,7 +176,7 @@ func (handler *InternshipHandler) UpdatePreference(ctx *gin.Context) {
 	}
 	preferenceID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid preference id"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه اولویت معتبر نیست."})
 		return
 	}
 	preference, err := handler.service.UpdatePreference(studentID, preferenceID, request.preferenceInput())
@@ -194,7 +194,7 @@ func (handler *InternshipHandler) DeletePreference(ctx *gin.Context) {
 	}
 	preferenceID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid preference id"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه اولویت معتبر نیست."})
 		return
 	}
 	if err := handler.service.DeletePreference(studentID, preferenceID); err != nil {
@@ -224,7 +224,7 @@ func (handler *InternshipHandler) preferenceRequest(ctx *gin.Context) (uint, pre
 	}
 	var request preferenceRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اطلاعات درخواست معتبر نیست."})
 		return 0, preferenceRequest{}, false
 	}
 	return studentID, request, true
@@ -245,25 +245,25 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 	case errors.Is(err, service.ErrCaseNotFound), errors.Is(err, service.ErrPreferenceNotFound),
 		errors.Is(err, service.ErrWeeklyReportNotFound), errors.Is(err, service.ErrEvaluationNotFound),
 		errors.Is(err, service.ErrFileNotFound):
-		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusNotFound, gin.H{"error": publicInternshipError(err)})
 	case errors.Is(err, service.ErrAssignmentNotFound), errors.Is(err, service.ErrInvalidApplication),
 		errors.Is(err, service.ErrInvalidPreference), errors.Is(err, service.ErrInvalidCaseStatus),
 		errors.Is(err, service.ErrCompanySupervisor), errors.Is(err, service.ErrInvalidWeeklyReport),
 		errors.Is(err, service.ErrInvalidEvaluation), errors.Is(err, service.ErrInvalidProfessorResult):
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": publicInternshipError(err)})
 	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit), errors.Is(err, service.ErrDuplicatePriority),
 		errors.Is(err, service.ErrDuplicateWeeklyReport), errors.Is(err, service.ErrWeeklyReportConfirmed),
 		errors.Is(err, service.ErrDuplicateEvaluation), errors.Is(err, service.ErrWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrProfessorCaseNotActive), errors.Is(err, service.ErrProfessorWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrProfessorCompanyEvaluationRequired), errors.Is(err, service.ErrProfessorFinalReportRequired):
-		ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusConflict, gin.H{"error": publicInternshipError(err)})
 	case errors.Is(err, service.ErrInvalidTransition):
-		ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusConflict, gin.H{"error": publicInternshipError(err)})
 	case errors.Is(err, service.ErrCaseAccessDenied):
-		ctx.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusForbidden, gin.H{"error": publicInternshipError(err)})
 	default:
 		log.Printf("internship request failed: %v", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "خطایی در سرور رخ داد."})
 	}
 }
 
@@ -271,10 +271,67 @@ func currentUserID(ctx *gin.Context) (uint, bool) {
 	value, exists := ctx.Get(appmiddleware.ContextUserID)
 	userID, ok := value.(uint)
 	if !exists || !ok || userID == 0 {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "ورود به سامانه الزامی است."})
 		return 0, false
 	}
 	return userID, true
+}
+
+func publicInternshipError(err error) string {
+	switch {
+	case errors.Is(err, service.ErrCaseNotFound):
+		return "پرونده کارآموزی یافت نشد."
+	case errors.Is(err, service.ErrAssignmentNotFound):
+		return "استادی برای دانشجو تخصیص داده نشده است."
+	case errors.Is(err, service.ErrCaseNotEditable):
+		return "این پرونده در وضعیت قابل ویرایش نیست."
+	case errors.Is(err, service.ErrPreferenceNotFound):
+		return "اولویت کارآموزی یافت نشد."
+	case errors.Is(err, service.ErrPreferenceLimit):
+		return "حداکثر تعداد اولویت‌های مجاز ثبت شده است."
+	case errors.Is(err, service.ErrDuplicatePriority):
+		return "این شماره اولویت قبلاً ثبت شده است."
+	case errors.Is(err, service.ErrInvalidPreference):
+		return "اطلاعات اولویت کارآموزی معتبر نیست."
+	case errors.Is(err, service.ErrInvalidApplication):
+		return "اطلاعات درخواست کارآموزی کامل نیست."
+	case errors.Is(err, service.ErrInvalidCaseStatus):
+		return "وضعیت پرونده کارآموزی معتبر نیست."
+	case errors.Is(err, service.ErrInvalidTransition):
+		return "تغییر وضعیت در مرحله فعلی امکان‌پذیر نیست."
+	case errors.Is(err, service.ErrCompanySupervisor):
+		return "سرپرست شرکت معتبر نیست."
+	case errors.Is(err, service.ErrCaseAccessDenied):
+		return "اجازه دسترسی به این پرونده را ندارید."
+	case errors.Is(err, service.ErrWeeklyReportNotFound):
+		return "گزارش هفتگی یافت نشد."
+	case errors.Is(err, service.ErrInvalidWeeklyReport):
+		return "اطلاعات گزارش هفتگی معتبر نیست."
+	case errors.Is(err, service.ErrDuplicateWeeklyReport):
+		return "گزارش این هفته قبلاً ثبت شده است."
+	case errors.Is(err, service.ErrWeeklyReportConfirmed):
+		return "گزارش هفتگی تأییدشده قابل تغییر نیست."
+	case errors.Is(err, service.ErrEvaluationNotFound):
+		return "ارزیابی شرکت یافت نشد."
+	case errors.Is(err, service.ErrInvalidEvaluation):
+		return "اطلاعات ارزیابی شرکت معتبر نیست."
+	case errors.Is(err, service.ErrDuplicateEvaluation):
+		return "ارزیابی شرکت قبلاً ثبت شده است."
+	case errors.Is(err, service.ErrWeeklyReportsIncomplete), errors.Is(err, service.ErrProfessorWeeklyReportsIncomplete):
+		return "هر ۸ گزارش هفتگی باید ثبت و تأیید شده باشند."
+	case errors.Is(err, service.ErrFileNotFound):
+		return "فایل یافت نشد."
+	case errors.Is(err, service.ErrInvalidProfessorResult):
+		return "نتیجه نهایی استاد معتبر نیست."
+	case errors.Is(err, service.ErrProfessorCaseNotActive):
+		return "پرونده کارآموزی فعال نیست."
+	case errors.Is(err, service.ErrProfessorCompanyEvaluationRequired):
+		return "ثبت ارزیابی شرکت الزامی است."
+	case errors.Is(err, service.ErrProfessorFinalReportRequired):
+		return "بارگذاری گزارش نهایی کارآموزی الزامی است."
+	default:
+		return "انجام عملیات امکان‌پذیر نیست."
+	}
 }
 
 func parseID(value string) (uint, error) {

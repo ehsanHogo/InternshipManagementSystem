@@ -72,12 +72,12 @@ func (handler *InternshipHandler) SendToCompany(ctx *gin.Context) {
 	}
 	var request sendToCompanyRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اطلاعات درخواست معتبر نیست."})
 		return
 	}
 	letterDate, err := parseDate(request.LetterDate)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid letter date"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "تاریخ نامه معتبر نیست."})
 		return
 	}
 	internshipCase, err := handler.service.SendToCompany(caseID, service.SendToCompanyInput{
@@ -153,12 +153,12 @@ func (handler *InternshipHandler) ConfirmCompanyCase(ctx *gin.Context) {
 	}
 	var request companyConfirmationRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اطلاعات درخواست معتبر نیست."})
 		return
 	}
 	startDate, err := parseDate(request.StartDate)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid start date"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "تاریخ شروع معتبر نیست."})
 		return
 	}
 	internshipCase, err := handler.service.ConfirmCompanyCase(supervisorID, caseID, service.CompanyConfirmationInput{
@@ -183,7 +183,7 @@ func caseResponses(cases []model.InternshipCase) []internshipCaseResponse {
 func caseIDFromContext(ctx *gin.Context) (uint, bool) {
 	caseID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid internship case id"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه پرونده کارآموزی معتبر نیست."})
 		return 0, false
 	}
 	return caseID, true

@@ -85,7 +85,7 @@ func (handler *InternshipHandler) UpdateWeeklyReport(ctx *gin.Context) {
 	}
 	reportID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid weekly report id"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه گزارش هفتگی معتبر نیست."})
 		return
 	}
 	input, ok := bindWeeklyReport(ctx)
@@ -128,12 +128,12 @@ func (handler *InternshipHandler) ConfirmWeeklyReport(ctx *gin.Context) {
 	}
 	reportID, err := parseID(ctx.Param("reportId"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid weekly report id"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه گزارش هفتگی معتبر نیست."})
 		return
 	}
 	var request confirmWeeklyReportRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil && !errors.Is(err, io.EOF) {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اطلاعات درخواست معتبر نیست."})
 		return
 	}
 	report, err := handler.service.ConfirmWeeklyReport(supervisorID, caseID, reportID, request.Comment)
@@ -172,7 +172,7 @@ func (handler *InternshipHandler) CreateCompanyEvaluation(ctx *gin.Context) {
 	}
 	var request companyEvaluationRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil || request.LeaveDays == nil || request.AbsenceDays == nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اطلاعات درخواست معتبر نیست."})
 		return
 	}
 	evaluation, err := handler.service.CreateCompanyEvaluation(supervisorID, caseID, service.CompanyEvaluationInput{
@@ -203,12 +203,12 @@ func (handler *InternshipHandler) UploadFinalReport(ctx *gin.Context) {
 	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, maxFinalReportSize+(1<<20))
 	header, err := ctx.FormFile("file")
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "PDF file is required"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "انتخاب فایل گزارش نهایی با قالب پی‌دی‌اف الزامی است."})
 		return
 	}
 	contentType := strings.ToLower(strings.TrimSpace(strings.Split(header.Header.Get("Content-Type"), ";")[0]))
 	if !strings.EqualFold(filepath.Ext(header.Filename), ".pdf") || contentType != "application/pdf" || header.Size <= 0 || header.Size > maxFinalReportSize {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "a PDF file up to 10 MB is required"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "فایل گزارش نهایی باید با قالب پی‌دی‌اف و حداکثر حجم ۱۰ مگابایت باشد."})
 		return
 	}
 	if err := os.MkdirAll(handler.uploadDir, 0o750); err != nil {
@@ -236,7 +236,7 @@ func (handler *InternshipHandler) UploadFinalReport(ctx *gin.Context) {
 	closeErr := destination.Close()
 	if copyErr != nil || closeErr != nil || written <= 0 || written > maxFinalReportSize {
 		_ = os.Remove(path)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid uploaded file"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "فایل بارگذاری‌شده معتبر نیست."})
 		return
 	}
 
@@ -265,12 +265,12 @@ func (handler *InternshipHandler) DownloadFile(ctx *gin.Context) {
 	roleValue, exists := ctx.Get(appmiddleware.ContextRole)
 	role, valid := roleValue.(model.Role)
 	if !exists || !valid {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "ورود به سامانه الزامی است."})
 		return
 	}
 	fileID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid file id"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه فایل معتبر نیست."})
 		return
 	}
 	file, err := handler.service.GetAccessibleFile(userID, role, fileID)
@@ -294,17 +294,17 @@ func (handler *InternshipHandler) DownloadFile(ctx *gin.Context) {
 func bindWeeklyReport(ctx *gin.Context) (service.WeeklyReportInput, bool) {
 	var request weeklyReportRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اطلاعات درخواست معتبر نیست."})
 		return service.WeeklyReportInput{}, false
 	}
 	startDate, err := parseDate(request.StartDate)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid start date"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "تاریخ شروع معتبر نیست."})
 		return service.WeeklyReportInput{}, false
 	}
 	endDate, err := parseDate(request.EndDate)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid end date"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "تاریخ پایان معتبر نیست."})
 		return service.WeeklyReportInput{}, false
 	}
 	return service.WeeklyReportInput{

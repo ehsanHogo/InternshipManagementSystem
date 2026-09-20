@@ -27,9 +27,10 @@ type User struct {
 	Email         string  `gorm:"size:320;uniqueIndex;not null"`
 	PasswordHash  string  `gorm:"not null" json:"-"`
 	Role          Role    `gorm:"type:varchar(32);not null"`
-	StudentNumber *string `gorm:"size:50"`
+	StudentNumber *string `gorm:"size:50;uniqueIndex"`
 	Major         *string `gorm:"size:200"`
 	CompanyID     *uint
+	Company       *Company `gorm:"foreignKey:CompanyID" json:"-"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }

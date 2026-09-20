@@ -57,10 +57,10 @@ func RequireRole(allowedRoles ...model.Role) gin.HandlerFunc {
 			}
 		}
 
-		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "اجازه دسترسی به این بخش را ندارید."})
 	}
 }
 
 func abortUnauthorized(ctx *gin.Context) {
-	ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
+	ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "ورود به سامانه الزامی است."})
 }
