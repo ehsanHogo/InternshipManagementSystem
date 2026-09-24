@@ -16,6 +16,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/login/login.component').then((module) => module.LoginComponent)
   },
   {
+    path: 'company-register',
+    canActivate: [guestGuard],
+    loadComponent: () =>
+      import('./pages/company-register/company-register.component').then((module) => module.CompanyRegisterComponent)
+  },
+  {
     path: '',
     canActivate: [authGuard],
     loadComponent: () => import('./layout/app-shell.component').then((module) => module.AppShellComponent),
@@ -121,6 +127,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/professor-case/professor-case.component').then(
             (module) => module.ProfessorCaseComponent
+          )
+      },
+      {
+        path: 'company/profile',
+        canActivate: [companySupervisorGuard],
+        loadComponent: () =>
+          import('./pages/company-profile/company-profile.component').then(
+            (module) => module.CompanyProfileComponent
           )
       },
       {

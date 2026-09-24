@@ -104,6 +104,29 @@ form {
   color: #dc2626;
 }
 
+.registration-entry {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1.4rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+  text-align: center;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    color: #2563eb;
+    font-weight: 700;
+  }
+
+  small {
+    font-size: 0.78rem;
+  }
+}
+
 .demo-hint {
   margin: 1rem 0 0;
   color: #64748b;

@@ -1,0 +1,59 @@
+<section class="page-heading">
+  <div>
+    <span class="eyebrow">سرپرست شرکت</span>
+    <h1>پروفایل شرکت</h1>
+    <p>اطلاعات ثبت‌شده شرکت و سرپرست را مشاهده کنید.</p>
+  </div>
+</section>
+
+@if (loading()) {
+  <div class="state-card">
+    <span><i class="pi pi-spin pi-spinner" aria-hidden="true"></i> در حال دریافت اطلاعات...</span>
+  </div>
+} @else if (loadFailed()) {
+  <div class="state-card error-state">
+    <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+    <p>دریافت اطلاعات شرکت امکان‌پذیر نبود.</p>
+    <p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="load()" />
+  </div>
+} @else if (profile(); as account) {
+  <p-card header="اطلاعات شرکت">
+    <div class="detail-grid">
+      <div class="detail"><span>نام شرکت</span><strong>{{ account.company.name }}</strong></div>
+      <div class="detail"><span>شناسه ملی</span><strong dir="ltr">{{ account.company.nationalId }}</strong></div>
+      <div class="detail"><span>کد اقتصادی</span><strong dir="ltr">{{ account.company.economicCode }}</strong></div>
+      <div class="detail"><span>وب‌سایت</span><strong dir="ltr">{{ account.company.website || '—' }}</strong></div>
+      <div class="detail"><span>تلفن شرکت</span><strong dir="ltr">{{ account.company.phone || '—' }}</strong></div>
+      <div class="detail"><span>ایمیل شرکت</span><strong dir="ltr">{{ account.company.email || '—' }}</strong></div>
+      <div class="detail full-width"><span>آدرس</span><strong>{{ account.company.address || '—' }}</strong></div>
+    </div>
+  </p-card>
+
+  <p-card header="اطلاعات سرپرست شرکت">
+    <div class="detail-grid">
+      <div class="detail"><span>نام و نام خانوادگی</span><strong>{{ account.supervisor.fullName }}</strong></div>
+      <div class="detail"><span>ایمیل</span><strong dir="ltr">{{ account.supervisor.email }}</strong></div>
+      <div class="detail"><span>شماره تماس</span><strong dir="ltr">{{ account.supervisor.phone || '—' }}</strong></div>
+      <div class="detail"><span>سمت</span><strong>{{ account.supervisor.jobTitle || '—' }}</strong></div>
+    </div>
+  </p-card>
+
+  <p-card header="وضعیت تأیید دانشکده">
+    <div class="approval-status" [class.approved]="account.company.isApproved">
+      <i [class]="account.company.isApproved ? 'pi pi-check-circle' : 'pi pi-info-circle'" aria-hidden="true"></i>
+      <div>
+        <p-tag
+          [value]="account.company.isApproved ? 'تأییدشده توسط دانشکده' : 'در انتظار تأیید دانشکده'"
+          [severity]="account.company.isApproved ? 'success' : 'warn'"
+        />
+        <p>
+          @if (account.company.isApproved) {
+            شرکت در فهرست شرکت‌های مورد تأیید دانشکده قرار دارد.
+          } @else {
+            هنوز در فهرست شرکت‌های مورد تأیید دانشکده قرار نگرفته است؛ حساب شما فعال است و می‌توانید از سامانه استفاده کنید.
+          }
+        </p>
+      </div>
+    </div>
+  </p-card>
+}

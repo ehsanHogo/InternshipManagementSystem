@@ -69,6 +69,10 @@
         </a>
       }
       @if (user()?.role === 'COMPANY_SUPERVISOR') {
+        <a routerLink="/company/profile" routerLinkActive="active">
+          <i class="pi pi-building" aria-hidden="true"></i>
+          پروفایل شرکت
+        </a>
         <a routerLink="/company/internships" routerLinkActive="active">
           <i class="pi pi-briefcase" aria-hidden="true"></i>
           پرونده‌های کارآموزی

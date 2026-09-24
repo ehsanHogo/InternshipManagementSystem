@@ -1,0 +1,140 @@
+<main class="registration-page">
+  <section class="registration-shell" aria-labelledby="registration-title">
+    <header class="page-header">
+      <a routerLink="/login" class="back-link">
+        <i class="pi pi-arrow-right" aria-hidden="true"></i>
+        بازگشت به ورود
+      </a>
+      <span class="brand-icon" aria-hidden="true"><i class="pi pi-building"></i></span>
+      <div>
+        <h1 id="registration-title">ثبت‌نام شرکت</h1>
+        <p>حساب سرپرست و اطلاعات شرکت را وارد کنید.</p>
+      </div>
+    </header>
+
+    <form [formGroup]="registrationForm" (ngSubmit)="submit()" novalidate>
+      <p-card header="بخش اطلاعات سرپرست شرکت" formGroupName="supervisor">
+        <div class="form-grid">
+          <label class="field">
+            <span>نام و نام خانوادگی <b>*</b></span>
+            <input pInputText formControlName="fullName" autocomplete="name" />
+            @if (registrationForm.controls.supervisor.controls.fullName.touched && registrationForm.controls.supervisor.controls.fullName.invalid) {
+              <small>وارد کردن نام و نام خانوادگی الزامی است.</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>ایمیل <b>*</b></span>
+            <input pInputText type="email" dir="ltr" formControlName="email" autocomplete="email" />
+            @if (registrationForm.controls.supervisor.controls.email.touched && registrationForm.controls.supervisor.controls.email.hasError('required')) {
+              <small>وارد کردن ایمیل الزامی است.</small>
+            } @else if (registrationForm.controls.supervisor.controls.email.touched && registrationForm.controls.supervisor.controls.email.hasError('email')) {
+              <small>فرمت ایمیل صحیح نیست.</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>رمز عبور <b>*</b></span>
+            <p-password
+              inputId="registration-password"
+              formControlName="password"
+              autocomplete="new-password"
+              [toggleMask]="true"
+              [feedback]="false"
+              [fluid]="true"
+            />
+            @if (registrationForm.controls.supervisor.controls.password.touched && registrationForm.controls.supervisor.controls.password.invalid) {
+              <small>وارد کردن رمز عبور الزامی است.</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>شماره تماس <b>*</b></span>
+            <input pInputText dir="ltr" formControlName="phone" autocomplete="tel" />
+            @if (registrationForm.controls.supervisor.controls.phone.touched && registrationForm.controls.supervisor.controls.phone.invalid) {
+              <small>وارد کردن شماره تماس الزامی است.</small>
+            }
+          </label>
+
+          <label class="field full-width">
+            <span>سمت <b>*</b></span>
+            <input pInputText formControlName="jobTitle" autocomplete="organization-title" />
+            @if (registrationForm.controls.supervisor.controls.jobTitle.touched && registrationForm.controls.supervisor.controls.jobTitle.invalid) {
+              <small>وارد کردن سمت الزامی است.</small>
+            }
+          </label>
+        </div>
+      </p-card>
+
+      <p-card header="بخش اطلاعات شرکت" formGroupName="company">
+        <div class="form-grid">
+          <label class="field full-width">
+            <span>نام شرکت <b>*</b></span>
+            <input pInputText formControlName="name" autocomplete="organization" />
+            @if (registrationForm.controls.company.controls.name.touched && registrationForm.controls.company.controls.name.invalid) {
+              <small>وارد کردن نام شرکت الزامی است.</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>شناسه ملی <b>*</b></span>
+            <input pInputText dir="ltr" formControlName="nationalId" />
+            @if (registrationForm.controls.company.controls.nationalId.touched && registrationForm.controls.company.controls.nationalId.invalid) {
+              <small>وارد کردن شناسه ملی الزامی است.</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>کد اقتصادی <b>*</b></span>
+            <input pInputText dir="ltr" formControlName="economicCode" />
+            @if (registrationForm.controls.company.controls.economicCode.touched && registrationForm.controls.company.controls.economicCode.invalid) {
+              <small>وارد کردن کد اقتصادی الزامی است.</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>وب‌سایت <em>(اختیاری)</em></span>
+            <input pInputText dir="ltr" formControlName="website" autocomplete="url" placeholder="https://example.com" />
+          </label>
+
+          <label class="field">
+            <span>تلفن شرکت <b>*</b></span>
+            <input pInputText dir="ltr" formControlName="phone" autocomplete="tel" />
+            @if (registrationForm.controls.company.controls.phone.touched && registrationForm.controls.company.controls.phone.invalid) {
+              <small>وارد کردن تلفن شرکت الزامی است.</small>
+            }
+          </label>
+
+          <label class="field full-width">
+            <span>ایمیل شرکت <b>*</b></span>
+            <input pInputText type="email" dir="ltr" formControlName="email" autocomplete="email" />
+            @if (registrationForm.controls.company.controls.email.touched && registrationForm.controls.company.controls.email.hasError('required')) {
+              <small>وارد کردن ایمیل شرکت الزامی است.</small>
+            } @else if (registrationForm.controls.company.controls.email.touched && registrationForm.controls.company.controls.email.hasError('email')) {
+              <small>فرمت ایمیل شرکت صحیح نیست.</small>
+            }
+          </label>
+
+          <label class="field full-width">
+            <span>آدرس <b>*</b></span>
+            <textarea pTextarea rows="4" formControlName="address" autocomplete="street-address"></textarea>
+            @if (registrationForm.controls.company.controls.address.touched && registrationForm.controls.company.controls.address.invalid) {
+              <small>وارد کردن آدرس شرکت الزامی است.</small>
+            }
+          </label>
+        </div>
+      </p-card>
+
+      <div class="form-actions">
+        <p-button
+          type="submit"
+          label="ثبت‌نام شرکت"
+          icon="pi pi-check"
+          [loading]="submitting"
+          [disabled]="submitting"
+        />
+        <a routerLink="/login">حساب دارید؟ وارد سامانه شوید</a>
+      </div>
+    </form>
+  </section>
+</main>

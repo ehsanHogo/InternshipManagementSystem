@@ -51,6 +51,8 @@ func main() {
 	internshipHandler := handler.NewInternshipHandler(internshipService, cfg.UploadDir)
 	managementService := service.NewUniversityManagementService(db)
 	managementHandler := handler.NewUniversityManagementHandler(managementService)
+	companyAccountService := service.NewCompanyAccountService(db)
+	companyAccountHandler := handler.NewCompanyAccountHandler(companyAccountService)
 
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery(), appmiddleware.CORS(cfg.FrontendOrigin))
@@ -58,6 +60,7 @@ func main() {
 	api := router.Group("/api")
 	api.GET("/health", healthHandler.Get)
 	api.POST("/auth/login", authHandler.Login)
+	api.POST("/auth/company-register", companyAccountHandler.Register)
 	api.GET("/auth/me", appmiddleware.RequireAuth(cfg.JWT.Secret), authHandler.Me)
 	api.GET("/protected", appmiddleware.RequireAuth(cfg.JWT.Secret), authHandler.Protected)
 
@@ -102,6 +105,7 @@ func main() {
 
 	company := authenticated.Group("/company")
 	company.Use(appmiddleware.RequireRole(model.RoleCompanySupervisor))
+	company.GET("/profile", companyAccountHandler.Profile)
 	company.GET("/internship-cases", internshipHandler.ListCompanyCases)
 	company.GET("/internship-cases/:id", internshipHandler.GetCompanyCase)
 	company.POST("/internship-cases/:id/confirm", internshipHandler.ConfirmCompanyCase)
