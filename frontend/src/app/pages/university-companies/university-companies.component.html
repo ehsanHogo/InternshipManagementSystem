@@ -7,18 +7,20 @@
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت شرکت‌ها...</span></div>
 } @else {
   <p-table [value]="companies()" [rowHover]="true" responsiveLayout="scroll">
-    <ng-template #header><tr><th>نام شرکت</th><th>وب‌سایت</th><th>تلفن</th><th>ایمیل</th><th>آدرس</th></tr></ng-template>
+    <ng-template #header><tr><th>نام شرکت</th><th>شناسه ملی</th><th>کد اقتصادی</th><th>وب‌سایت</th><th>تلفن</th><th>ایمیل</th><th>آدرس</th></tr></ng-template>
     <ng-template #body let-company><tr>
-      <td>{{ company.name }}</td><td dir="ltr">{{ company.website || '—' }}</td><td dir="ltr">{{ company.phone || '—' }}</td>
+      <td>{{ company.name }}</td><td dir="ltr">{{ company.nationalId }}</td><td dir="ltr">{{ company.economicCode }}</td><td dir="ltr">{{ company.website || '—' }}</td><td dir="ltr">{{ company.phone || '—' }}</td>
       <td dir="ltr">{{ company.email || '—' }}</td><td>{{ company.address || '—' }}</td>
     </tr></ng-template>
-    <ng-template #emptymessage><tr><td colspan="5" class="muted">شرکتی ثبت نشده است.</td></tr></ng-template>
+    <ng-template #emptymessage><tr><td colspan="7" class="muted">شرکتی ثبت نشده است.</td></tr></ng-template>
   </p-table>
 }
 
 <p-dialog header="افزودن شرکت" [visible]="dialogVisible()" (visibleChange)="dialogVisible.set($event)" [modal]="true" appendTo="body" [baseZIndex]="1200" [style]="{ width: 'min(92vw, 42rem)' }">
   <form class="form-grid" [formGroup]="form" (ngSubmit)="submit()">
     <label class="field full-width">نام شرکت<input pInputText formControlName="name" /></label>
+    <label class="field">شناسه ملی<input pInputText dir="ltr" formControlName="nationalId" /></label>
+    <label class="field">کد اقتصادی<input pInputText dir="ltr" formControlName="economicCode" /></label>
     <label class="field">وب‌سایت<input pInputText dir="ltr" formControlName="website" /></label>
     <label class="field">تلفن<input pInputText dir="ltr" formControlName="phone" /></label>
     <label class="field full-width">ایمیل<input pInputText dir="ltr" formControlName="email" /></label>

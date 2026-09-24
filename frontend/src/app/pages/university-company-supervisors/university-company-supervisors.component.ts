@@ -34,13 +34,13 @@ export class UniversityCompanySupervisorsComponent {
   readonly form = this.formBuilder.nonNullable.group({
     fullName: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
-    companyId: [0, Validators.min(1)]
+    companyId: [0, Validators.min(1)], phone: [''], jobTitle: ['']
   });
 
   constructor() { this.load(); }
 
   openDialog(): void {
-    this.form.reset({ fullName: '', email: '', companyId: 0 });
+    this.form.reset({ fullName: '', email: '', companyId: 0, phone: '', jobTitle: '' });
     this.dialogVisible.set(true);
   }
 
@@ -48,7 +48,7 @@ export class UniversityCompanySupervisorsComponent {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.submitting = true;
     const raw = this.form.getRawValue();
-    this.management.createCompanySupervisor({ fullName: raw.fullName.trim(), email: raw.email.trim(), companyId: raw.companyId })
+    this.management.createCompanySupervisor({ fullName: raw.fullName.trim(), email: raw.email.trim(), companyId: raw.companyId, phone: raw.phone.trim(), jobTitle: raw.jobTitle.trim() })
       .pipe(finalize(() => (this.submitting = false))).subscribe({
         next: (account) => { this.dialogVisible.set(false); this.credentials.set(account); this.load(); },
         error: (error: HttpErrorResponse) => this.showError(error, 'ایجاد حساب سرپرست ناموفق بود.')

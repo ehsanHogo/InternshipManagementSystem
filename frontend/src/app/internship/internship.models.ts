@@ -2,16 +2,19 @@ import { User } from '../auth/auth.models';
 
 export type InternshipCaseStatus =
   | 'DRAFT'
-  | 'PENDING_UNIVERSITY_APPROVAL'
-  | 'PENDING_COMPANY_APPROVAL'
-  | 'COMPANY_APPROVED'
-  | 'UNIVERSITY_APPROVED'
+  | 'PENDING_UNIVERSITY_REVIEW'
+  | 'PENDING_COMPANY_DETAILS'
+  | 'PENDING_FINAL_APPROVAL'
+  | 'READY_TO_START'
   | 'ACTIVE'
-  | 'COMPLETED';
+  | 'COMPLETED'
+  | 'CANCELLED';
 
 export interface Company {
   id: number;
   name: string;
+  nationalId: string;
+  economicCode: string;
   website?: string;
   phone?: string;
   email?: string;
@@ -22,6 +25,7 @@ export interface Company {
 export interface InternshipPreference {
   id: number;
   priority: number;
+  opportunityApplicationId: number;
   companyId?: number;
   company?: Company;
   proposedCompanyName?: string;
@@ -54,8 +58,9 @@ export interface InternshipCase {
   createdAt: string;
   updatedAt: string;
   submittedAt?: string;
-  companyConfirmedAt?: string;
-  universityApprovedAt?: string;
+  cancellationComment?: string;
+  cancelledAt?: string;
+  companyDetailsRevisionComment?: string;
   activatedAt?: string;
   finalReport?: FileMetadata;
   weeklyReportCount: number;
@@ -209,16 +214,18 @@ export interface CompanyConfirmationPayload {
 
 export const internshipStatusLabels: Record<InternshipCaseStatus, string> = {
   DRAFT: 'پیش‌نویس',
-  PENDING_UNIVERSITY_APPROVAL: 'در انتظار تأیید آموزش',
-  PENDING_COMPANY_APPROVAL: 'در انتظار تأیید شرکت',
-  COMPANY_APPROVED: 'تأیید شده توسط شرکت',
-  UNIVERSITY_APPROVED: 'تأیید شده توسط آموزش',
+  PENDING_UNIVERSITY_REVIEW: 'در انتظار بررسی دانشگاه',
+  PENDING_COMPANY_DETAILS: 'در انتظار تکمیل اطلاعات شرکت',
+  PENDING_FINAL_APPROVAL: 'در انتظار تأیید نهایی',
+  READY_TO_START: 'آماده شروع',
   ACTIVE: 'کارآموزی فعال',
-  COMPLETED: 'تکمیل شده'
+  COMPLETED: 'تکمیل شده',
+  CANCELLED: 'لغوشده'
 };
 
 export interface PreferencePayload {
   priority: number;
+  opportunityApplicationId?: number;
   companyId?: number;
   proposedCompanyName?: string;
   proposedWebsite?: string;

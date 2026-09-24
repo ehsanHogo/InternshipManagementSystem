@@ -29,6 +29,8 @@ type User struct {
 	Role          Role    `gorm:"type:varchar(32);not null"`
 	StudentNumber *string `gorm:"size:50;uniqueIndex"`
 	Major         *string `gorm:"size:200"`
+	Phone         *string `gorm:"size:50"`
+	JobTitle      *string `gorm:"size:200"`
 	CompanyID     *uint
 	Company       *Company `gorm:"foreignKey:CompanyID" json:"-"`
 	CreatedAt     time.Time
@@ -42,6 +44,8 @@ type PublicUser struct {
 	Role          Role    `json:"role"`
 	StudentNumber *string `json:"studentNumber,omitempty"`
 	Major         *string `json:"major,omitempty"`
+	Phone         *string `json:"phone,omitempty"`
+	JobTitle      *string `json:"jobTitle,omitempty"`
 	CompanyID     *uint   `json:"companyId,omitempty"`
 }
 
@@ -53,6 +57,8 @@ func (user User) Public() PublicUser {
 		Role:          user.Role,
 		StudentNumber: user.StudentNumber,
 		Major:         user.Major,
+		Phone:         user.Phone,
+		JobTitle:      user.JobTitle,
 		CompanyID:     user.CompanyID,
 	}
 }

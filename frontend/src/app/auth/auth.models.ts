@@ -12,6 +12,8 @@ export interface User {
   role: UserRole;
   studentNumber?: string;
   major?: string;
+  phone?: string;
+  jobTitle?: string;
   companyId?: number;
 }
 

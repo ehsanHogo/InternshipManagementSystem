@@ -17,8 +17,8 @@ const demoPassword = "Demo123!"
 
 func MigrateAndSeed(db *gorm.DB) error {
 	if err := db.AutoMigrate(
-		&model.User{},
 		&model.Company{},
+		&model.User{},
 		&model.ProfessorAssignment{},
 		&model.File{},
 		&model.InternshipCase{},
@@ -29,13 +29,23 @@ func MigrateAndSeed(db *gorm.DB) error {
 		return fmt.Errorf("migrate database: %w", err)
 	}
 
+	if err := seedCompanies(db); err != nil {
+		return err
+	}
+	var demoCompany model.Company
+	if err := db.Where("national_id = ?", "14000000001").First(&demoCompany).Error; err != nil {
+		return fmt.Errorf("find demo company for supervisor: %w", err)
+	}
+
 	studentNumber := "40123456"
 	major := "مهندسی کامپیوتر"
+	phone := "02188776655"
+	jobTitle := "سرپرست کارآموزی"
 	users := []model.User{
 		{FullName: "علی رضایی", Email: "student@demo.local", Role: model.RoleStudent, StudentNumber: &studentNumber, Major: &major},
 		{FullName: "دکتر محمد احمدی", Email: "professor@demo.local", Role: model.RoleProfessor},
 		{FullName: "کارشناس آموزش", Email: "university@demo.local", Role: model.RoleUniversitySupervisor},
-		{FullName: "رضا محمدی", Email: "company@demo.local", Role: model.RoleCompanySupervisor},
+		{FullName: "رضا محمدی", Email: "company@demo.local", Role: model.RoleCompanySupervisor, Phone: &phone, JobTitle: &jobTitle, CompanyID: &demoCompany.ID},
 		{FullName: "مدیر سیستم", Email: "admin@demo.local", Role: model.RoleAdmin},
 	}
 
@@ -43,9 +53,6 @@ func MigrateAndSeed(db *gorm.DB) error {
 		if err := createDemoUserIfMissing(db, &users[i]); err != nil {
 			return err
 		}
-	}
-	if err := seedCompanies(db); err != nil {
-		return err
 	}
 	if err := seedProfessorAssignment(db); err != nil {
 		return err
@@ -56,14 +63,16 @@ func MigrateAndSeed(db *gorm.DB) error {
 
 func seedCompanies(db *gorm.DB) error {
 	companies := []model.Company{
-		{Name: "شرکت داده‌پردازان نوین", IsApproved: true},
-		{Name: "شرکت فناوری سپهر", IsApproved: true},
-		{Name: "شرکت راهکارهای هوشمند پارس", IsApproved: true},
+		{Name: "شرکت داده‌پردازان نوین", NationalID: "14000000001", EconomicCode: "411111111111", IsApproved: true},
+		{Name: "شرکت فناوری سپهر", NationalID: "14000000002", EconomicCode: "422222222222", IsApproved: true},
+		{Name: "شرکت راهکارهای هوشمند پارس", NationalID: "14000000003", EconomicCode: "433333333333", IsApproved: true},
 	}
 	for i := range companies {
 		if err := db.Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "name"}},
-			DoUpdates: clause.Assignments(map[string]any{"is_approved": true}),
+			Columns: []clause.Column{{Name: "name"}},
+			DoUpdates: clause.Assignments(map[string]any{
+				"national_id": companies[i].NationalID, "economic_code": companies[i].EconomicCode, "is_approved": true,
+			}),
 		}).Create(&companies[i]).Error; err != nil {
 			return fmt.Errorf("seed company %s: %w", companies[i].Name, err)
 		}
@@ -96,7 +105,9 @@ func createDemoUserIfMissing(db *gorm.DB, user *model.User) error {
 	var existing model.User
 	result := db.Where("email = ?", strings.ToLower(user.Email)).First(&existing)
 	if result.Error == nil {
-		return nil
+		return db.Model(&existing).Updates(map[string]any{
+			"phone": user.Phone, "job_title": user.JobTitle, "company_id": user.CompanyID,
+		}).Error
 	}
 	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("look up demo user %s: %w", user.Email, result.Error)

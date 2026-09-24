@@ -31,10 +31,10 @@ export class UniversityApplicationsComponent {
   readonly selectedStatus = signal<InternshipCaseStatus | null>(null);
   readonly statusOptions: { label: string; value: InternshipCaseStatus | null }[] = [
     { label: 'همه وضعیت‌ها', value: null },
-    { label: internshipStatusLabels.PENDING_UNIVERSITY_APPROVAL, value: 'PENDING_UNIVERSITY_APPROVAL' },
-    { label: internshipStatusLabels.PENDING_COMPANY_APPROVAL, value: 'PENDING_COMPANY_APPROVAL' },
-    { label: internshipStatusLabels.COMPANY_APPROVED, value: 'COMPANY_APPROVED' },
-    { label: internshipStatusLabels.UNIVERSITY_APPROVED, value: 'UNIVERSITY_APPROVED' },
+    { label: internshipStatusLabels.PENDING_UNIVERSITY_REVIEW, value: 'PENDING_UNIVERSITY_REVIEW' },
+    { label: internshipStatusLabels.PENDING_COMPANY_DETAILS, value: 'PENDING_COMPANY_DETAILS' },
+    { label: internshipStatusLabels.PENDING_FINAL_APPROVAL, value: 'PENDING_FINAL_APPROVAL' },
+    { label: internshipStatusLabels.READY_TO_START, value: 'READY_TO_START' },
     { label: internshipStatusLabels.ACTIVE, value: 'ACTIVE' },
     { label: internshipStatusLabels.COMPLETED, value: 'COMPLETED' }
   ];

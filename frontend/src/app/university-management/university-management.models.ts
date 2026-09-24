@@ -20,6 +20,8 @@ export interface ProfessorPayload {
 
 export interface CompanyPayload {
   name: string;
+  nationalId: string;
+  economicCode: string;
   website: string;
   phone: string;
   email: string;
@@ -34,6 +36,8 @@ export interface CompanySupervisorPayload {
   fullName: string;
   email: string;
   companyId: number;
+  phone?: string;
+  jobTitle?: string;
 }
 
 export interface ImportRowResult {

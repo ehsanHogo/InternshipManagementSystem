@@ -34,14 +34,18 @@ type ManagedUserInput struct {
 	StudentNumber string
 	Major         string
 	CompanyID     uint
+	Phone         string
+	JobTitle      string
 }
 
 type CompanyInput struct {
-	Name    string
-	Website string
-	Phone   string
-	Email   string
-	Address string
+	Name         string
+	NationalID   string
+	EconomicCode string
+	Website      string
+	Phone        string
+	Email        string
+	Address      string
 }
 
 type ProfessorAssignmentView struct {
@@ -97,6 +101,8 @@ func (service *UniversityManagementService) CreateManagedUser(role model.Role, i
 			return nil, "", fmt.Errorf("validate company: %w", err)
 		}
 		user.CompanyID = &input.CompanyID
+		user.Phone = optionalString(input.Phone)
+		user.JobTitle = optionalString(input.JobTitle)
 	}
 
 	if err := service.ensureUserUnique(email, user.StudentNumber); err != nil {
@@ -148,18 +154,23 @@ func (service *UniversityManagementService) ListCompanies() ([]model.Company, er
 
 func (service *UniversityManagementService) CreateCompany(input CompanyInput) (*model.Company, error) {
 	name := strings.TrimSpace(input.Name)
-	if name == "" {
+	nationalID := strings.TrimSpace(input.NationalID)
+	economicCode := strings.TrimSpace(input.EconomicCode)
+	if name == "" || nationalID == "" || economicCode == "" {
 		return nil, ErrInvalidManagementInput
 	}
 	var count int64
-	if err := service.db.Model(&model.Company{}).Where("LOWER(name) = LOWER(?)", name).Count(&count).Error; err != nil {
+	if err := service.db.Model(&model.Company{}).
+		Where("LOWER(name) = LOWER(?) OR national_id = ? OR economic_code = ?", name, nationalID, economicCode).
+		Count(&count).Error; err != nil {
 		return nil, fmt.Errorf("check duplicate company: %w", err)
 	}
 	if count > 0 {
 		return nil, ErrCompanyAlreadyExists
 	}
 	company := model.Company{
-		Name: name, Website: optionalString(input.Website), Phone: optionalString(input.Phone),
+		Name: name, NationalID: nationalID, EconomicCode: economicCode,
+		Website: optionalString(input.Website), Phone: optionalString(input.Phone),
 		Email: optionalString(strings.ToLower(input.Email)), Address: optionalString(input.Address), IsApproved: true,
 	}
 	if err := service.db.Create(&company).Error; err != nil {

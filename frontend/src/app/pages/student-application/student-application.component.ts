@@ -92,8 +92,8 @@ export class StudentApplicationComponent {
   }
 
   statusSeverity(status: InternshipCaseStatus): 'secondary' | 'info' | 'success' | 'contrast' {
-    if (status === 'PENDING_UNIVERSITY_APPROVAL' || status === 'PENDING_COMPANY_APPROVAL') return 'info';
-    if (status === 'COMPANY_APPROVED' || status === 'UNIVERSITY_APPROVED') return 'success';
+    if (status === 'PENDING_UNIVERSITY_REVIEW' || status === 'PENDING_COMPANY_DETAILS') return 'info';
+    if (status === 'PENDING_FINAL_APPROVAL' || status === 'READY_TO_START') return 'success';
     if (status === 'ACTIVE') return 'success';
     if (status === 'COMPLETED') return 'contrast';
     return 'secondary';

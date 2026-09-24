@@ -100,7 +100,7 @@ func TestUniversityManagement(t *testing.T) {
 		t.Fatalf("new case did not use current professor: case=%+v err=%v", newCase, err)
 	}
 
-	company, err := management.CreateCompany(service.CompanyInput{Name: fmt.Sprintf("شرکت آزمون %d", suffix), Email: "company@example.test"})
+	company, err := management.CreateCompany(service.CompanyInput{Name: fmt.Sprintf("شرکت آزمون %d", suffix), NationalID: fmt.Sprintf("national-%d", suffix), EconomicCode: fmt.Sprintf("economic-%d", suffix), Email: "company@example.test"})
 	if err != nil || !company.IsApproved {
 		t.Fatalf("create approved company: company=%+v err=%v", company, err)
 	}

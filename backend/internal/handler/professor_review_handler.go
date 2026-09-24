@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -222,15 +221,7 @@ func professorReadiness(internshipCase *model.InternshipCase) (int, int, bool, b
 	return reportCount, confirmedCount, hasEvaluation, hasFinalReport, canComplete
 }
 
+// Company resolution is deferred until opportunity/application relations are added.
 func professorCompanyName(internshipCase *model.InternshipCase) string {
-	if internshipCase.SelectedPreference == nil {
-		return ""
-	}
-	if internshipCase.SelectedPreference.Company != nil {
-		return internshipCase.SelectedPreference.Company.Name
-	}
-	if internshipCase.SelectedPreference.ProposedCompanyName != nil {
-		return strings.TrimSpace(*internshipCase.SelectedPreference.ProposedCompanyName)
-	}
 	return ""
 }

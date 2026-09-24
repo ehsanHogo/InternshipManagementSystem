@@ -34,6 +34,8 @@ type managedUserRequest struct {
 	StudentNumber string `json:"studentNumber"`
 	Major         string `json:"major"`
 	CompanyID     uint   `json:"companyId"`
+	Phone         string `json:"phone"`
+	JobTitle      string `json:"jobTitle"`
 }
 
 type managedUserCreatedResponse struct {
@@ -42,11 +44,13 @@ type managedUserCreatedResponse struct {
 }
 
 type managedCompanyRequest struct {
-	Name    string `json:"name"`
-	Website string `json:"website"`
-	Phone   string `json:"phone"`
-	Email   string `json:"email"`
-	Address string `json:"address"`
+	Name         string `json:"name"`
+	NationalID   string `json:"nationalId"`
+	EconomicCode string `json:"economicCode"`
+	Website      string `json:"website"`
+	Phone        string `json:"phone"`
+	Email        string `json:"email"`
+	Address      string `json:"address"`
 }
 
 type managedCompanySupervisorResponse struct {
@@ -138,7 +142,7 @@ func (handler *UniversityManagementHandler) createUser(ctx *gin.Context, role mo
 	}
 	user, password, err := handler.service.CreateManagedUser(role, service.ManagedUserInput{
 		FullName: request.FullName, Email: request.Email, StudentNumber: request.StudentNumber,
-		Major: request.Major, CompanyID: request.CompanyID,
+		Major: request.Major, CompanyID: request.CompanyID, Phone: request.Phone, JobTitle: request.JobTitle,
 	})
 	if err != nil {
 		handler.writeError(ctx, err)
@@ -261,7 +265,7 @@ func (handler *UniversityManagementHandler) CreateCompany(ctx *gin.Context) {
 		return
 	}
 	company, err := handler.service.CreateCompany(service.CompanyInput{
-		Name: request.Name, Website: request.Website, Phone: request.Phone, Email: request.Email, Address: request.Address,
+		Name: request.Name, NationalID: request.NationalID, EconomicCode: request.EconomicCode, Website: request.Website, Phone: request.Phone, Email: request.Email, Address: request.Address,
 	})
 	if err != nil {
 		handler.writeError(ctx, err)

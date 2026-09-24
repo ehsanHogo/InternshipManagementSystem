@@ -233,7 +233,7 @@ export class UniversityCaseComponent {
       letterNumber: internshipCase.letterNumber ?? '',
       letterDate: internshipCase.letterDate?.slice(0, 10) ?? ''
     });
-    if (internshipCase.status === 'PENDING_UNIVERSITY_APPROVAL') this.reviewForm.enable({ emitEvent: false });
+    if (internshipCase.status === 'PENDING_UNIVERSITY_REVIEW') this.reviewForm.enable({ emitEvent: false });
     else this.reviewForm.disable({ emitEvent: false });
   }
 }

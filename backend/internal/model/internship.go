@@ -10,14 +10,31 @@ const (
 type InternshipCaseStatus string
 
 const (
-	InternshipCaseStatusDraft                     InternshipCaseStatus = "DRAFT"
-	InternshipCaseStatusPendingUniversityApproval InternshipCaseStatus = "PENDING_UNIVERSITY_APPROVAL"
-	InternshipCaseStatusPendingCompanyApproval    InternshipCaseStatus = "PENDING_COMPANY_APPROVAL"
-	InternshipCaseStatusCompanyApproved           InternshipCaseStatus = "COMPANY_APPROVED"
-	InternshipCaseStatusUniversityApproved        InternshipCaseStatus = "UNIVERSITY_APPROVED"
-	InternshipCaseStatusActive                    InternshipCaseStatus = "ACTIVE"
-	InternshipCaseStatusCompleted                 InternshipCaseStatus = "COMPLETED"
+	InternshipCaseStatusDraft                   InternshipCaseStatus = "DRAFT"
+	InternshipCaseStatusPendingUniversityReview InternshipCaseStatus = "PENDING_UNIVERSITY_REVIEW"
+	InternshipCaseStatusPendingCompanyDetails   InternshipCaseStatus = "PENDING_COMPANY_DETAILS"
+	InternshipCaseStatusPendingFinalApproval    InternshipCaseStatus = "PENDING_FINAL_APPROVAL"
+	InternshipCaseStatusReadyToStart            InternshipCaseStatus = "READY_TO_START"
+	InternshipCaseStatusActive                  InternshipCaseStatus = "ACTIVE"
+	InternshipCaseStatusCompleted               InternshipCaseStatus = "COMPLETED"
+	InternshipCaseStatusCancelled               InternshipCaseStatus = "CANCELLED"
 )
+
+func (status InternshipCaseStatus) Valid() bool {
+	switch status {
+	case InternshipCaseStatusDraft,
+		InternshipCaseStatusPendingUniversityReview,
+		InternshipCaseStatusPendingCompanyDetails,
+		InternshipCaseStatusPendingFinalApproval,
+		InternshipCaseStatusReadyToStart,
+		InternshipCaseStatusActive,
+		InternshipCaseStatusCompleted,
+		InternshipCaseStatusCancelled:
+		return true
+	default:
+		return false
+	}
+}
 
 type ProfessorFinalResult string
 
@@ -37,15 +54,17 @@ func (result ProfessorFinalResult) Valid() bool {
 }
 
 type Company struct {
-	ID         uint      `gorm:"primaryKey" json:"id"`
-	Name       string    `gorm:"size:250;uniqueIndex;not null" json:"name"`
-	Website    *string   `gorm:"size:500" json:"website,omitempty"`
-	Phone      *string   `gorm:"size:50" json:"phone,omitempty"`
-	Email      *string   `gorm:"size:320" json:"email,omitempty"`
-	Address    *string   `gorm:"size:1000" json:"address,omitempty"`
-	IsApproved bool      `gorm:"not null;default:false;index" json:"isApproved"`
-	CreatedAt  time.Time `json:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt"`
+	ID           uint      `gorm:"primaryKey" json:"id"`
+	Name         string    `gorm:"size:250;uniqueIndex;not null" json:"name"`
+	NationalID   string    `gorm:"size:50;not null;uniqueIndex;check:char_length(btrim(national_id)) > 0" json:"nationalId"`
+	EconomicCode string    `gorm:"size:50;not null;uniqueIndex;check:char_length(btrim(economic_code)) > 0" json:"economicCode"`
+	Website      *string   `gorm:"size:500" json:"website,omitempty"`
+	Phone        *string   `gorm:"size:50" json:"phone,omitempty"`
+	Email        *string   `gorm:"size:320" json:"email,omitempty"`
+	Address      *string   `gorm:"size:1000" json:"address,omitempty"`
+	IsApproved   bool      `gorm:"not null;default:false;index" json:"isApproved"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 type ProfessorAssignment struct {
@@ -69,16 +88,21 @@ type InternshipCase struct {
 	Mobile        *string `gorm:"size:30"`
 
 	SelectedPreferenceID *uint
-	CompanySupervisorID  *uint
-	LetterNumber         *string `gorm:"size:100"`
-	LetterDate           *time.Time
-	InternshipSubject    *string `gorm:"size:500"`
-	StartDate            *time.Time
-	WorkplaceAddress     *string `gorm:"size:1000"`
-	WorkplacePhone       *string `gorm:"size:50"`
-	FinalReportFileID    *uint
-	FinalResult          *ProfessorFinalResult `gorm:"type:varchar(16);check:final_result IS NULL OR final_result IN ('EXCELLENT','GOOD','FAILED')"`
-	ProfessorComment     *string               `gorm:"size:2000"`
+	// CompanySupervisorID is a temporary cached reference. V2 must populate it from
+	// the selected opportunity, never through arbitrary university selection.
+	CompanySupervisorID *uint
+	LetterNumber        *string `gorm:"size:100"`
+	LetterDate          *time.Time
+	InternshipSubject   *string `gorm:"size:500"`
+	StartDate           *time.Time
+	WorkplaceAddress    *string `gorm:"size:1000"`
+	WorkplacePhone      *string `gorm:"size:50"`
+	// FinalReportFileID remains temporarily until the dedicated FinalReport milestone.
+	FinalReportFileID             *uint
+	FinalResult                   *ProfessorFinalResult `gorm:"type:varchar(16);check:final_result IS NULL OR final_result IN ('EXCELLENT','GOOD','FAILED')"`
+	ProfessorComment              *string               `gorm:"size:2000"`
+	CancellationComment           *string               `gorm:"type:text"`
+	CompanyDetailsRevisionComment *string               `gorm:"type:text"`
 
 	Student            User                   `gorm:"foreignKey:StudentID"`
 	Professor          User                   `gorm:"foreignKey:ProfessorID"`
@@ -89,31 +113,19 @@ type InternshipCase struct {
 	WeeklyReports      []WeeklyReport         `gorm:"foreignKey:InternshipCaseID"`
 	CompanyEvaluation  *CompanyEvaluation     `gorm:"foreignKey:InternshipCaseID"`
 
-	CreatedAt            time.Time
-	UpdatedAt            time.Time
-	SubmittedAt          *time.Time
-	CompanyConfirmedAt   *time.Time
-	UniversityApprovedAt *time.Time
-	ActivatedAt          *time.Time
-	CompletedAt          *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	SubmittedAt *time.Time
+	ActivatedAt *time.Time
+	CompletedAt *time.Time
+	CancelledAt *time.Time
 }
 
 type InternshipPreference struct {
-	ID               uint `gorm:"primaryKey"`
-	InternshipCaseID uint `gorm:"not null;uniqueIndex:idx_case_priority"`
-	Priority         int  `gorm:"not null;uniqueIndex:idx_case_priority"`
-
-	CompanyID              *uint
-	Company                *Company `gorm:"foreignKey:CompanyID"`
-	ProposedCompanyName    *string  `gorm:"size:250"`
-	ProposedWebsite        *string  `gorm:"size:500"`
-	ProposedPhone          *string  `gorm:"size:50"`
-	ProposedEmail          *string  `gorm:"size:320"`
-	ProposedSupervisorName *string  `gorm:"size:200"`
-
-	City      string `gorm:"size:150;not null"`
-	WorkField string `gorm:"size:300;not null"`
-
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID                       uint `gorm:"primaryKey"`
+	InternshipCaseID         uint `gorm:"not null;uniqueIndex:idx_case_priority"`
+	OpportunityApplicationID uint `gorm:"not null;index"`
+	Priority                 int  `gorm:"not null;uniqueIndex:idx_case_priority;check:priority >= 1 AND priority <= 3"`
+	CreatedAt                time.Time
+	UpdatedAt                time.Time
 }

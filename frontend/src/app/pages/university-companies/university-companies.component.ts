@@ -29,7 +29,8 @@ export class UniversityCompaniesComponent {
   readonly dialogVisible = signal(false);
   submitting = false;
   readonly form = this.formBuilder.nonNullable.group({
-    name: ['', Validators.required], website: [''], phone: [''],
+    name: ['', Validators.required], nationalId: ['', Validators.required], economicCode: ['', Validators.required],
+    website: [''], phone: [''],
     email: ['', Validators.email], address: ['']
   });
 
@@ -45,7 +46,7 @@ export class UniversityCompaniesComponent {
     this.submitting = true;
     const raw = this.form.getRawValue();
     this.management.createCompany({
-      name: raw.name.trim(), website: raw.website.trim(), phone: raw.phone.trim(),
+      name: raw.name.trim(), nationalId: raw.nationalId.trim(), economicCode: raw.economicCode.trim(), website: raw.website.trim(), phone: raw.phone.trim(),
       email: raw.email.trim(), address: raw.address.trim()
     }).pipe(finalize(() => (this.submitting = false))).subscribe({
       next: () => {

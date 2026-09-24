@@ -19,6 +19,8 @@
     <label class="field full-width">نام و نام خانوادگی<input pInputText formControlName="fullName" /></label>
     <label class="field full-width">ایمیل<input pInputText dir="ltr" formControlName="email" /></label>
     <label class="field full-width">شرکت<p-select formControlName="companyId" [options]="companies()" optionLabel="name" optionValue="id" placeholder="انتخاب شرکت" appendTo="body" /></label>
+    <label class="field">تلفن<input pInputText dir="ltr" formControlName="phone" /></label>
+    <label class="field">عنوان شغلی<input pInputText formControlName="jobTitle" /></label>
     <div class="dialog-actions full-width"><p-button label="انصراف" severity="secondary" [outlined]="true" type="button" (onClick)="dialogVisible.set(false)" /><p-button label="ایجاد حساب" type="submit" [loading]="submitting" /></div>
   </form>
 </p-dialog>

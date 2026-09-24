@@ -25,50 +25,44 @@ type updateCaseRequest struct {
 }
 
 type preferenceRequest struct {
-	Priority               int     `json:"priority"`
-	CompanyID              *uint   `json:"companyId"`
-	ProposedCompanyName    *string `json:"proposedCompanyName"`
-	ProposedWebsite        *string `json:"proposedWebsite"`
-	ProposedPhone          *string `json:"proposedPhone"`
-	ProposedEmail          *string `json:"proposedEmail"`
-	ProposedSupervisorName *string `json:"proposedSupervisorName"`
-	City                   string  `json:"city"`
-	WorkField              string  `json:"workField"`
+	Priority                 int  `json:"priority"`
+	OpportunityApplicationID uint `json:"opportunityApplicationId"`
 }
 
 type internshipCaseResponse struct {
-	ID                         uint                           `json:"id"`
-	Status                     model.InternshipCaseStatus     `json:"status"`
-	PassedCredits              *int                           `json:"passedCredits"`
-	Mobile                     *string                        `json:"mobile"`
-	Student                    model.PublicUser               `json:"student"`
-	Professor                  model.PublicUser               `json:"professor"`
-	Preferences                []internshipPreferenceResponse `json:"preferences"`
-	SelectedPreferenceID       *uint                          `json:"selectedPreferenceId"`
-	SelectedPreference         *internshipPreferenceResponse  `json:"selectedPreference,omitempty"`
-	CompanySupervisorID        *uint                          `json:"companySupervisorId"`
-	CompanySupervisor          *model.PublicUser              `json:"companySupervisor,omitempty"`
-	LetterNumber               *string                        `json:"letterNumber"`
-	LetterDate                 *time.Time                     `json:"letterDate"`
-	InternshipSubject          *string                        `json:"internshipSubject"`
-	StartDate                  *time.Time                     `json:"startDate"`
-	WorkplaceAddress           *string                        `json:"workplaceAddress"`
-	WorkplacePhone             *string                        `json:"workplacePhone"`
-	CreatedAt                  time.Time                      `json:"createdAt"`
-	UpdatedAt                  time.Time                      `json:"updatedAt"`
-	SubmittedAt                *time.Time                     `json:"submittedAt"`
-	CompanyConfirmedAt         *time.Time                     `json:"companyConfirmedAt"`
-	UniversityApprovedAt       *time.Time                     `json:"universityApprovedAt"`
-	ActivatedAt                *time.Time                     `json:"activatedAt"`
-	FinalReport                *fileMetadataResponse          `json:"finalReport,omitempty"`
-	WeeklyReportCount          int                            `json:"weeklyReportCount"`
-	ConfirmedReportCount       int                            `json:"confirmedReportCount"`
-	CanSubmitCompanyEvaluation bool                           `json:"canSubmitCompanyEvaluation"`
-	WeeklyReports              []model.WeeklyReport           `json:"weeklyReports"`
-	CompanyEvaluation          *model.CompanyEvaluation       `json:"companyEvaluation,omitempty"`
-	FinalResult                *model.ProfessorFinalResult    `json:"finalResult,omitempty"`
-	ProfessorComment           *string                        `json:"professorComment,omitempty"`
-	CompletedAt                *time.Time                     `json:"completedAt,omitempty"`
+	ID                            uint                           `json:"id"`
+	Status                        model.InternshipCaseStatus     `json:"status"`
+	PassedCredits                 *int                           `json:"passedCredits"`
+	Mobile                        *string                        `json:"mobile"`
+	Student                       model.PublicUser               `json:"student"`
+	Professor                     model.PublicUser               `json:"professor"`
+	Preferences                   []internshipPreferenceResponse `json:"preferences"`
+	SelectedPreferenceID          *uint                          `json:"selectedPreferenceId"`
+	SelectedPreference            *internshipPreferenceResponse  `json:"selectedPreference,omitempty"`
+	CompanySupervisorID           *uint                          `json:"companySupervisorId"`
+	CompanySupervisor             *model.PublicUser              `json:"companySupervisor,omitempty"`
+	LetterNumber                  *string                        `json:"letterNumber"`
+	LetterDate                    *time.Time                     `json:"letterDate"`
+	InternshipSubject             *string                        `json:"internshipSubject"`
+	StartDate                     *time.Time                     `json:"startDate"`
+	WorkplaceAddress              *string                        `json:"workplaceAddress"`
+	WorkplacePhone                *string                        `json:"workplacePhone"`
+	CreatedAt                     time.Time                      `json:"createdAt"`
+	UpdatedAt                     time.Time                      `json:"updatedAt"`
+	SubmittedAt                   *time.Time                     `json:"submittedAt"`
+	CancellationComment           *string                        `json:"cancellationComment,omitempty"`
+	CancelledAt                   *time.Time                     `json:"cancelledAt,omitempty"`
+	CompanyDetailsRevisionComment *string                        `json:"companyDetailsRevisionComment,omitempty"`
+	ActivatedAt                   *time.Time                     `json:"activatedAt"`
+	FinalReport                   *fileMetadataResponse          `json:"finalReport,omitempty"`
+	WeeklyReportCount             int                            `json:"weeklyReportCount"`
+	ConfirmedReportCount          int                            `json:"confirmedReportCount"`
+	CanSubmitCompanyEvaluation    bool                           `json:"canSubmitCompanyEvaluation"`
+	WeeklyReports                 []model.WeeklyReport           `json:"weeklyReports"`
+	CompanyEvaluation             *model.CompanyEvaluation       `json:"companyEvaluation,omitempty"`
+	FinalResult                   *model.ProfessorFinalResult    `json:"finalResult,omitempty"`
+	ProfessorComment              *string                        `json:"professorComment,omitempty"`
+	CompletedAt                   *time.Time                     `json:"completedAt,omitempty"`
 }
 
 type fileMetadataResponse struct {
@@ -78,17 +72,9 @@ type fileMetadataResponse struct {
 }
 
 type internshipPreferenceResponse struct {
-	ID                     uint           `json:"id"`
-	Priority               int            `json:"priority"`
-	CompanyID              *uint          `json:"companyId"`
-	Company                *model.Company `json:"company,omitempty"`
-	ProposedCompanyName    *string        `json:"proposedCompanyName,omitempty"`
-	ProposedWebsite        *string        `json:"proposedWebsite,omitempty"`
-	ProposedPhone          *string        `json:"proposedPhone,omitempty"`
-	ProposedEmail          *string        `json:"proposedEmail,omitempty"`
-	ProposedSupervisorName *string        `json:"proposedSupervisorName,omitempty"`
-	City                   string         `json:"city"`
-	WorkField              string         `json:"workField"`
+	ID                       uint `json:"id"`
+	Priority                 int  `json:"priority"`
+	OpportunityApplicationID uint `json:"opportunityApplicationId"`
 }
 
 func NewInternshipHandler(internshipService *service.InternshipService, uploadDirs ...string) *InternshipHandler {
@@ -232,11 +218,7 @@ func (handler *InternshipHandler) preferenceRequest(ctx *gin.Context) (uint, pre
 
 func (request preferenceRequest) preferenceInput() service.PreferenceInput {
 	return service.PreferenceInput{
-		Priority: request.Priority, CompanyID: request.CompanyID,
-		ProposedCompanyName: request.ProposedCompanyName, ProposedWebsite: request.ProposedWebsite,
-		ProposedPhone: request.ProposedPhone, ProposedEmail: request.ProposedEmail,
-		ProposedSupervisorName: request.ProposedSupervisorName,
-		City:                   request.City, WorkField: request.WorkField,
+		Priority: request.Priority, OpportunityApplicationID: request.OpportunityApplicationID,
 	}
 }
 
@@ -257,7 +239,8 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		errors.Is(err, service.ErrProfessorCaseNotActive), errors.Is(err, service.ErrProfessorWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrProfessorCompanyEvaluationRequired), errors.Is(err, service.ErrProfessorFinalReportRequired):
 		ctx.JSON(http.StatusConflict, gin.H{"error": publicInternshipError(err)})
-	case errors.Is(err, service.ErrInvalidTransition):
+	case errors.Is(err, service.ErrInvalidTransition), errors.Is(err, service.ErrInternshipCompleted),
+		errors.Is(err, service.ErrObsoleteWorkflow):
 		ctx.JSON(http.StatusConflict, gin.H{"error": publicInternshipError(err)})
 	case errors.Is(err, service.ErrCaseAccessDenied):
 		ctx.JSON(http.StatusForbidden, gin.H{"error": publicInternshipError(err)})
@@ -299,6 +282,10 @@ func publicInternshipError(err error) string {
 		return "وضعیت پرونده کارآموزی معتبر نیست."
 	case errors.Is(err, service.ErrInvalidTransition):
 		return "تغییر وضعیت در مرحله فعلی امکان‌پذیر نیست."
+	case errors.Is(err, service.ErrInternshipCompleted):
+		return "دانشجو دوره کارآموزی را تکمیل کرده است."
+	case errors.Is(err, service.ErrObsoleteWorkflow):
+		return "این گردش‌کار در نسخه جدید هنوز فعال نشده است."
 	case errors.Is(err, service.ErrCompanySupervisor):
 		return "سرپرست شرکت معتبر نیست."
 	case errors.Is(err, service.ErrCaseAccessDenied):
@@ -358,9 +345,10 @@ func caseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 		LetterNumber:         internshipCase.LetterNumber, LetterDate: internshipCase.LetterDate,
 		InternshipSubject: internshipCase.InternshipSubject, StartDate: internshipCase.StartDate,
 		WorkplaceAddress: internshipCase.WorkplaceAddress, WorkplacePhone: internshipCase.WorkplacePhone,
-		CompanyConfirmedAt:   internshipCase.CompanyConfirmedAt,
-		UniversityApprovedAt: internshipCase.UniversityApprovedAt, ActivatedAt: internshipCase.ActivatedAt,
-		FinalResult: internshipCase.FinalResult, ProfessorComment: internshipCase.ProfessorComment,
+		CancellationComment: internshipCase.CancellationComment, CancelledAt: internshipCase.CancelledAt,
+		CompanyDetailsRevisionComment: internshipCase.CompanyDetailsRevisionComment,
+		ActivatedAt:                   internshipCase.ActivatedAt,
+		FinalResult:                   internshipCase.FinalResult, ProfessorComment: internshipCase.ProfessorComment,
 		CompletedAt: internshipCase.CompletedAt,
 	}
 	if internshipCase.SelectedPreference != nil {
@@ -396,10 +384,6 @@ func caseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 func preferenceResponse(preference model.InternshipPreference) internshipPreferenceResponse {
 	return internshipPreferenceResponse{
 		ID: preference.ID, Priority: preference.Priority,
-		CompanyID: preference.CompanyID, Company: preference.Company,
-		ProposedCompanyName: preference.ProposedCompanyName, ProposedWebsite: preference.ProposedWebsite,
-		ProposedPhone: preference.ProposedPhone, ProposedEmail: preference.ProposedEmail,
-		ProposedSupervisorName: preference.ProposedSupervisorName,
-		City:                   preference.City, WorkField: preference.WorkField,
+		OpportunityApplicationID: preference.OpportunityApplicationID,
 	}
 }

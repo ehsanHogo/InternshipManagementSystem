@@ -14,6 +14,27 @@ import (
 	"internship-management-system/backend/internal/service"
 )
 
+func TestObsoleteCompanyWorkflowIsDisabled(t *testing.T) {
+	workflow := service.NewInternshipService(nil)
+	checks := []struct {
+		name string
+		run  func() error
+	}{
+		{name: "manual supervisor selection", run: func() error { _, err := workflow.SendToCompany(1, service.SendToCompanyInput{}); return err }},
+		{name: "company confirmation", run: func() error {
+			_, err := workflow.ConfirmCompanyCase(1, 1, service.CompanyConfirmationInput{})
+			return err
+		}},
+		{name: "legacy university approval", run: func() error { _, err := workflow.ApproveUniversityCase(1); return err }},
+		{name: "manual activation", run: func() error { _, err := workflow.ActivateUniversityCase(1); return err }},
+	}
+	for _, check := range checks {
+		if err := check.run(); !errors.Is(err, service.ErrObsoleteWorkflow) {
+			t.Errorf("%s error = %v, want obsolete workflow", check.name, err)
+		}
+	}
+}
+
 func TestWorkflow(t *testing.T) {
 	dsn := os.Getenv("TEST_DATABASE_DSN")
 	if dsn == "" {
@@ -24,7 +45,7 @@ func TestWorkflow(t *testing.T) {
 		t.Fatalf("connect to integration database: %v", err)
 	}
 	if err := db.AutoMigrate(
-		&model.User{}, &model.Company{}, &model.ProfessorAssignment{},
+		&model.Company{}, &model.User{}, &model.ProfessorAssignment{},
 		&model.File{}, &model.InternshipCase{}, &model.InternshipPreference{},
 		&model.WeeklyReport{}, &model.CompanyEvaluation{},
 	); err != nil {
@@ -39,15 +60,135 @@ func TestWorkflow(t *testing.T) {
 	workflow := service.NewInternshipService(tx)
 	suffix := time.Now().UnixNano()
 
+	t.Run("company identifiers are required and unique", func(t *testing.T) {
+		tests := []struct {
+			name    string
+			company model.Company
+		}{
+			{name: "national id required", company: model.Company{Name: fmt.Sprintf("missing-national-%d", suffix), EconomicCode: fmt.Sprintf("economic-a-%d", suffix)}},
+			{name: "economic code required", company: model.Company{Name: fmt.Sprintf("missing-economic-%d", suffix), NationalID: fmt.Sprintf("national-a-%d", suffix)}},
+		}
+		for index, test := range tests {
+			savepoint := fmt.Sprintf("company_required_%d", index)
+			if err := tx.SavePoint(savepoint).Error; err != nil {
+				t.Fatalf("create savepoint: %v", err)
+			}
+			err := tx.Create(&test.company).Error
+			if rollbackErr := tx.RollbackTo(savepoint).Error; rollbackErr != nil {
+				t.Fatalf("rollback failed company insert: %v", rollbackErr)
+			}
+			if err == nil {
+				t.Fatalf("%s: expected database constraint error", test.name)
+			}
+		}
+
+		for index, column := range []string{"national_id", "economic_code"} {
+			savepoint := fmt.Sprintf("company_unique_%d", index)
+			if err := tx.SavePoint(savepoint).Error; err != nil {
+				t.Fatalf("create savepoint: %v", err)
+			}
+			base := model.Company{
+				Name:         fmt.Sprintf("unique-base-%d-%d", suffix, index),
+				NationalID:   fmt.Sprintf("national-%d-%d", suffix, index),
+				EconomicCode: fmt.Sprintf("economic-%d-%d", suffix, index),
+			}
+			if err := tx.Create(&base).Error; err != nil {
+				t.Fatalf("create company uniqueness fixture: %v", err)
+			}
+			duplicate := model.Company{
+				Name:         fmt.Sprintf("unique-duplicate-%d-%d", suffix, index),
+				NationalID:   fmt.Sprintf("other-national-%d-%d", suffix, index),
+				EconomicCode: fmt.Sprintf("other-economic-%d-%d", suffix, index),
+			}
+			if column == "national_id" {
+				duplicate.NationalID = base.NationalID
+			} else {
+				duplicate.EconomicCode = base.EconomicCode
+			}
+			err := tx.Create(&duplicate).Error
+			if rollbackErr := tx.RollbackTo(savepoint).Error; rollbackErr != nil {
+				t.Fatalf("rollback duplicate company: %v", rollbackErr)
+			}
+			if err == nil {
+				t.Fatalf("expected %s uniqueness error", column)
+			}
+		}
+	})
+
 	professor := createTestUser(t, tx, suffix, "professor", model.RoleProfessor)
 	supervisor := createTestUser(t, tx, suffix, "supervisor", model.RoleCompanySupervisor)
 	otherSupervisor := createTestUser(t, tx, suffix, "other-supervisor", model.RoleCompanySupervisor)
-	existingCompany := model.Company{Name: fmt.Sprintf("existing-%d", suffix), IsApproved: true}
-	if err := tx.Create(&existingCompany).Error; err != nil {
-		t.Fatalf("create existing company: %v", err)
-	}
 
-	t.Run("student submission uses pending university approval", func(t *testing.T) {
+	t.Run("preference priority is unique per case", func(t *testing.T) {
+		student := createTestStudent(t, tx, suffix, "preference-unique")
+		internshipCase := model.InternshipCase{StudentID: student.ID, ProfessorID: professor.ID, Status: model.InternshipCaseStatusDraft}
+		if err := tx.Create(&internshipCase).Error; err != nil {
+			t.Fatalf("create preference case: %v", err)
+		}
+		if err := tx.SavePoint("preference_priority_unique").Error; err != nil {
+			t.Fatalf("create preference savepoint: %v", err)
+		}
+		first := model.InternshipPreference{InternshipCaseID: internshipCase.ID, OpportunityApplicationID: 2001, Priority: 1}
+		if err := tx.Create(&first).Error; err != nil {
+			t.Fatalf("create first preference: %v", err)
+		}
+		duplicate := model.InternshipPreference{InternshipCaseID: internshipCase.ID, OpportunityApplicationID: 2002, Priority: 1}
+		err := tx.Create(&duplicate).Error
+		if rollbackErr := tx.RollbackTo("preference_priority_unique").Error; rollbackErr != nil {
+			t.Fatalf("rollback duplicate preference: %v", rollbackErr)
+		}
+		if err == nil {
+			t.Fatal("expected duplicate case/priority constraint error")
+		}
+	})
+	t.Run("student with no case creates a draft", func(t *testing.T) {
+		student := createTestStudent(t, tx, suffix, "new-case")
+		createAssignment(t, tx, student.ID, professor.ID)
+		internshipCase, created, err := workflow.CreateOrGetCase(student.ID)
+		if err != nil || !created || internshipCase.Status != model.InternshipCaseStatusDraft {
+			t.Fatalf("create draft: case=%+v created=%v err=%v", internshipCase, created, err)
+		}
+	})
+
+	t.Run("non-terminal case is reused", func(t *testing.T) {
+		student := createTestStudent(t, tx, suffix, "reuse-case")
+		createAssignment(t, tx, student.ID, professor.ID)
+		first, created, err := workflow.CreateOrGetCase(student.ID)
+		if err != nil || !created {
+			t.Fatalf("create first case: case=%+v created=%v err=%v", first, created, err)
+		}
+		second, created, err := workflow.CreateOrGetCase(student.ID)
+		if err != nil || created || second.ID != first.ID {
+			t.Fatalf("reuse case: first=%d second=%+v created=%v err=%v", first.ID, second, created, err)
+		}
+	})
+
+	t.Run("cancelled case permits a new draft", func(t *testing.T) {
+		student := createTestStudent(t, tx, suffix, "cancelled-case")
+		createAssignment(t, tx, student.ID, professor.ID)
+		cancelled := model.InternshipCase{StudentID: student.ID, ProfessorID: professor.ID, Status: model.InternshipCaseStatusCancelled}
+		if err := tx.Create(&cancelled).Error; err != nil {
+			t.Fatalf("create cancelled case: %v", err)
+		}
+		internshipCase, created, err := workflow.CreateOrGetCase(student.ID)
+		if err != nil || !created || internshipCase.ID == cancelled.ID || internshipCase.Status != model.InternshipCaseStatusDraft {
+			t.Fatalf("create after cancellation: case=%+v created=%v err=%v", internshipCase, created, err)
+		}
+	})
+
+	t.Run("completed case blocks a new case", func(t *testing.T) {
+		student := createTestStudent(t, tx, suffix, "completed-case")
+		createAssignment(t, tx, student.ID, professor.ID)
+		completed := model.InternshipCase{StudentID: student.ID, ProfessorID: professor.ID, Status: model.InternshipCaseStatusCompleted}
+		if err := tx.Create(&completed).Error; err != nil {
+			t.Fatalf("create completed case: %v", err)
+		}
+		if _, created, err := workflow.CreateOrGetCase(student.ID); !errors.Is(err, service.ErrInternshipCompleted) || created {
+			t.Fatalf("completed case result: created=%v err=%v", created, err)
+		}
+	})
+
+	t.Run("submission enters university review", func(t *testing.T) {
 		student := createTestStudent(t, tx, suffix, "submission")
 		createAssignment(t, tx, student.ID, professor.ID)
 		credits, mobile := 80, "09120000000"
@@ -59,110 +200,15 @@ func TestWorkflow(t *testing.T) {
 			t.Fatalf("create draft case: %v", err)
 		}
 		preference := model.InternshipPreference{
-			InternshipCaseID: internshipCase.ID, Priority: 1, CompanyID: &existingCompany.ID,
-			City: "تهران", WorkField: "نرم افزار",
+			InternshipCaseID: internshipCase.ID, OpportunityApplicationID: 1001, Priority: 1,
 		}
 		if err := tx.Create(&preference).Error; err != nil {
 			t.Fatalf("create draft preference: %v", err)
 		}
 		submitted, err := workflow.SubmitCase(student.ID)
-		if err != nil {
-			t.Fatalf("submit case: %v", err)
+		if err != nil || submitted.Status != model.InternshipCaseStatusPendingUniversityReview {
+			t.Fatalf("submit case: case=%+v err=%v", submitted, err)
 		}
-		if submitted.Status != model.InternshipCaseStatusPendingUniversityApproval {
-			t.Fatalf("submission status = %s, want %s", submitted.Status, model.InternshipCaseStatusPendingUniversityApproval)
-		}
-	})
-
-	t.Run("proposed company is created only on company confirmation", func(t *testing.T) {
-		student := createTestStudent(t, tx, suffix, "proposed")
-		proposedName := fmt.Sprintf("proposed-%d", suffix)
-		proposedPhone := "02100000000"
-		internshipCase := createSubmittedCase(t, tx, student.ID, professor.ID)
-		preference := model.InternshipPreference{
-			InternshipCaseID: internshipCase.ID, Priority: 1, ProposedCompanyName: &proposedName,
-			ProposedPhone: &proposedPhone, City: "تهران", WorkField: "فناوری",
-		}
-		if err := tx.Create(&preference).Error; err != nil {
-			t.Fatalf("create proposed preference: %v", err)
-		}
-
-		sent, err := workflow.SendToCompany(internshipCase.ID, service.SendToCompanyInput{
-			PreferenceID: preference.ID, CompanySupervisorID: supervisor.ID,
-			LetterNumber: "1405/test", LetterDate: testDate(t, "2026-07-06"),
-		})
-		if err != nil {
-			t.Fatalf("send proposed preference to company: %v", err)
-		}
-		if sent.Status != model.InternshipCaseStatusPendingCompanyApproval {
-			t.Fatalf("sent status = %s", sent.Status)
-		}
-		assertCompanyCount(t, tx, proposedName, 0)
-		if _, err := workflow.GetCompanyCase(otherSupervisor.ID, internshipCase.ID); !errors.Is(err, service.ErrCaseAccessDenied) {
-			t.Fatalf("unassigned supervisor error = %v, want access denied", err)
-		}
-
-		confirmed, err := workflow.ConfirmCompanyCase(supervisor.ID, internshipCase.ID, service.CompanyConfirmationInput{
-			InternshipSubject: "توسعه وب", StartDate: testDate(t, "2026-07-11"),
-			WorkplaceAddress: "تهران", WorkplacePhone: "02112345678",
-		})
-		if err != nil {
-			t.Fatalf("confirm proposed company placement: %v", err)
-		}
-		if confirmed.Status != model.InternshipCaseStatusCompanyApproved || confirmed.SelectedPreference == nil ||
-			confirmed.SelectedPreference.CompanyID == nil || confirmed.CompanyConfirmedAt == nil {
-			t.Fatalf("confirmation did not persist expected state: %+v", confirmed)
-		}
-		assertCompanyCount(t, tx, proposedName, 1)
-		var refreshedSupervisor model.User
-		if err := tx.First(&refreshedSupervisor, supervisor.ID).Error; err != nil {
-			t.Fatalf("reload supervisor: %v", err)
-		}
-		if refreshedSupervisor.CompanyID == nil || *refreshedSupervisor.CompanyID != *confirmed.SelectedPreference.CompanyID {
-			t.Fatalf("supervisor was not associated with proposed company")
-		}
-		if _, err := workflow.ConfirmCompanyCase(supervisor.ID, internshipCase.ID, service.CompanyConfirmationInput{
-			InternshipSubject: "تکرار", StartDate: testDate(t, "2026-07-11"),
-			WorkplaceAddress: "تهران", WorkplacePhone: "02112345678",
-		}); !errors.Is(err, service.ErrInvalidTransition) {
-			t.Fatalf("repeated confirmation error = %v, want invalid transition", err)
-		}
-		assertCompanyCount(t, tx, proposedName, 1)
-
-		approved, err := workflow.ApproveUniversityCase(internshipCase.ID)
-		if err != nil || approved.Status != model.InternshipCaseStatusUniversityApproved || approved.UniversityApprovedAt == nil {
-			t.Fatalf("university approval failed: case=%+v err=%v", approved, err)
-		}
-		activated, err := workflow.ActivateUniversityCase(internshipCase.ID)
-		if err != nil || activated.Status != model.InternshipCaseStatusActive || activated.ActivatedAt == nil {
-			t.Fatalf("activation failed: case=%+v err=%v", activated, err)
-		}
-	})
-
-	t.Run("existing company confirmation does not create a duplicate", func(t *testing.T) {
-		student := createTestStudent(t, tx, suffix, "existing")
-		internshipCase := createSubmittedCase(t, tx, student.ID, professor.ID)
-		preference := model.InternshipPreference{
-			InternshipCaseID: internshipCase.ID, Priority: 1, CompanyID: &existingCompany.ID,
-			City: "تهران", WorkField: "فناوری",
-		}
-		if err := tx.Create(&preference).Error; err != nil {
-			t.Fatalf("create existing-company preference: %v", err)
-		}
-		if _, err := workflow.SendToCompany(internshipCase.ID, service.SendToCompanyInput{
-			PreferenceID: preference.ID, CompanySupervisorID: supervisor.ID,
-			LetterNumber: "1405/existing", LetterDate: testDate(t, "2026-07-06"),
-		}); err != nil {
-			t.Fatalf("send existing company preference: %v", err)
-		}
-		assertCompanyCount(t, tx, existingCompany.Name, 1)
-		if _, err := workflow.ConfirmCompanyCase(supervisor.ID, internshipCase.ID, service.CompanyConfirmationInput{
-			InternshipSubject: "تحلیل داده", StartDate: testDate(t, "2026-07-11"),
-			WorkplaceAddress: "تهران", WorkplacePhone: "02112345678",
-		}); err != nil {
-			t.Fatalf("confirm existing company placement: %v", err)
-		}
-		assertCompanyCount(t, tx, existingCompany.Name, 1)
 	})
 
 	t.Run("active internship reporting workflow", func(t *testing.T) {
@@ -270,7 +316,7 @@ func TestWorkflow(t *testing.T) {
 
 	t.Run("reports require active internship", func(t *testing.T) {
 		student := createTestStudent(t, tx, suffix, "inactive-reporting")
-		inactiveCase := model.InternshipCase{StudentID: student.ID, ProfessorID: professor.ID, Status: model.InternshipCaseStatusUniversityApproved}
+		inactiveCase := model.InternshipCase{StudentID: student.ID, ProfessorID: professor.ID, Status: model.InternshipCaseStatusReadyToStart}
 		if err := tx.Create(&inactiveCase).Error; err != nil {
 			t.Fatalf("create inactive case: %v", err)
 		}
@@ -413,7 +459,7 @@ func TestWorkflow(t *testing.T) {
 					universityCase.FinalReportFile == nil || universityCase.FinalResult == nil {
 					t.Fatalf("university completed case detail: case=%+v err=%v", universityCase, err)
 				}
-				if _, err := workflow.ApproveUniversityCase(readyCase.ID); !errors.Is(err, service.ErrInvalidTransition) {
+				if _, err := workflow.ApproveUniversityCase(readyCase.ID); !errors.Is(err, service.ErrObsoleteWorkflow) {
 					t.Fatalf("university completed mutation error = %v", err)
 				}
 			}
@@ -527,7 +573,7 @@ func createSubmittedCase(t *testing.T, db *gorm.DB, studentID, professorID uint)
 	now := time.Now()
 	internshipCase := model.InternshipCase{
 		StudentID: studentID, ProfessorID: professorID,
-		Status: model.InternshipCaseStatusPendingUniversityApproval, SubmittedAt: &now,
+		Status: model.InternshipCaseStatusPendingUniversityReview, SubmittedAt: &now,
 	}
 	if err := db.Create(&internshipCase).Error; err != nil {
 		t.Fatalf("create submitted case: %v", err)
