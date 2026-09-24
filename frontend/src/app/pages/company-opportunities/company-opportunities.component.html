@@ -1,0 +1,110 @@
+<section class="page-heading">
+  <div>
+    <span class="eyebrow">سرپرست شرکت</span>
+    <h1>فرصت‌های کارآموزی</h1>
+    <p>فرصت‌های شرکت را ایجاد، مشاهده، ویرایش یا پس از پایان پذیرش ببندید.</p>
+  </div>
+  <p-button label="ایجاد فرصت" icon="pi pi-plus" (onClick)="openCreate()" />
+</section>
+
+@if (loading()) {
+  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت فرصت‌ها...</span></div>
+} @else if (loadFailed()) {
+  <div class="state-card error-state">
+    <div><i class="pi pi-exclamation-circle"></i><p>دریافت فرصت‌ها امکان‌پذیر نبود.</p></div>
+    <p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="load()" />
+  </div>
+} @else if (opportunities().length === 0) {
+  <div class="empty-state">
+    <div><i class="pi pi-briefcase"></i><p>هنوز فرصت کارآموزی ایجاد نکرده‌اید.</p></div>
+    <p-button label="ایجاد اولین فرصت" icon="pi pi-plus" (onClick)="openCreate()" />
+  </div>
+} @else {
+  <p-table [value]="opportunities()" [rowHover]="true" responsiveLayout="scroll">
+    <ng-template #header>
+      <tr><th>عنوان</th><th>زمینه کاری</th><th>محل</th><th>وضعیت</th><th>تاریخ ایجاد</th><th>عملیات</th></tr>
+    </ng-template>
+    <ng-template #body let-opportunity>
+      <tr>
+        <td><strong>{{ opportunity.title }}</strong></td>
+        <td>{{ opportunity.workField }}</td>
+        <td>{{ opportunity.location }}</td>
+        <td>
+          <p-tag [value]="statusLabel(opportunity.status)" [severity]="opportunity.status === 'OPEN' ? 'success' : 'secondary'" />
+        </td>
+        <td>{{ opportunity.createdAt | jalaliDate }}</td>
+        <td>
+          <div class="row-actions">
+            <p-button label="مشاهده" icon="pi pi-eye" size="small" [text]="true" (onClick)="openView(opportunity)" />
+            <p-button label="ویرایش" icon="pi pi-pencil" size="small" severity="secondary" [text]="true" (onClick)="openEdit(opportunity)" />
+            @if (opportunity.status === 'OPEN') {
+              <p-button label="بستن فرصت" icon="pi pi-lock" size="small" severity="danger" [text]="true" (onClick)="askToClose(opportunity)" />
+            }
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+}
+
+<p-dialog
+  [header]="editing() ? 'ویرایش فرصت کارآموزی' : 'ایجاد فرصت کارآموزی'"
+  [visible]="formVisible()"
+  (visibleChange)="formVisible.set($event)"
+  [modal]="true"
+  appendTo="body"
+  [style]="{ width: 'min(92vw, 44rem)' }"
+>
+  <form class="form-grid" [formGroup]="form" (ngSubmit)="submit()">
+    <label class="field full-width">
+      عنوان فرصت
+      <input pInputText formControlName="title" maxlength="250" />
+      @if (form.controls.title.touched && (!form.controls.title.value.trim() || form.controls.title.invalid)) { <small>عنوان فرصت الزامی است.</small> }
+    </label>
+    <label class="field">
+      زمینه کاری
+      <input pInputText formControlName="workField" maxlength="200" />
+      @if (form.controls.workField.touched && (!form.controls.workField.value.trim() || form.controls.workField.invalid)) { <small>زمینه کاری الزامی است.</small> }
+    </label>
+    <label class="field">
+      محل کارآموزی
+      <input pInputText formControlName="location" maxlength="500" />
+      @if (form.controls.location.touched && (!form.controls.location.value.trim() || form.controls.location.invalid)) { <small>محل کارآموزی الزامی است.</small> }
+    </label>
+    <label class="field full-width">
+      توضیحات
+      <textarea pTextarea rows="7" formControlName="description" maxlength="10000"></textarea>
+      @if (form.controls.description.touched && (!form.controls.description.value.trim() || form.controls.description.invalid)) { <small>توضیحات فرصت الزامی است.</small> }
+    </label>
+    <div class="dialog-actions full-width">
+      <p-button label="انصراف" severity="secondary" [outlined]="true" type="button" (onClick)="formVisible.set(false)" />
+      <p-button [label]="editing() ? 'ذخیره تغییرات' : 'ایجاد فرصت'" type="submit" [loading]="submitting" [disabled]="submitting" />
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog header="جزئیات فرصت کارآموزی" [visible]="viewVisible()" (visibleChange)="viewVisible.set($event)" [modal]="true" appendTo="body" [style]="{ width: 'min(92vw, 44rem)' }">
+  @if (detailLoading()) {
+    <div class="dialog-loading"><i class="pi pi-spin pi-spinner"></i> در حال دریافت جزئیات...</div>
+  } @else if (selected(); as opportunity) {
+    <div class="detail-grid">
+      <div class="detail full-width"><span>عنوان</span><strong>{{ opportunity.title }}</strong></div>
+      <div class="detail"><span>زمینه کاری</span><strong>{{ opportunity.workField }}</strong></div>
+      <div class="detail"><span>محل</span><strong>{{ opportunity.location }}</strong></div>
+      <div class="detail"><span>وضعیت</span><p-tag [value]="statusLabel(opportunity.status)" [severity]="opportunity.status === 'OPEN' ? 'success' : 'secondary'" /></div>
+      <div class="detail"><span>تاریخ ایجاد</span><strong>{{ opportunity.createdAt | jalaliDate }}</strong></div>
+      <div class="detail full-width description"><span>توضیحات</span><p>{{ opportunity.description }}</p></div>
+    </div>
+  }
+</p-dialog>
+
+<p-dialog header="بستن فرصت کارآموزی" [visible]="closeVisible()" (visibleChange)="closeVisible.set($event)" [modal]="true" appendTo="body" [closable]="!closing()" [style]="{ width: 'min(92vw, 34rem)' }">
+  <div class="close-message">
+    <i class="pi pi-exclamation-triangle"></i>
+    <div><strong>آیا از بستن این فرصت کارآموزی مطمئن هستید؟</strong><p>پس از بسته شدن، این فرصت برای دانشجویان قابل درخواست نخواهد بود.</p></div>
+  </div>
+  <div class="dialog-actions">
+    <p-button label="انصراف" severity="secondary" [outlined]="true" [disabled]="closing()" (onClick)="closeVisible.set(false)" />
+    <p-button label="بستن فرصت" severity="danger" icon="pi pi-lock" [loading]="closing()" [disabled]="closing()" (onClick)="confirmClose()" />
+  </div>
+</p-dialog>

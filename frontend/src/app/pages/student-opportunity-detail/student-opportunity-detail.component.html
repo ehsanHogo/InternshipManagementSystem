@@ -1,0 +1,59 @@
+<section class="page-heading">
+  <div>
+    <span class="eyebrow">جزئیات فرصت</span>
+    <h1>{{ opportunity()?.title || 'فرصت کارآموزی' }}</h1>
+    <p>اطلاعات فرصت و شرکت ارائه‌دهنده را مشاهده کنید.</p>
+  </div>
+  <p-button label="بازگشت به فرصت‌ها" icon="pi pi-arrow-right" severity="secondary" [outlined]="true" routerLink="/student/opportunities" />
+</section>
+
+@if (loading()) {
+  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت جزئیات...</span></div>
+} @else if (loadFailed()) {
+  <div class="state-card error-state">
+    <div><i class="pi pi-exclamation-circle"></i><p>این فرصت باز نیست یا یافت نشد.</p></div>
+    <p-button label="بازگشت به فرصت‌ها" icon="pi pi-arrow-right" routerLink="/student/opportunities" />
+  </div>
+} @else if (opportunity(); as item) {
+  <p-card header="اطلاعات فرصت کارآموزی">
+    <div class="detail-grid">
+      <div class="detail full-width"><span>عنوان فرصت</span><strong>{{ item.title }}</strong></div>
+      <div class="detail"><span>نام شرکت</span><strong>{{ item.company.name }}</strong></div>
+      <div class="detail"><span>زمینه کاری</span><strong>{{ item.workField }}</strong></div>
+      <div class="detail full-width"><span>محل</span><strong>{{ item.location }}</strong></div>
+      <div class="detail full-width description"><span>توضیحات</span><p>{{ item.description }}</p></div>
+    </div>
+  </p-card>
+
+  <p-card header="اطلاعات شرکت">
+    <div class="approval" [class.approved]="item.company.isApproved">
+      <i [class]="item.company.isApproved ? 'pi pi-check-circle' : 'pi pi-info-circle'"></i>
+      <div>
+        <p-tag
+          [value]="item.company.isApproved ? 'مورد تأیید دانشکده' : 'شرکت جدید'"
+          [severity]="item.company.isApproved ? 'success' : 'secondary'"
+        />
+        <p>
+          {{ item.company.isApproved
+            ? 'این شرکت در فهرست شرکت‌های مورد تأیید دانشکده قرار دارد.'
+            : 'این شرکت هنوز در فهرست شرکت‌های مورد تأیید دانشکده نیست.' }}
+        </p>
+      </div>
+    </div>
+    <div class="detail-grid company-details">
+      <div class="detail"><span>وب‌سایت شرکت</span>
+        @if (item.company.website) { <a [href]="item.company.website" target="_blank" rel="noopener noreferrer" dir="ltr">{{ item.company.website }}</a> }
+        @else { <strong>—</strong> }
+      </div>
+      <div class="detail"><span>شماره تماس شرکت</span>
+        @if (item.company.phone) { <a [href]="'tel:' + item.company.phone" dir="ltr">{{ item.company.phone }}</a> }
+        @else { <strong>—</strong> }
+      </div>
+      <div class="detail"><span>ایمیل شرکت</span>
+        @if (item.company.email) { <a [href]="'mailto:' + item.company.email" dir="ltr">{{ item.company.email }}</a> }
+        @else { <strong>—</strong> }
+      </div>
+      <div class="detail"><span>آدرس شرکت</span><strong>{{ item.company.address || '—' }}</strong></div>
+    </div>
+  </p-card>
+}

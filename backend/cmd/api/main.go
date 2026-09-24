@@ -53,6 +53,8 @@ func main() {
 	managementHandler := handler.NewUniversityManagementHandler(managementService)
 	companyAccountService := service.NewCompanyAccountService(db)
 	companyAccountHandler := handler.NewCompanyAccountHandler(companyAccountService)
+	opportunityService := service.NewOpportunityService(db)
+	opportunityHandler := handler.NewOpportunityHandler(opportunityService)
 
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery(), appmiddleware.CORS(cfg.FrontendOrigin))
@@ -81,6 +83,8 @@ func main() {
 	student.POST("/internship-case/weekly-reports", internshipHandler.CreateWeeklyReport)
 	student.PUT("/internship-case/weekly-reports/:id", internshipHandler.UpdateWeeklyReport)
 	student.POST("/internship-case/final-report", internshipHandler.UploadFinalReport)
+	student.GET("/opportunities", opportunityHandler.ListStudent)
+	student.GET("/opportunities/:id", opportunityHandler.GetStudent)
 
 	university := authenticated.Group("/university")
 	university.Use(appmiddleware.RequireRole(model.RoleUniversitySupervisor))
@@ -113,6 +117,11 @@ func main() {
 	company.POST("/internship-cases/:id/weekly-reports/:reportId/confirm", internshipHandler.ConfirmWeeklyReport)
 	company.GET("/internship-cases/:id/evaluation", internshipHandler.GetCompanyEvaluation)
 	company.POST("/internship-cases/:id/evaluation", internshipHandler.CreateCompanyEvaluation)
+	company.POST("/opportunities", opportunityHandler.Create)
+	company.GET("/opportunities", opportunityHandler.ListCompany)
+	company.GET("/opportunities/:id", opportunityHandler.GetCompany)
+	company.PUT("/opportunities/:id", opportunityHandler.Update)
+	company.POST("/opportunities/:id/close", opportunityHandler.Close)
 
 	professor := authenticated.Group("/professor")
 	professor.Use(appmiddleware.RequireRole(model.RoleProfessor))

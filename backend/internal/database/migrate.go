@@ -19,6 +19,7 @@ func MigrateAndSeed(db *gorm.DB) error {
 	if err := db.AutoMigrate(
 		&model.Company{},
 		&model.User{},
+		&model.InternshipOpportunity{},
 		&model.ProfessorAssignment{},
 		&model.File{},
 		&model.InternshipCase{},

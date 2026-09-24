@@ -32,6 +32,22 @@ export const routes: Routes = [
           import('./pages/dashboard/dashboard.component').then((module) => module.DashboardComponent)
       },
       {
+        path: 'student/opportunities',
+        canActivate: [studentGuard],
+        loadComponent: () =>
+          import('./pages/student-opportunities/student-opportunities.component').then(
+            (module) => module.StudentOpportunitiesComponent
+          )
+      },
+      {
+        path: 'student/opportunities/:id',
+        canActivate: [studentGuard],
+        loadComponent: () =>
+          import('./pages/student-opportunity-detail/student-opportunity-detail.component').then(
+            (module) => module.StudentOpportunityDetailComponent
+          )
+      },
+      {
         path: 'student/application',
         canActivate: [studentGuard],
         loadComponent: () =>
@@ -127,6 +143,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/professor-case/professor-case.component').then(
             (module) => module.ProfessorCaseComponent
+          )
+      },
+      {
+        path: 'company/opportunities',
+        canActivate: [companySupervisorGuard],
+        loadComponent: () =>
+          import('./pages/company-opportunities/company-opportunities.component').then(
+            (module) => module.CompanyOpportunitiesComponent
           )
       },
       {

@@ -29,6 +29,10 @@
         داشبورد
       </a>
       @if (user()?.role === 'STUDENT') {
+        <a routerLink="/student/opportunities" routerLinkActive="active">
+          <i class="pi pi-briefcase" aria-hidden="true"></i>
+          فرصت‌های کارآموزی
+        </a>
         <a routerLink="/student/application" routerLinkActive="active">
           <i class="pi pi-file-edit" aria-hidden="true"></i>
           درخواست کارآموزی
@@ -69,6 +73,10 @@
         </a>
       }
       @if (user()?.role === 'COMPANY_SUPERVISOR') {
+        <a routerLink="/company/opportunities" routerLinkActive="active">
+          <i class="pi pi-megaphone" aria-hidden="true"></i>
+          فرصت‌های کارآموزی
+        </a>
         <a routerLink="/company/profile" routerLinkActive="active">
           <i class="pi pi-building" aria-hidden="true"></i>
           پروفایل شرکت

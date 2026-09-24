@@ -1,0 +1,46 @@
+@use '../workflow-page.scss';
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+}
+
+.description p {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.9;
+}
+
+.dialog-loading {
+  min-height: 8rem;
+  display: grid;
+  place-items: center;
+  color: #64748b;
+}
+
+.close-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #fecaca;
+  border-radius: 0.8rem;
+  background: #fef2f2;
+
+  i { color: #dc2626; font-size: 1.5rem; }
+  strong { color: #991b1b; }
+  p { margin: 0.4rem 0 0; color: #475569; line-height: 1.8; }
+}
+
+.error-state > div,
+.empty-state > div {
+  text-align: center;
+}
+
+.empty-state i {
+  color: #94a3b8;
+  font-size: 2rem;
+}
