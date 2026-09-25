@@ -256,7 +256,9 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		errors.Is(err, service.ErrInvalidPreference), errors.Is(err, service.ErrPreferenceNotOwned),
 		errors.Is(err, service.ErrPreferenceNotAccepted), errors.Is(err, service.ErrInvalidCaseStatus),
 		errors.Is(err, service.ErrCompanySupervisor), errors.Is(err, service.ErrInvalidWeeklyReport),
-		errors.Is(err, service.ErrInvalidEvaluation), errors.Is(err, service.ErrInvalidProfessorResult):
+		errors.Is(err, service.ErrInvalidEvaluation), errors.Is(err, service.ErrInvalidProfessorResult),
+		errors.Is(err, service.ErrPreferenceNotInCase), errors.Is(err, service.ErrIntroductionLetterNumberRequired),
+		errors.Is(err, service.ErrIntroductionLetterDateRequired), errors.Is(err, service.ErrCancellationCommentRequired):
 		status = http.StatusBadRequest
 	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit),
 		errors.Is(err, service.ErrDuplicatePriority), errors.Is(err, service.ErrPreferenceAlreadyExists),
@@ -265,7 +267,8 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		errors.Is(err, service.ErrProfessorCaseNotActive), errors.Is(err, service.ErrProfessorWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrProfessorCompanyEvaluationRequired), errors.Is(err, service.ErrProfessorFinalReportRequired),
 		errors.Is(err, service.ErrInvalidTransition), errors.Is(err, service.ErrInternshipCompleted),
-		errors.Is(err, service.ErrObsoleteWorkflow):
+		errors.Is(err, service.ErrObsoleteWorkflow), errors.Is(err, service.ErrCaseNotPendingUniversityReview),
+		errors.Is(err, service.ErrCompanySupervisorResolution):
 		status = http.StatusConflict
 	case errors.Is(err, service.ErrCaseAccessDenied):
 		status = http.StatusForbidden
@@ -307,6 +310,20 @@ func internshipErrorCode(err error) string {
 		return "INTERNSHIP_ALREADY_COMPLETED"
 	case errors.Is(err, service.ErrCaseNotFound):
 		return "INTERNSHIP_CASE_NOT_FOUND"
+	case errors.Is(err, service.ErrCaseNotPendingUniversityReview):
+		return "INTERNSHIP_CASE_NOT_PENDING_UNIVERSITY_REVIEW"
+	case errors.Is(err, service.ErrPreferenceNotFound):
+		return "PREFERENCE_NOT_FOUND"
+	case errors.Is(err, service.ErrPreferenceNotInCase):
+		return "PREFERENCE_NOT_IN_CASE"
+	case errors.Is(err, service.ErrIntroductionLetterNumberRequired):
+		return "INTRODUCTION_LETTER_NUMBER_REQUIRED"
+	case errors.Is(err, service.ErrIntroductionLetterDateRequired):
+		return "INTRODUCTION_LETTER_DATE_REQUIRED"
+	case errors.Is(err, service.ErrCompanySupervisorResolution):
+		return "COMPANY_SUPERVISOR_RESOLUTION_FAILED"
+	case errors.Is(err, service.ErrCancellationCommentRequired):
+		return "CANCELLATION_COMMENT_REQUIRED"
 	default:
 		return "INTERNSHIP_REQUEST_FAILED"
 	}
@@ -346,6 +363,18 @@ func publicInternshipError(err error) string {
 		return "این گردش‌کار در نسخه جدید هنوز فعال نشده است."
 	case errors.Is(err, service.ErrCompanySupervisor):
 		return "سرپرست شرکت معتبر نیست."
+	case errors.Is(err, service.ErrCaseNotPendingUniversityReview):
+		return "این پرونده دیگر در انتظار بررسی آموزش نیست."
+	case errors.Is(err, service.ErrPreferenceNotInCase):
+		return "اولویت انتخاب‌شده متعلق به این پرونده نیست."
+	case errors.Is(err, service.ErrIntroductionLetterNumberRequired):
+		return "شماره معرفی‌نامه الزامی است."
+	case errors.Is(err, service.ErrIntroductionLetterDateRequired):
+		return "تاریخ معرفی‌نامه الزامی است."
+	case errors.Is(err, service.ErrCompanySupervisorResolution):
+		return "سرپرست معتبر شرکت برای این فرصت قابل شناسایی نیست."
+	case errors.Is(err, service.ErrCancellationCommentRequired):
+		return "ثبت دلیل لغو پرونده الزامی است."
 	case errors.Is(err, service.ErrCaseAccessDenied):
 		return "اجازه دسترسی به این پرونده را ندارید."
 	case errors.Is(err, service.ErrWeeklyReportNotFound):

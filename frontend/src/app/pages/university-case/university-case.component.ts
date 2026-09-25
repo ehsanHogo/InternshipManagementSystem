@@ -2,29 +2,26 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { finalize } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
+import { TextareaModule } from 'primeng/textarea';
 
-import { User } from '../../auth/auth.models';
 import {
-  EvaluationRating,
   InternshipCase,
   InternshipCaseStatus,
   InternshipPreference,
-  ProfessorFinalResult,
-  evaluationRatingLabels,
-  internshipStatusLabels,
-  professorFinalResultLabels
+  internshipStatusLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
+import { userErrorMessage } from '../../shared/http-error-message';
 import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 @Component({
@@ -38,9 +35,10 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
     ButtonModule,
     CardModule,
     ConfirmDialogModule,
+    DialogModule,
     InputTextModule,
-    SelectModule,
-    TagModule
+    TagModule,
+    TextareaModule
   ],
   providers: [ConfirmationService],
   templateUrl: './university-case.component.html',
@@ -55,190 +53,153 @@ export class UniversityCaseComponent {
   private readonly caseID = Number(this.route.snapshot.paramMap.get('id'));
 
   readonly internshipCase = signal<InternshipCase | null>(null);
-  readonly supervisors = signal<User[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);
-  readonly downloading = signal(false);
-  readonly criteria: { key: EvaluationField; label: string }[] = [
-    { key: 'attendanceRating', label: 'حضور و نظم' },
-    { key: 'participationRating', label: 'مشارکت در فعالیت‌ها' },
-    { key: 'learningRating', label: 'استعداد و توانایی یادگیری' },
-    { key: 'interestRating', label: 'علاقه به یادگیری مطالب علمی و فنی' },
-    { key: 'persistenceRating', label: 'پیگیری و پشتکار' },
-    { key: 'suggestionRating', label: 'ارزش پیشنهادهای ارائه‌شده' },
-    { key: 'resourceUsageRating', label: 'استفاده از امکانات موجود برای افزایش توانایی' },
-    { key: 'reportQualityRating', label: 'کیفیت گزارش‌های کارآموزی' },
-    { key: 'projectPerformanceRating', label: 'عملکرد در پروژه یا فعالیت محوله' }
-  ];
+  readonly cancelDialogVisible = signal(false);
 
   readonly reviewForm = this.formBuilder.group({
     preferenceId: this.formBuilder.control<number | null>(null, Validators.required),
-    companySupervisorId: this.formBuilder.control<number | null>(null, Validators.required),
-    letterNumber: this.formBuilder.nonNullable.control('', Validators.required),
+    letterNumber: this.formBuilder.nonNullable.control('', [Validators.required, Validators.pattern(/\S/)]),
     letterDate: this.formBuilder.nonNullable.control('', Validators.required)
   });
 
+  readonly cancellationForm = this.formBuilder.group({
+    comment: this.formBuilder.nonNullable.control('', [Validators.required, Validators.pattern(/\S/)])
+  });
+
   constructor() {
-    forkJoin({
-      internshipCase: this.internshipService.getUniversityCase(this.caseID),
-      supervisors: this.internshipService.listCompanySupervisors()
-    }).subscribe({
-      next: ({ internshipCase, supervisors }) => {
-        this.internshipCase.set(internshipCase);
-        this.supervisors.set(supervisors);
-        this.syncReviewForm(internshipCase);
-        this.loading.set(false);
-      },
-      error: (error: HttpErrorResponse) => {
-        this.loading.set(false);
-        this.showError(error);
-      }
-    });
+    this.loadCase();
   }
 
   statusLabel(status: InternshipCaseStatus): string {
     return internshipStatusLabels[status];
   }
 
-  preferenceName(preference: InternshipPreference): string {
-    return preference.application.opportunity.company.name ?? '—';
+  selectPreference(preferenceID: number): void {
+    this.reviewForm.controls.preferenceId.setValue(preferenceID);
+    this.reviewForm.controls.preferenceId.markAsTouched();
   }
 
-  ratingLabel(rating: EvaluationRating): string {
-    return evaluationRatingLabels[rating];
+  selectedPreference(): InternshipPreference | undefined {
+    const preferenceID = this.reviewForm.controls.preferenceId.value;
+    return this.internshipCase()?.preferences.find((preference) => preference.id === preferenceID);
   }
 
-  finalResultLabel(result?: ProfessorFinalResult): string {
-    return result ? professorFinalResultLabels[result] : '—';
-  }
-
-  downloadFinalReport(): void {
-    const report = this.internshipCase()?.finalReport;
-    if (!report) return;
-    this.downloading.set(true);
-    this.internshipService.downloadFile(report.id).subscribe({
-      next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = report.originalName;
-        anchor.click();
-        URL.revokeObjectURL(url);
-        this.downloading.set(false);
-      },
-      error: () => {
-        this.downloading.set(false);
-        this.messages.add({ severity: 'error', summary: 'خطا', detail: 'دانلود گزارش نهایی ناموفق بود.' });
-      }
+  confirmApproval(): void {
+    if (this.reviewForm.invalid) {
+      this.reviewForm.markAllAsTouched();
+      this.messages.add({
+        severity: 'warn',
+        summary: 'اطلاعات ناقص',
+        detail: 'یک اولویت، شماره معرفی‌نامه و تاریخ معرفی‌نامه را وارد کنید.'
+      });
+      return;
+    }
+    const selected = this.selectedPreference();
+    const placement = selected
+      ? `${selected.application.opportunity.company.name} — ${selected.application.opportunity.title}`
+      : '';
+    this.confirmation.confirm({
+      header: 'تأیید محل کارآموزی',
+      message: `آیا از انتخاب «${placement}» و ثبت معرفی‌نامه اطمینان دارید؟`,
+      icon: 'pi pi-check-circle',
+      acceptLabel: 'بله، تأیید شود',
+      rejectLabel: 'انصراف',
+      accept: () => this.approvePlacement()
     });
   }
 
-  selectPreference(preferenceID: number): void {
-    this.reviewForm.controls.preferenceId.setValue(preferenceID);
+  openCancellation(): void {
+    this.cancellationForm.reset({ comment: '' });
+    this.cancelDialogVisible.set(true);
   }
 
-  confirmSendToCompany(): void {
-    if (this.reviewForm.invalid) {
-      this.reviewForm.markAllAsTouched();
-      this.messages.add({ severity: 'warn', summary: 'اطلاعات ناقص', detail: 'محل کارآموزی، سرپرست شرکت و اطلاعات نامه را وارد کنید.' });
+  confirmCancellation(): void {
+    if (this.cancellationForm.invalid) {
+      this.cancellationForm.markAllAsTouched();
       return;
     }
     this.confirmation.confirm({
-      header: 'ارسال پرونده به شرکت',
-      message: 'پس از ارسال، اطلاعات نامه، محل انتخابی و سرپرست شرکت در این مرحله قابل ویرایش نیست. آیا ادامه می‌دهید؟',
-      acceptLabel: 'بله، ارسال شود',
-      rejectLabel: 'انصراف',
+      header: 'تأیید لغو پرونده',
+      message: 'کل پرونده رسمی لغو می‌شود و دانشجو می‌تواند درخواست جدیدی ثبت کند. آیا ادامه می‌دهید؟',
       icon: 'pi pi-exclamation-triangle',
-      accept: () => this.sendToCompany()
+      acceptLabel: 'بله، پرونده لغو شود',
+      rejectLabel: 'انصراف',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => this.cancelCase()
     });
   }
 
-  private sendToCompany(): void {
+  private loadCase(): void {
+    this.loading.set(true);
+    this.internshipService.getUniversityCase(this.caseID)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (internshipCase) => {
+          this.internshipCase.set(internshipCase);
+          this.syncReviewForm(internshipCase);
+        },
+        error: (error: HttpErrorResponse) => this.showError(error)
+      });
+  }
+
+  private approvePlacement(): void {
     const value = this.reviewForm.getRawValue();
     this.saving.set(true);
-    this.internshipService.sendToCompany(this.caseID, {
+    this.internshipService.approveUniversityPlacement(this.caseID, {
       preferenceId: value.preferenceId!,
-      companySupervisorId: value.companySupervisorId!,
       letterNumber: value.letterNumber.trim(),
       letterDate: value.letterDate
-    }).subscribe({
-      next: (internshipCase) => {
-        this.internshipCase.set(internshipCase);
-        this.syncReviewForm(internshipCase);
-        this.saving.set(false);
-        this.messages.add({ severity: 'success', summary: 'ارسال شد', detail: 'پرونده برای تأیید شرکت ارسال شد.' });
-      },
-      error: (error: HttpErrorResponse) => {
-        this.saving.set(false);
-        this.showError(error);
-      }
-    });
+    })
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (internshipCase) => {
+          this.internshipCase.set(internshipCase);
+          this.syncReviewForm(internshipCase);
+          this.messages.add({
+            severity: 'success',
+            summary: 'تأیید شد',
+            detail: 'محل کارآموزی و معرفی‌نامه ثبت شد؛ پرونده در انتظار اطلاعات شروع شرکت است.'
+          });
+        },
+        error: (error: HttpErrorResponse) => this.showError(error)
+      });
   }
 
-  confirmApprove(): void {
-    this.confirmation.confirm({
-      header: 'تأیید نهایی آموزش',
-      message: 'پذیرش شرکت و اطلاعات محل کارآموزی بررسی شد. آیا پرونده توسط آموزش تأیید شود؟',
-      acceptLabel: 'تأیید نهایی',
-      rejectLabel: 'انصراف',
-      accept: () => this.approve()
-    });
-  }
-
-  confirmActivate(): void {
-    this.confirmation.confirm({
-      header: 'فعال‌سازی کارآموزی',
-      message: 'تمام تأییدهای لازم انجام شده است. آیا کارآموزی دانشجو فعال شود؟',
-      acceptLabel: 'فعال شود',
-      rejectLabel: 'انصراف',
-      accept: () => this.activate()
-    });
-  }
-
-  private approve(): void {
-    this.runAction(this.internshipService.approveUniversityCase(this.caseID), 'پرونده توسط آموزش تأیید شد.');
-  }
-
-  private activate(): void {
-    this.runAction(this.internshipService.activateUniversityCase(this.caseID), 'کارآموزی دانشجو با موفقیت فعال شد.');
-  }
-
-  private runAction(request: ReturnType<InternshipService['approveUniversityCase']>, detail: string): void {
+  private cancelCase(): void {
+    const comment = this.cancellationForm.controls.comment.value.trim();
     this.saving.set(true);
-    request.subscribe({
-      next: (internshipCase) => {
-        this.internshipCase.set(internshipCase);
-        this.syncReviewForm(internshipCase);
-        this.saving.set(false);
-        this.messages.add({ severity: 'success', summary: 'انجام شد', detail });
-      },
-      error: (error: HttpErrorResponse) => {
-        this.saving.set(false);
-        this.showError(error);
-      }
-    });
-  }
-
-  private showError(error: HttpErrorResponse): void {
-    let detail = 'انجام عملیات ناموفق بود.';
-    if (error.status === 0) detail = 'ارتباط با سرور برقرار نشد.';
-    if (error.status === 409) detail = 'این عملیات با وضعیت فعلی پرونده سازگار نیست.';
-    this.messages.add({ severity: 'error', summary: 'خطا', detail });
+    this.internshipService.cancelUniversityReview(this.caseID, { comment })
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (internshipCase) => {
+          this.cancelDialogVisible.set(false);
+          this.internshipCase.set(internshipCase);
+          this.syncReviewForm(internshipCase);
+          this.messages.add({ severity: 'success', summary: 'لغو شد', detail: 'پرونده کارآموزی لغو شد.' });
+        },
+        error: (error: HttpErrorResponse) => this.showError(error)
+      });
   }
 
   private syncReviewForm(internshipCase: InternshipCase): void {
     this.reviewForm.reset({
       preferenceId: internshipCase.selectedPreferenceId ?? null,
-      companySupervisorId: internshipCase.companySupervisorId ?? null,
       letterNumber: internshipCase.letterNumber ?? '',
       letterDate: internshipCase.letterDate?.slice(0, 10) ?? ''
     });
-    if (internshipCase.status === 'PENDING_UNIVERSITY_REVIEW') this.reviewForm.enable({ emitEvent: false });
-    else this.reviewForm.disable({ emitEvent: false });
+    if (internshipCase.status === 'PENDING_UNIVERSITY_REVIEW') {
+      this.reviewForm.enable({ emitEvent: false });
+    } else {
+      this.reviewForm.disable({ emitEvent: false });
+    }
+  }
+
+  private showError(error: HttpErrorResponse): void {
+    this.messages.add({
+      severity: 'error',
+      summary: 'عملیات ناموفق',
+      detail: userErrorMessage(error, 'انجام بررسی پرونده امکان‌پذیر نبود.')
+    });
   }
 }
-
-type EvaluationField =
-  | 'attendanceRating' | 'participationRating' | 'learningRating'
-  | 'interestRating' | 'persistenceRating' | 'suggestionRating'
-  | 'resourceUsageRating' | 'reportQualityRating' | 'projectPerformanceRating';

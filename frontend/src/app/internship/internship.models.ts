@@ -28,9 +28,10 @@ export interface AcceptedOpportunityApplication {
   opportunity: {
     id: number;
     title: string;
+    description: string;
     workField: string;
     location: string;
-    company: Pick<Company, "id" | "name" | "isApproved">;
+    company: Company;
   };
 }
 
@@ -202,11 +203,14 @@ export interface ProfessorCompletionPayload {
   comment?: string;
 }
 
-export interface SendToCompanyPayload {
+export interface UniversityPlacementApprovalPayload {
   preferenceId: number;
-  companySupervisorId: number;
   letterNumber: string;
   letterDate: string;
+}
+
+export interface UniversityReviewCancellationPayload {
+  comment: string;
 }
 
 export interface CompanyConfirmationPayload {

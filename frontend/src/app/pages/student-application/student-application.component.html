@@ -151,6 +151,9 @@
             <div class="preference-details">
               <strong>{{ preference.application.opportunity.title }}</strong>
               <span>{{ preference.application.opportunity.company.name }}</span>
+              @if (currentCase.selectedPreferenceId === preference.id) {
+                <p-tag value="انتخاب‌شده توسط آموزش" severity="success" />
+              }
               <span><i class="pi pi-briefcase"></i>{{ preference.application.opportunity.workField }}</span>
               <span><i class="pi pi-map-marker"></i>{{ preference.application.opportunity.location }}</span>
               <p-tag
@@ -170,6 +173,37 @@
       </div>
     }
   </p-card>
+
+  @if (currentCase.status === "PENDING_COMPANY_DETAILS" && currentCase.selectedPreference) {
+    <p-card header="نتیجه بررسی آموزش">
+      <div class="detail-grid">
+        <div class="detail"><span>وضعیت</span><strong>در انتظار ثبت اطلاعات شروع توسط شرکت</strong></div>
+        <div class="detail"><span>اولویت انتخاب‌شده</span><strong>اولویت {{ priorityLabel(currentCase.selectedPreference.priority) }}</strong></div>
+        <div class="detail"><span>شرکت انتخاب‌شده</span><strong>{{ currentCase.selectedPreference.application.opportunity.company.name }}</strong></div>
+        <div class="detail"><span>فرصت انتخاب‌شده</span><strong>{{ currentCase.selectedPreference.application.opportunity.title }}</strong></div>
+        <div class="detail"><span>شماره معرفی‌نامه</span><strong>{{ currentCase.letterNumber ?? "—" }}</strong></div>
+        <div class="detail"><span>تاریخ معرفی‌نامه</span><strong>{{ currentCase.letterDate | jalaliDate }}</strong></div>
+      </div>
+    </p-card>
+  }
+
+  @if (currentCase.status === "CANCELLED") {
+    <p-card header="پرونده لغو شده">
+      <div class="detail-grid">
+        <div class="detail"><span>وضعیت</span><strong>لغو شده</strong></div>
+        <div class="detail"><span>تاریخ لغو</span><strong>{{ currentCase.cancelledAt | jalaliDate }}</strong></div>
+        <div class="detail full-width"><span>دلیل لغو</span><strong>{{ currentCase.cancellationComment ?? "—" }}</strong></div>
+      </div>
+      <div class="card-actions">
+        <p-button
+          label="ثبت درخواست جدید کارآموزی"
+          icon="pi pi-file-plus"
+          [loading]="creating()"
+          (onClick)="createCase()"
+        />
+      </div>
+    </p-card>
+  }
 
   @if (isDraft) {
     <div class="submit-panel">

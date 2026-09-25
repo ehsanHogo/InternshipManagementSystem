@@ -11,11 +11,14 @@ import (
 	"internship-management-system/backend/internal/service"
 )
 
-type sendToCompanyRequest struct {
-	PreferenceID        uint   `json:"preferenceId"`
-	CompanySupervisorID uint   `json:"companySupervisorId"`
-	LetterNumber        string `json:"letterNumber"`
-	LetterDate          string `json:"letterDate"`
+type approveUniversityPlacementRequest struct {
+	PreferenceID uint   `json:"preferenceId"`
+	LetterNumber string `json:"letterNumber"`
+	LetterDate   string `json:"letterDate"`
+}
+
+type cancelUniversityReviewRequest struct {
+	Comment string `json:"comment"`
 }
 
 type companyConfirmationRequest struct {
@@ -39,6 +42,15 @@ func (handler *InternshipHandler) ListUniversityCases(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, caseResponses(cases))
 }
 
+func (handler *InternshipHandler) ListPendingUniversityReviewCases(ctx *gin.Context) {
+	cases, err := handler.service.ListPendingUniversityReviewCases()
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, caseResponses(cases))
+}
+
 func (handler *InternshipHandler) GetUniversityCase(ctx *gin.Context) {
 	caseID, ok := caseIDFromContext(ctx)
 	if !ok {
@@ -52,38 +64,48 @@ func (handler *InternshipHandler) GetUniversityCase(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
 }
 
-func (handler *InternshipHandler) ListCompanySupervisors(ctx *gin.Context) {
-	users, err := handler.service.ListCompanySupervisors()
-	if err != nil {
-		handler.writeError(ctx, err)
-		return
-	}
-	response := make([]model.PublicUser, 0, len(users))
-	for _, user := range users {
-		response = append(response, user.Public())
-	}
-	ctx.JSON(http.StatusOK, response)
-}
-
-func (handler *InternshipHandler) SendToCompany(ctx *gin.Context) {
+func (handler *InternshipHandler) ApproveUniversityPlacement(ctx *gin.Context) {
 	caseID, ok := caseIDFromContext(ctx)
 	if !ok {
 		return
 	}
-	var request sendToCompanyRequest
+	var request approveUniversityPlacementRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اطلاعات درخواست معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_UNIVERSITY_REVIEW", "error": "اطلاعات بررسی پرونده معتبر نیست."})
+		return
+	}
+	if strings.TrimSpace(request.LetterDate) == "" {
+		handler.writeError(ctx, service.ErrIntroductionLetterDateRequired)
 		return
 	}
 	letterDate, err := parseDate(request.LetterDate)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "تاریخ نامه معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INTRODUCTION_LETTER_DATE_REQUIRED", "error": "تاریخ معرفی‌نامه معتبر نیست."})
 		return
 	}
-	internshipCase, err := handler.service.SendToCompany(caseID, service.SendToCompanyInput{
-		PreferenceID: request.PreferenceID, CompanySupervisorID: request.CompanySupervisorID,
-		LetterNumber: request.LetterNumber, LetterDate: letterDate,
+	internshipCase, err := handler.service.ApproveUniversityPlacement(caseID, service.UniversityPlacementApprovalInput{
+		PreferenceID: request.PreferenceID,
+		LetterNumber: request.LetterNumber,
+		LetterDate:   letterDate,
 	})
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
+}
+
+func (handler *InternshipHandler) CancelUniversityReview(ctx *gin.Context) {
+	caseID, ok := caseIDFromContext(ctx)
+	if !ok {
+		return
+	}
+	var request cancelUniversityReviewRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_UNIVERSITY_REVIEW", "error": "اطلاعات لغو پرونده معتبر نیست."})
+		return
+	}
+	internshipCase, err := handler.service.CancelUniversityReview(caseID, request.Comment)
 	if err != nil {
 		handler.writeError(ctx, err)
 		return

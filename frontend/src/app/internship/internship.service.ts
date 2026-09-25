@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { User } from '../auth/auth.models';
 import {
   AcceptedOpportunityApplication,
   Company,
@@ -13,7 +12,8 @@ import {
   InternshipCaseStatus,
   InternshipPreference,
   PreferencePayload,
-  SendToCompanyPayload,
+  UniversityPlacementApprovalPayload,
+  UniversityReviewCancellationPayload,
   FileMetadata,
   ProfessorCaseDetail,
   ProfessorCaseListItem,
@@ -75,20 +75,16 @@ export class InternshipService {
     return this.http.get<InternshipCase>(`/api/university/internship-cases/${id}`);
   }
 
-  listCompanySupervisors(): Observable<User[]> {
-    return this.http.get<User[]>('/api/university/company-supervisors');
+  listPendingUniversityReviewCases(): Observable<InternshipCase[]> {
+    return this.http.get<InternshipCase[]>("/api/university/internship-cases/pending-review");
   }
 
-  sendToCompany(id: number, payload: SendToCompanyPayload): Observable<InternshipCase> {
-    return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/send-to-company`, payload);
+  approveUniversityPlacement(id: number, payload: UniversityPlacementApprovalPayload): Observable<InternshipCase> {
+    return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/approve-placement`, payload);
   }
 
-  approveUniversityCase(id: number): Observable<InternshipCase> {
-    return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/approve`, {});
-  }
-
-  activateUniversityCase(id: number): Observable<InternshipCase> {
-    return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/activate`, {});
+  cancelUniversityReview(id: number, payload: UniversityReviewCancellationPayload): Observable<InternshipCase> {
+    return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/cancel`, payload);
   }
 
   listCompanyCases(): Observable<InternshipCase[]> {

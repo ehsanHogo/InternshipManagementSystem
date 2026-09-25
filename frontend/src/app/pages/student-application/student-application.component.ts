@@ -21,6 +21,7 @@ import {
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 import { userErrorMessage } from '../../shared/http-error-message';
+import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 @Component({
@@ -34,6 +35,7 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
     InputNumberModule,
     InputTextModule,
     TagModule,
+    JalaliDatePipe,
     PersianDigitsPipe
   ],
   providers: [ConfirmationService],

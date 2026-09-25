@@ -29,11 +29,12 @@ type reviewApplicationRequest struct {
 }
 
 type applicationOpportunityResponse struct {
-	ID        uint                       `json:"id"`
-	Title     string                     `json:"title"`
-	WorkField string                     `json:"workField"`
-	Location  string                     `json:"location"`
-	Company   opportunityCompanyResponse `json:"company"`
+	ID          uint                       `json:"id"`
+	Title       string                     `json:"title"`
+	Description string                     `json:"description"`
+	WorkField   string                     `json:"workField"`
+	Location    string                     `json:"location"`
+	Company     opportunityCompanyResponse `json:"company"`
 }
 
 type applicationResumeResponse struct {
@@ -290,9 +291,12 @@ func acceptedApplicationView(application model.OpportunityApplication) acceptedO
 		ID: application.ID, Status: application.Status,
 		Opportunity: applicationOpportunityResponse{
 			ID: application.Opportunity.ID, Title: application.Opportunity.Title,
-			WorkField: application.Opportunity.WorkField, Location: application.Opportunity.Location,
+			Description: application.Opportunity.Description,
+			WorkField:   application.Opportunity.WorkField, Location: application.Opportunity.Location,
 			Company: opportunityCompanyResponse{
 				ID: application.Opportunity.Company.ID, Name: application.Opportunity.Company.Name,
+				Website: application.Opportunity.Company.Website, Phone: application.Opportunity.Company.Phone,
+				Email: application.Opportunity.Company.Email, Address: application.Opportunity.Company.Address,
 				IsApproved: application.Opportunity.Company.IsApproved,
 			},
 		},
@@ -305,9 +309,12 @@ func applicationView(application model.OpportunityApplication, includeStudent bo
 		AppliedAt: application.AppliedAt, ReviewedAt: application.ReviewedAt,
 		Opportunity: applicationOpportunityResponse{
 			ID: application.Opportunity.ID, Title: application.Opportunity.Title,
-			WorkField: application.Opportunity.WorkField, Location: application.Opportunity.Location,
+			Description: application.Opportunity.Description,
+			WorkField:   application.Opportunity.WorkField, Location: application.Opportunity.Location,
 			Company: opportunityCompanyResponse{
 				ID: application.Opportunity.Company.ID, Name: application.Opportunity.Company.Name,
+				Website: application.Opportunity.Company.Website, Phone: application.Opportunity.Company.Phone,
+				Email: application.Opportunity.Company.Email, Address: application.Opportunity.Company.Address,
 				IsApproved: application.Opportunity.Company.IsApproved,
 			},
 		},

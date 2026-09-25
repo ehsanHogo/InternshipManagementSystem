@@ -1,22 +1,10 @@
 <section class="page-heading">
   <div>
     <span class="eyebrow">مسئول آموزش</span>
-    <h1>درخواست‌های کارآموزی</h1>
-    <p>درخواست‌ها و مراحل تأیید کارآموزی دانشجویان را بررسی کنید.</p>
+    <h1>درخواست‌های در انتظار بررسی</h1>
+    <p>پرونده‌های رسمی ارسال‌شده را بررسی و یک محل کارآموزی را انتخاب کنید، یا کل پرونده را با ذکر دلیل لغو کنید.</p>
   </div>
 </section>
-
-<div class="filter-row">
-  <p-select
-    [options]="statusOptions"
-    optionLabel="label"
-    optionValue="value"
-    [ngModel]="selectedStatus()"
-    (ngModelChange)="filterChanged($event)"
-    placeholder="انتخاب وضعیت"
-    appendTo="body"
-  />
-</div>
 
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت درخواست‌ها...</span></div>
@@ -24,32 +12,43 @@
   <p-table [value]="cases()" [rowHover]="true" responsiveLayout="scroll">
     <ng-template #header>
       <tr>
+        <th>شماره پرونده</th>
         <th>نام دانشجو</th>
         <th>شماره دانشجویی</th>
-        <th>رشته</th>
-        <th>استاد</th>
-        <th>محل انتخاب‌شده</th>
+        <th>استاد تخصیص‌یافته</th>
+        <th>تعداد اولویت‌ها</th>
+        <th>اولویت نخست</th>
+        <th>تاریخ ارسال</th>
         <th>وضعیت</th>
-        <th>تاریخ ثبت</th>
         <th>عملیات</th>
       </tr>
     </ng-template>
     <ng-template #body let-item>
       <tr>
+        <td>{{ item.id | persianDigits }}</td>
         <td>{{ item.student.fullName }}</td>
         <td>{{ item.student.studentNumber ?? '—' }}</td>
-        <td>{{ item.student.major ?? '—' }}</td>
         <td>{{ item.professor.fullName }}</td>
-        <td>{{ placementName(item) }}</td>
-        <td><p-tag [value]="statusLabel(item.status)" severity="info" /></td>
-        <td>{{ item.submittedAt | jalaliDate }}</td>
+        <td>{{ item.preferences.length | persianDigits }}</td>
         <td>
-          <p-button label="بررسی" icon="pi pi-eye" [text]="true" [routerLink]="['/university/applications', item.id]" />
+          @if (item.preferences[0]; as first) {
+            {{ first.application.opportunity.company.name }} — {{ first.application.opportunity.title }}
+          } @else { — }
+        </td>
+        <td>{{ item.submittedAt | jalaliDate }}</td>
+        <td><p-tag [value]="statusLabel" severity="warn" /></td>
+        <td>
+          <p-button
+            label="مشاهده پرونده"
+            icon="pi pi-eye"
+            [text]="true"
+            [routerLink]="['/university/applications', item.id]"
+          />
         </td>
       </tr>
     </ng-template>
     <ng-template #emptymessage>
-      <tr><td colspan="8" class="muted">درخواستی با این وضعیت وجود ندارد.</td></tr>
+      <tr><td colspan="9" class="muted">پرونده‌ای در انتظار بررسی آموزش نیست.</td></tr>
     </ng-template>
   </p-table>
 }

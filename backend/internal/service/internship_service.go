@@ -13,23 +13,29 @@ import (
 )
 
 var (
-	ErrCaseNotFound            = errors.New("internship case not found")
-	ErrAssignmentNotFound      = errors.New("professor assignment not found")
-	ErrCaseNotEditable         = errors.New("internship case is not editable")
-	ErrPreferenceNotFound      = errors.New("internship preference not found")
-	ErrPreferenceLimit         = errors.New("preference limit reached")
-	ErrDuplicatePriority       = errors.New("preference priority already exists")
-	ErrInvalidPreference       = errors.New("invalid internship preference")
-	ErrPreferenceNotOwned      = errors.New("opportunity application is not owned by student")
-	ErrPreferenceNotAccepted   = errors.New("opportunity application is not accepted")
-	ErrPreferenceAlreadyExists = errors.New("opportunity application is already selected")
-	ErrInvalidApplication      = errors.New("internship application is incomplete")
-	ErrInvalidCaseStatus       = errors.New("invalid internship case status")
-	ErrInvalidTransition       = errors.New("invalid internship case transition")
-	ErrCompanySupervisor       = errors.New("invalid company supervisor")
-	ErrCaseAccessDenied        = errors.New("internship case access denied")
-	ErrInternshipCompleted     = errors.New("internship requirement already completed")
-	ErrObsoleteWorkflow        = errors.New("workflow is unavailable until opportunity support is implemented")
+	ErrCaseNotFound                     = errors.New("internship case not found")
+	ErrAssignmentNotFound               = errors.New("professor assignment not found")
+	ErrCaseNotEditable                  = errors.New("internship case is not editable")
+	ErrPreferenceNotFound               = errors.New("internship preference not found")
+	ErrPreferenceNotInCase              = errors.New("internship preference does not belong to case")
+	ErrPreferenceLimit                  = errors.New("preference limit reached")
+	ErrDuplicatePriority                = errors.New("preference priority already exists")
+	ErrInvalidPreference                = errors.New("invalid internship preference")
+	ErrPreferenceNotOwned               = errors.New("opportunity application is not owned by student")
+	ErrPreferenceNotAccepted            = errors.New("opportunity application is not accepted")
+	ErrPreferenceAlreadyExists          = errors.New("opportunity application is already selected")
+	ErrInvalidApplication               = errors.New("internship application is incomplete")
+	ErrInvalidCaseStatus                = errors.New("invalid internship case status")
+	ErrInvalidTransition                = errors.New("invalid internship case transition")
+	ErrCompanySupervisor                = errors.New("invalid company supervisor")
+	ErrCaseNotPendingUniversityReview   = errors.New("internship case is not pending university review")
+	ErrIntroductionLetterNumberRequired = errors.New("introduction letter number is required")
+	ErrIntroductionLetterDateRequired   = errors.New("introduction letter date is required")
+	ErrCompanySupervisorResolution      = errors.New("company supervisor resolution failed")
+	ErrCancellationCommentRequired      = errors.New("cancellation comment is required")
+	ErrCaseAccessDenied                 = errors.New("internship case access denied")
+	ErrInternshipCompleted              = errors.New("internship requirement already completed")
+	ErrObsoleteWorkflow                 = errors.New("workflow is unavailable until opportunity support is implemented")
 )
 
 type InternshipService struct {
@@ -518,7 +524,7 @@ func nullableString(value string) any {
 }
 
 func currentCaseStatuses() []model.InternshipCaseStatus {
-	return append(nonTerminalCaseStatuses(), model.InternshipCaseStatusCompleted)
+	return append(nonTerminalCaseStatuses(), model.InternshipCaseStatusCompleted, model.InternshipCaseStatusCancelled)
 }
 
 func nonTerminalCaseStatuses() []model.InternshipCaseStatus {

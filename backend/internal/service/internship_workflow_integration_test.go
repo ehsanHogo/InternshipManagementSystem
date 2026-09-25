@@ -20,7 +20,6 @@ func TestObsoleteCompanyWorkflowIsDisabled(t *testing.T) {
 		name string
 		run  func() error
 	}{
-		{name: "manual supervisor selection", run: func() error { _, err := workflow.SendToCompany(1, service.SendToCompanyInput{}); return err }},
 		{name: "company confirmation", run: func() error {
 			_, err := workflow.ConfirmCompanyCase(1, 1, service.CompanyConfirmationInput{})
 			return err
