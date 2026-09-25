@@ -78,6 +78,7 @@ func main() {
 	student.POST("/internship-case", internshipHandler.CreateOrGetCase)
 	student.PUT("/internship-case", internshipHandler.UpdateCase)
 	student.POST("/internship-case/preferences", internshipHandler.AddPreference)
+	student.PUT("/internship-case/preferences", internshipHandler.ReplacePreferences)
 	student.PUT("/internship-case/preferences/:id", internshipHandler.UpdatePreference)
 	student.DELETE("/internship-case/preferences/:id", internshipHandler.DeletePreference)
 	student.POST("/internship-case/submit", internshipHandler.SubmitCase)
@@ -89,6 +90,7 @@ func main() {
 	student.GET("/opportunities/:id", opportunityHandler.GetStudent)
 	student.POST("/opportunities/:id/apply", applicationHandler.Apply)
 	student.GET("/opportunity-applications", applicationHandler.ListStudent)
+	student.GET("/accepted-opportunity-applications", applicationHandler.ListAcceptedStudent)
 	student.GET("/opportunity-applications/:id", applicationHandler.GetStudent)
 
 	university := authenticated.Group("/university")

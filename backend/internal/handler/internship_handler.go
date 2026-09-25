@@ -29,6 +29,10 @@ type preferenceRequest struct {
 	OpportunityApplicationID uint `json:"opportunityApplicationId"`
 }
 
+type replacePreferencesRequest struct {
+	OpportunityApplicationIDs []uint `json:"opportunityApplicationIds"`
+}
+
 type internshipCaseResponse struct {
 	ID                            uint                           `json:"id"`
 	Status                        model.InternshipCaseStatus     `json:"status"`
@@ -72,9 +76,10 @@ type fileMetadataResponse struct {
 }
 
 type internshipPreferenceResponse struct {
-	ID                       uint `json:"id"`
-	Priority                 int  `json:"priority"`
-	OpportunityApplicationID uint `json:"opportunityApplicationId"`
+	ID                       uint                                   `json:"id"`
+	Priority                 int                                    `json:"priority"`
+	OpportunityApplicationID uint                                   `json:"opportunityApplicationId"`
+	Application              acceptedOpportunityApplicationResponse `json:"application"`
 }
 
 func NewInternshipHandler(internshipService *service.InternshipService, uploadDirs ...string) *InternshipHandler {
@@ -173,6 +178,24 @@ func (handler *InternshipHandler) UpdatePreference(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, preferenceResponse(*preference))
 }
 
+func (handler *InternshipHandler) ReplacePreferences(ctx *gin.Context) {
+	studentID, ok := currentUserID(ctx)
+	if !ok {
+		return
+	}
+	var request replacePreferencesRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_PREFERENCE_APPLICATION", "error": "اطلاعات اولویت‌های انتخابی معتبر نیست."})
+		return
+	}
+	internshipCase, err := handler.service.ReplacePreferences(studentID, request.OpportunityApplicationIDs)
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
+}
+
 func (handler *InternshipHandler) DeletePreference(ctx *gin.Context) {
 	studentID, ok := currentUserID(ctx)
 	if !ok {
@@ -223,31 +246,33 @@ func (request preferenceRequest) preferenceInput() service.PreferenceInput {
 }
 
 func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
+	status := http.StatusInternalServerError
 	switch {
 	case errors.Is(err, service.ErrCaseNotFound), errors.Is(err, service.ErrPreferenceNotFound),
 		errors.Is(err, service.ErrWeeklyReportNotFound), errors.Is(err, service.ErrEvaluationNotFound),
 		errors.Is(err, service.ErrFileNotFound):
-		ctx.JSON(http.StatusNotFound, gin.H{"error": publicInternshipError(err)})
+		status = http.StatusNotFound
 	case errors.Is(err, service.ErrAssignmentNotFound), errors.Is(err, service.ErrInvalidApplication),
-		errors.Is(err, service.ErrInvalidPreference), errors.Is(err, service.ErrInvalidCaseStatus),
+		errors.Is(err, service.ErrInvalidPreference), errors.Is(err, service.ErrPreferenceNotOwned),
+		errors.Is(err, service.ErrPreferenceNotAccepted), errors.Is(err, service.ErrInvalidCaseStatus),
 		errors.Is(err, service.ErrCompanySupervisor), errors.Is(err, service.ErrInvalidWeeklyReport),
 		errors.Is(err, service.ErrInvalidEvaluation), errors.Is(err, service.ErrInvalidProfessorResult):
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": publicInternshipError(err)})
-	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit), errors.Is(err, service.ErrDuplicatePriority),
+		status = http.StatusBadRequest
+	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit),
+		errors.Is(err, service.ErrDuplicatePriority), errors.Is(err, service.ErrPreferenceAlreadyExists),
 		errors.Is(err, service.ErrDuplicateWeeklyReport), errors.Is(err, service.ErrWeeklyReportConfirmed),
 		errors.Is(err, service.ErrDuplicateEvaluation), errors.Is(err, service.ErrWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrProfessorCaseNotActive), errors.Is(err, service.ErrProfessorWeeklyReportsIncomplete),
-		errors.Is(err, service.ErrProfessorCompanyEvaluationRequired), errors.Is(err, service.ErrProfessorFinalReportRequired):
-		ctx.JSON(http.StatusConflict, gin.H{"error": publicInternshipError(err)})
-	case errors.Is(err, service.ErrInvalidTransition), errors.Is(err, service.ErrInternshipCompleted),
+		errors.Is(err, service.ErrProfessorCompanyEvaluationRequired), errors.Is(err, service.ErrProfessorFinalReportRequired),
+		errors.Is(err, service.ErrInvalidTransition), errors.Is(err, service.ErrInternshipCompleted),
 		errors.Is(err, service.ErrObsoleteWorkflow):
-		ctx.JSON(http.StatusConflict, gin.H{"error": publicInternshipError(err)})
+		status = http.StatusConflict
 	case errors.Is(err, service.ErrCaseAccessDenied):
-		ctx.JSON(http.StatusForbidden, gin.H{"error": publicInternshipError(err)})
+		status = http.StatusForbidden
 	default:
 		log.Printf("internship request failed: %v", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "خطایی در سرور رخ داد."})
 	}
+	ctx.JSON(status, gin.H{"code": internshipErrorCode(err), "error": publicInternshipError(err)})
 }
 
 func currentUserID(ctx *gin.Context) (uint, bool) {
@@ -258,6 +283,33 @@ func currentUserID(ctx *gin.Context) (uint, bool) {
 		return 0, false
 	}
 	return userID, true
+}
+
+func internshipErrorCode(err error) string {
+	switch {
+	case errors.Is(err, service.ErrCaseNotEditable):
+		return "INTERNSHIP_CASE_NOT_EDITABLE"
+	case errors.Is(err, service.ErrPreferenceLimit):
+		return "PREFERENCE_LIMIT_EXCEEDED"
+	case errors.Is(err, service.ErrDuplicatePriority):
+		return "INVALID_PREFERENCE_PRIORITY"
+	case errors.Is(err, service.ErrPreferenceAlreadyExists):
+		return "PREFERENCE_ALREADY_EXISTS"
+	case errors.Is(err, service.ErrPreferenceNotOwned):
+		return "PREFERENCE_APPLICATION_NOT_OWNED"
+	case errors.Is(err, service.ErrPreferenceNotAccepted):
+		return "PREFERENCE_APPLICATION_NOT_ACCEPTED"
+	case errors.Is(err, service.ErrInvalidPreference):
+		return "INVALID_PREFERENCE_APPLICATION"
+	case errors.Is(err, service.ErrInvalidApplication):
+		return "INTERNSHIP_CASE_NOT_READY_FOR_SUBMISSION"
+	case errors.Is(err, service.ErrInternshipCompleted):
+		return "INTERNSHIP_ALREADY_COMPLETED"
+	case errors.Is(err, service.ErrCaseNotFound):
+		return "INTERNSHIP_CASE_NOT_FOUND"
+	default:
+		return "INTERNSHIP_REQUEST_FAILED"
+	}
 }
 
 func publicInternshipError(err error) string {
@@ -275,7 +327,13 @@ func publicInternshipError(err error) string {
 	case errors.Is(err, service.ErrDuplicatePriority):
 		return "این شماره اولویت قبلاً ثبت شده است."
 	case errors.Is(err, service.ErrInvalidPreference):
-		return "اطلاعات اولویت کارآموزی معتبر نیست."
+		return "درخواست فرصت کارآموزی انتخاب‌شده معتبر نیست."
+	case errors.Is(err, service.ErrPreferenceNotOwned):
+		return "درخواست فرصت انتخاب‌شده متعلق به شما نیست."
+	case errors.Is(err, service.ErrPreferenceNotAccepted):
+		return "فقط درخواست‌های پذیرفته‌شده قابل انتخاب هستند."
+	case errors.Is(err, service.ErrPreferenceAlreadyExists):
+		return "این درخواست پذیرفته‌شده قبلاً انتخاب شده است."
 	case errors.Is(err, service.ErrInvalidApplication):
 		return "اطلاعات درخواست کارآموزی کامل نیست."
 	case errors.Is(err, service.ErrInvalidCaseStatus):
@@ -385,5 +443,6 @@ func preferenceResponse(preference model.InternshipPreference) internshipPrefere
 	return internshipPreferenceResponse{
 		ID: preference.ID, Priority: preference.Priority,
 		OpportunityApplicationID: preference.OpportunityApplicationID,
+		Application:              acceptedApplicationView(preference.OpportunityApplication),
 	}
 }

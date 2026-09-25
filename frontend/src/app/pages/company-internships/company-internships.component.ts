@@ -40,6 +40,6 @@ export class CompanyInternshipsComponent {
   }
 
   placementName(item: InternshipCase): string {
-    return item.selectedPreference?.company?.name ?? item.selectedPreference?.proposedCompanyName ?? '—';
+    return item.selectedPreference?.application.opportunity.company.name ?? '—';
   }
 }

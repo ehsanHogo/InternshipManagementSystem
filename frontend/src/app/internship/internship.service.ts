@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { User } from '../auth/auth.models';
 import {
+  AcceptedOpportunityApplication,
   Company,
   CompanyEvaluation,
   CompanyEvaluationPayload,
@@ -37,8 +38,16 @@ export class InternshipService {
     return this.http.put<InternshipCase>('/api/student/internship-case', { passedCredits, mobile });
   }
 
+  listAcceptedOpportunityApplications(): Observable<AcceptedOpportunityApplication[]> {
+    return this.http.get<AcceptedOpportunityApplication[]>("/api/student/accepted-opportunity-applications");
+  }
+
   listCompanies(): Observable<Company[]> {
     return this.http.get<Company[]>('/api/companies');
+  }
+
+  replacePreferences(opportunityApplicationIds: number[]): Observable<InternshipCase> {
+    return this.http.put<InternshipCase>("/api/student/internship-case/preferences", { opportunityApplicationIds });
   }
 
   addPreference(payload: PreferencePayload): Observable<InternshipPreference> {

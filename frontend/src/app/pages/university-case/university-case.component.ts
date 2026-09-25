@@ -101,7 +101,7 @@ export class UniversityCaseComponent {
   }
 
   preferenceName(preference: InternshipPreference): string {
-    return preference.company?.name ?? preference.proposedCompanyName ?? '—';
+    return preference.application.opportunity.company.name ?? '—';
   }
 
   ratingLabel(rating: EvaluationRating): string {

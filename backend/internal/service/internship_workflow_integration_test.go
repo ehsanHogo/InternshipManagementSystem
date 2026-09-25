@@ -45,8 +45,8 @@ func TestWorkflow(t *testing.T) {
 		t.Fatalf("connect to integration database: %v", err)
 	}
 	if err := db.AutoMigrate(
-		&model.Company{}, &model.User{}, &model.ProfessorAssignment{},
-		&model.File{}, &model.InternshipCase{}, &model.InternshipPreference{},
+		&model.Company{}, &model.User{}, &model.InternshipOpportunity{}, &model.ProfessorAssignment{},
+		&model.File{}, &model.OpportunityApplication{}, &model.InternshipCase{}, &model.InternshipPreference{},
 		&model.WeeklyReport{}, &model.CompanyEvaluation{},
 	); err != nil {
 		t.Fatalf("migrate integration database: %v", err)
@@ -128,11 +128,13 @@ func TestWorkflow(t *testing.T) {
 		if err := tx.SavePoint("preference_priority_unique").Error; err != nil {
 			t.Fatalf("create preference savepoint: %v", err)
 		}
-		first := model.InternshipPreference{InternshipCaseID: internshipCase.ID, OpportunityApplicationID: 2001, Priority: 1}
+		firstApplication := createWorkflowOpportunityApplication(t, tx, suffix, student.ID, professor.ID, "priority-first", model.ApplicationStatusAccepted, model.OpportunityStatusOpen)
+		secondApplication := createWorkflowOpportunityApplication(t, tx, suffix, student.ID, professor.ID, "priority-second", model.ApplicationStatusAccepted, model.OpportunityStatusOpen)
+		first := model.InternshipPreference{InternshipCaseID: internshipCase.ID, OpportunityApplicationID: firstApplication.ID, Priority: 1}
 		if err := tx.Create(&first).Error; err != nil {
 			t.Fatalf("create first preference: %v", err)
 		}
-		duplicate := model.InternshipPreference{InternshipCaseID: internshipCase.ID, OpportunityApplicationID: 2002, Priority: 1}
+		duplicate := model.InternshipPreference{InternshipCaseID: internshipCase.ID, OpportunityApplicationID: secondApplication.ID, Priority: 1}
 		err := tx.Create(&duplicate).Error
 		if rollbackErr := tx.RollbackTo("preference_priority_unique").Error; rollbackErr != nil {
 			t.Fatalf("rollback duplicate preference: %v", rollbackErr)
@@ -199,8 +201,9 @@ func TestWorkflow(t *testing.T) {
 		if err := tx.Create(&internshipCase).Error; err != nil {
 			t.Fatalf("create draft case: %v", err)
 		}
+		application := createWorkflowOpportunityApplication(t, tx, suffix, student.ID, professor.ID, "submission", model.ApplicationStatusAccepted, model.OpportunityStatusOpen)
 		preference := model.InternshipPreference{
-			InternshipCaseID: internshipCase.ID, OpportunityApplicationID: 1001, Priority: 1,
+			InternshipCaseID: internshipCase.ID, OpportunityApplicationID: application.ID, Priority: 1,
 		}
 		if err := tx.Create(&preference).Error; err != nil {
 			t.Fatalf("create draft preference: %v", err)
@@ -599,4 +602,43 @@ func testDate(t *testing.T, value string) time.Time {
 		t.Fatalf("parse test date: %v", err)
 	}
 	return date
+}
+
+func createWorkflowOpportunityApplication(t *testing.T, db *gorm.DB, suffix int64, studentID, creatorID uint, label string, status model.ApplicationStatus, opportunityStatus model.OpportunityStatus) model.OpportunityApplication {
+	t.Helper()
+	company := model.Company{
+		Name:         fmt.Sprintf("workflow-company-%d-%s", suffix, label),
+		NationalID:   fmt.Sprintf("wn-%d-%s", suffix, label),
+		EconomicCode: fmt.Sprintf("we-%d-%s", suffix, label),
+	}
+	if err := db.Create(&company).Error; err != nil {
+		t.Fatalf("create workflow company %s: %v", label, err)
+	}
+	opportunity := model.InternshipOpportunity{
+		CompanyID: company.ID, CreatedBy: creatorID, Title: "فرصت آزمون", Description: "شرح",
+		WorkField: "نرم‌افزار", Location: "تهران", Status: opportunityStatus,
+	}
+	if err := db.Create(&opportunity).Error; err != nil {
+		t.Fatalf("create workflow opportunity %s: %v", label, err)
+	}
+	file := model.File{
+		OriginalName: label + ".pdf", StoredName: fmt.Sprintf("workflow-%d-%s.pdf", suffix, label),
+		Path: fmt.Sprintf("/tmp/workflow-%d-%s.pdf", suffix, label), MimeType: "application/pdf",
+		SizeBytes: 100, UploadedBy: studentID, UploadedAt: time.Now(),
+	}
+	if err := db.Create(&file).Error; err != nil {
+		t.Fatalf("create workflow resume %s: %v", label, err)
+	}
+	application := model.OpportunityApplication{
+		OpportunityID: opportunity.ID, StudentID: studentID, ResumeFileID: file.ID,
+		Status: status, AppliedAt: time.Now(),
+	}
+	if status != model.ApplicationStatusPending {
+		now := time.Now()
+		application.ReviewedAt = &now
+	}
+	if err := db.Create(&application).Error; err != nil {
+		t.Fatalf("create workflow application %s: %v", label, err)
+	}
+	return application
 }

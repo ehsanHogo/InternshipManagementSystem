@@ -85,8 +85,8 @@
               >اولویت {{ preference.priority | persianDigits }} —
               {{ preferenceName(preference) }}</strong
             >
-            <span>{{ preference.city }} · {{ preference.workField }}</span>
-            @if (!preference.companyId) {
+            <span>{{ preference.application.opportunity.location }} · {{ preference.application.opportunity.workField }}</span>
+            @if (!preference.application.opportunity.company.isApproved) {
               <div class="notice">
                 این شرکت توسط دانشجو پیشنهاد شده و هنوز در فهرست شرکت‌های مورد
                 تأیید دانشگاه ثبت نشده است.<br />

@@ -13,20 +13,23 @@ import (
 )
 
 var (
-	ErrCaseNotFound        = errors.New("internship case not found")
-	ErrAssignmentNotFound  = errors.New("professor assignment not found")
-	ErrCaseNotEditable     = errors.New("internship case is not editable")
-	ErrPreferenceNotFound  = errors.New("internship preference not found")
-	ErrPreferenceLimit     = errors.New("preference limit reached")
-	ErrDuplicatePriority   = errors.New("preference priority already exists")
-	ErrInvalidPreference   = errors.New("invalid internship preference")
-	ErrInvalidApplication  = errors.New("internship application is incomplete")
-	ErrInvalidCaseStatus   = errors.New("invalid internship case status")
-	ErrInvalidTransition   = errors.New("invalid internship case transition")
-	ErrCompanySupervisor   = errors.New("invalid company supervisor")
-	ErrCaseAccessDenied    = errors.New("internship case access denied")
-	ErrInternshipCompleted = errors.New("internship requirement already completed")
-	ErrObsoleteWorkflow    = errors.New("workflow is unavailable until opportunity support is implemented")
+	ErrCaseNotFound            = errors.New("internship case not found")
+	ErrAssignmentNotFound      = errors.New("professor assignment not found")
+	ErrCaseNotEditable         = errors.New("internship case is not editable")
+	ErrPreferenceNotFound      = errors.New("internship preference not found")
+	ErrPreferenceLimit         = errors.New("preference limit reached")
+	ErrDuplicatePriority       = errors.New("preference priority already exists")
+	ErrInvalidPreference       = errors.New("invalid internship preference")
+	ErrPreferenceNotOwned      = errors.New("opportunity application is not owned by student")
+	ErrPreferenceNotAccepted   = errors.New("opportunity application is not accepted")
+	ErrPreferenceAlreadyExists = errors.New("opportunity application is already selected")
+	ErrInvalidApplication      = errors.New("internship application is incomplete")
+	ErrInvalidCaseStatus       = errors.New("invalid internship case status")
+	ErrInvalidTransition       = errors.New("invalid internship case transition")
+	ErrCompanySupervisor       = errors.New("invalid company supervisor")
+	ErrCaseAccessDenied        = errors.New("internship case access denied")
+	ErrInternshipCompleted     = errors.New("internship requirement already completed")
+	ErrObsoleteWorkflow        = errors.New("workflow is unavailable until opportunity support is implemented")
 )
 
 type InternshipService struct {
@@ -174,6 +177,9 @@ func (service *InternshipService) AddPreference(studentID uint, input Preference
 		if internshipCase.Status != model.InternshipCaseStatusDraft {
 			return ErrCaseNotEditable
 		}
+		if err := service.validatePreferenceApplication(tx, studentID, internshipCase.ID, input.OpportunityApplicationID, 0); err != nil {
+			return err
+		}
 
 		var count int64
 		if err := tx.Model(&model.InternshipPreference{}).
@@ -189,6 +195,9 @@ func (service *InternshipService) AddPreference(studentID uint, input Preference
 
 		preference = preferenceFromInput(internshipCase.ID, input)
 		if err := tx.Create(&preference).Error; err != nil {
+			if isUniqueViolation(err) {
+				return ErrPreferenceAlreadyExists
+			}
 			return fmt.Errorf("create internship preference: %w", err)
 		}
 		return nil
@@ -226,6 +235,9 @@ func (service *InternshipService) UpdatePreference(studentID, preferenceID uint,
 		if internshipCase.Status != model.InternshipCaseStatusDraft {
 			return ErrCaseNotEditable
 		}
+		if err := service.validatePreferenceApplication(tx, studentID, internshipCase.ID, input.OpportunityApplicationID, preference.ID); err != nil {
+			return err
+		}
 		if err := service.ensurePriorityAvailable(tx, internshipCase.ID, input.Priority, preference.ID); err != nil {
 			return err
 		}
@@ -235,6 +247,9 @@ func (service *InternshipService) UpdatePreference(studentID, preferenceID uint,
 			"opportunity_application_id": input.OpportunityApplicationID,
 		}
 		if err := tx.Model(&preference).Updates(updates).Error; err != nil {
+			if isUniqueViolation(err) {
+				return ErrPreferenceAlreadyExists
+			}
 			return fmt.Errorf("update internship preference: %w", err)
 		}
 		return nil
@@ -243,6 +258,47 @@ func (service *InternshipService) UpdatePreference(studentID, preferenceID uint,
 		return nil, err
 	}
 	return service.getPreference(preferenceID)
+}
+
+func (service *InternshipService) ReplacePreferences(studentID uint, applicationIDs []uint) (*model.InternshipCase, error) {
+	if len(applicationIDs) > model.MaxPreferenceCount {
+		return nil, ErrPreferenceLimit
+	}
+	var caseID uint
+	err := service.db.Transaction(func(tx *gorm.DB) error {
+		internshipCase, err := service.findOwnedCaseForUpdate(tx, studentID)
+		if err != nil {
+			return err
+		}
+		if internshipCase.Status != model.InternshipCaseStatusDraft {
+			return ErrCaseNotEditable
+		}
+		caseID = internshipCase.ID
+		seen := make(map[uint]bool, len(applicationIDs))
+		for _, applicationID := range applicationIDs {
+			if applicationID == 0 || seen[applicationID] {
+				return ErrPreferenceAlreadyExists
+			}
+			seen[applicationID] = true
+			if err := service.validateOwnedAcceptedApplication(tx, studentID, applicationID); err != nil {
+				return err
+			}
+		}
+		if err := tx.Where("internship_case_id = ?", internshipCase.ID).Delete(&model.InternshipPreference{}).Error; err != nil {
+			return fmt.Errorf("replace internship preferences: %w", err)
+		}
+		for index, applicationID := range applicationIDs {
+			preference := model.InternshipPreference{InternshipCaseID: internshipCase.ID, OpportunityApplicationID: applicationID, Priority: index + 1}
+			if err := tx.Create(&preference).Error; err != nil {
+				return fmt.Errorf("create replacement internship preference: %w", err)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return service.getCaseByID(caseID)
 }
 
 func (service *InternshipService) DeletePreference(studentID, preferenceID uint) error {
@@ -271,6 +327,15 @@ func (service *InternshipService) DeletePreference(studentID, preferenceID uint)
 		if err := tx.Delete(&preference).Error; err != nil {
 			return fmt.Errorf("delete internship preference: %w", err)
 		}
+		var later []model.InternshipPreference
+		if err := tx.Where("internship_case_id = ? AND priority > ?", internshipCase.ID, preference.Priority).Order("priority ASC").Find(&later).Error; err != nil {
+			return fmt.Errorf("list later internship preferences: %w", err)
+		}
+		for index := range later {
+			if err := tx.Model(&later[index]).Update("priority", later[index].Priority-1).Error; err != nil {
+				return fmt.Errorf("compact internship preference priorities: %w", err)
+			}
+		}
 		return nil
 	})
 }
@@ -287,20 +352,18 @@ func (service *InternshipService) SubmitCase(studentID uint) (*model.InternshipC
 		}
 
 		var preferences []model.InternshipPreference
-		if err := tx.Where("internship_case_id = ?", internshipCase.ID).Find(&preferences).Error; err != nil {
+		if err := tx.Where("internship_case_id = ?", internshipCase.ID).Order("priority ASC").Find(&preferences).Error; err != nil {
 			return fmt.Errorf("list internship preferences: %w", err)
 		}
 		if internshipCase.PassedCredits == nil || internshipCase.Mobile == nil || strings.TrimSpace(*internshipCase.Mobile) == "" ||
 			len(preferences) < model.MinPreferenceCount || len(preferences) > model.MaxPreferenceCount {
 			return ErrInvalidApplication
 		}
-		priorities := make(map[int]bool, len(preferences))
-		for _, preference := range preferences {
-			if preference.Priority < 1 || preference.Priority > model.MaxPreferenceCount || priorities[preference.Priority] {
+		for index, preference := range preferences {
+			if preference.Priority != index+1 {
 				return ErrInvalidApplication
 			}
-			priorities[preference.Priority] = true
-			if preference.OpportunityApplicationID == 0 {
+			if err := service.validatePreferenceApplication(tx, studentID, internshipCase.ID, preference.OpportunityApplicationID, preference.ID); err != nil {
 				return ErrInvalidApplication
 			}
 		}
@@ -323,7 +386,8 @@ func (service *InternshipService) SubmitCase(studentID uint) (*model.InternshipC
 func (service *InternshipService) caseQuery(db *gorm.DB) *gorm.DB {
 	return db.Preload("Student").Preload("Professor").
 		Preload("Preferences", func(query *gorm.DB) *gorm.DB { return query.Order("priority ASC") }).
-		Preload("SelectedPreference").Preload("CompanySupervisor").
+		Preload("Preferences.OpportunityApplication.Opportunity.Company").
+		Preload("SelectedPreference.OpportunityApplication.Opportunity.Company").Preload("CompanySupervisor").
 		Preload("FinalReportFile").Preload("CompanyEvaluation").
 		Preload("WeeklyReports", func(query *gorm.DB) *gorm.DB { return query.Order("week_number ASC") })
 }
@@ -386,9 +450,45 @@ func (service *InternshipService) ensurePriorityAvailable(db *gorm.DB, caseID ui
 	return nil
 }
 
+func (service *InternshipService) validatePreferenceApplication(db *gorm.DB, studentID, caseID, applicationID, excludePreferenceID uint) error {
+	if err := service.validateOwnedAcceptedApplication(db, studentID, applicationID); err != nil {
+		return err
+	}
+	query := db.Model(&model.InternshipPreference{}).Where("internship_case_id = ? AND opportunity_application_id = ?", caseID, applicationID)
+	if excludePreferenceID != 0 {
+		query = query.Where("id <> ?", excludePreferenceID)
+	}
+	var count int64
+	if err := query.Count(&count).Error; err != nil {
+		return fmt.Errorf("validate duplicate preference application: %w", err)
+	}
+	if count > 0 {
+		return ErrPreferenceAlreadyExists
+	}
+	return nil
+}
+
+func (service *InternshipService) validateOwnedAcceptedApplication(db *gorm.DB, studentID, applicationID uint) error {
+	var application model.OpportunityApplication
+	err := db.Select("id", "student_id", "status").First(&application, applicationID).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return ErrInvalidPreference
+	}
+	if err != nil {
+		return fmt.Errorf("get preference opportunity application: %w", err)
+	}
+	if application.StudentID != studentID {
+		return ErrPreferenceNotOwned
+	}
+	if application.Status != model.ApplicationStatusAccepted {
+		return ErrPreferenceNotAccepted
+	}
+	return nil
+}
+
 func (service *InternshipService) getPreference(preferenceID uint) (*model.InternshipPreference, error) {
 	var preference model.InternshipPreference
-	if err := service.db.First(&preference, preferenceID).Error; err != nil {
+	if err := service.db.Preload("OpportunityApplication.Opportunity.Company").First(&preference, preferenceID).Error; err != nil {
 		return nil, fmt.Errorf("get internship preference: %w", err)
 	}
 	return &preference, nil

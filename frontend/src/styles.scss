@@ -115,3 +115,55 @@ textarea:disabled {
 .p-datatable-table-container {
   overflow-x: auto;
 }
+
+.accepted-empty {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.8rem;
+  color: #475569;
+
+  i { color: #2563eb; font-size: 1.4rem; }
+  div { display: grid; gap: 0.25rem; flex: 1; }
+  span { color: #64748b; font-size: 0.88rem; }
+}
+
+.accepted-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.accepted-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.9rem;
+  background: #fff;
+
+  &.selected { border-color: #86efac; background: #f0fdf4; }
+}
+
+.accepted-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  div { display: grid; gap: 0.25rem; }
+  strong { color: #0f172a; }
+  span { color: #64748b; font-size: 0.88rem; }
+}
+
+.opportunity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  color: #64748b;
+  font-size: 0.85rem;
+
+  span { display: inline-flex; align-items: center; gap: 0.35rem; }
+}

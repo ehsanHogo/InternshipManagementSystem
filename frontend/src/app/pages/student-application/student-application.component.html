@@ -1,16 +1,13 @@
-<p-confirmDialog [baseZIndex]="1300" [style]="{ width: 'min(92vw, 30rem)' }" />
+<p-confirmDialog [baseZIndex]="1300" [style]="{ width: 'min(92vw, 34rem)' }" />
 
 <section class="page-heading">
   <div>
-    <span class="eyebrow">فرایند کارآموزی</span>
-    <h1>درخواست کارآموزی</h1>
-    <p>اطلاعات درخواست و محل‌های پیشنهادی خود را ثبت کنید.</p>
+    <span class="eyebrow">درخواست رسمی کارآموزی</span>
+    <h1>ثبت درخواست برای آموزش</h1>
+    <p>از میان فرصت‌هایی که شرکت پذیرفته است، حداکثر سه اولویت انتخاب کنید.</p>
   </div>
   @if (internshipCase(); as currentCase) {
-    <p-tag
-      [value]="statusLabel(currentCase.status)"
-      [severity]="statusSeverity(currentCase.status)"
-    />
+    <p-tag [value]="statusLabel(currentCase.status)" [severity]="statusSeverity(currentCase.status)" />
   }
 </section>
 
@@ -22,315 +19,154 @@
 } @else if (!internshipCase()) {
   <p-card>
     <div class="empty-state">
-      <span class="empty-icon"
-        ><i class="pi pi-file-plus" aria-hidden="true"></i
-      ></span>
-      <h2>هنوز درخواست کارآموزی ندارید</h2>
-      <p>
-        برای شروع، یک پیش‌نویس درخواست ایجاد کنید. استاد راهنمای تعیین‌شده
-        به‌صورت خودکار به درخواست اضافه می‌شود.
-      </p>
-      <p-button
-        label="ایجاد درخواست کارآموزی"
-        icon="pi pi-plus"
-        [loading]="creating()"
-        (onClick)="createCase()"
-      />
+      @if (acceptedApplications().length === 0) {
+        <span class="empty-icon"><i class="pi pi-briefcase" aria-hidden="true"></i></span>
+        <h2>فرصت پذیرفته‌شده‌ای ندارید</h2>
+        <p>برای ثبت درخواست رسمی کارآموزی، ابتدا باید حداقل یک درخواست پذیرفته‌شده از یک شرکت داشته باشید.</p>
+        <p-button label="مشاهده فرصت‌های کارآموزی" icon="pi pi-arrow-left" routerLink="/student/opportunities" />
+      } @else {
+        <span class="empty-icon"><i class="pi pi-file-plus" aria-hidden="true"></i></span>
+        <h2>درخواست رسمی خود را آغاز کنید</h2>
+        <p>استاد راهنمای تعیین‌شده به‌صورت خودکار در پرونده ثبت می‌شود و فرصت‌های پذیرفته‌شده شما قابل انتخاب خواهند بود.</p>
+        <p-button label="ثبت درخواست رسمی کارآموزی" icon="pi pi-plus" [loading]="creating()" (onClick)="createCase()" />
+      }
     </div>
   </p-card>
 } @else if (internshipCase(); as currentCase) {
   @if (!isDraft) {
     <div class="review-notice">
       <i class="pi pi-lock" aria-hidden="true"></i>
-      <span
-        >درخواست ثبت نهایی شده است. وضعیت جاری:
-        {{ statusLabel(currentCase.status) }}. امکان ویرایش وجود ندارد.</span
-      >
+      <span>وضعیت: {{ statusLabel(currentCase.status) }}. اطلاعات و اولویت‌های این پرونده برای دانشجو فقط خواندنی است.</span>
     </div>
   }
 
-  <p-card header="اطلاعات درخواست">
+  <p-card header="مشخصات درخواست">
     @if (isDraft) {
       <form class="application-grid" [formGroup]="applicationForm">
-        <label class="field readonly-field"
-          ><span>نام دانشجو</span
-          ><input pInputText [value]="currentCase.student.fullName" disabled
-        /></label>
-        <label class="field readonly-field"
-          ><span>شماره دانشجویی</span
-          ><input
-            pInputText
-            [value]="currentCase.student.studentNumber ?? '—'"
-            disabled
-        /></label>
-        <label class="field readonly-field"
-          ><span>رشته</span
-          ><input
-            pInputText
-            [value]="currentCase.student.major ?? '—'"
-            disabled
-        /></label>
-        <label class="field readonly-field"
-          ><span>استاد</span
-          ><input pInputText [value]="currentCase.professor.fullName" disabled
-        /></label>
+        <label class="field readonly-field">
+          <span>نام دانشجو</span>
+          <input pInputText [value]="currentCase.student.fullName" disabled />
+        </label>
+        <label class="field readonly-field">
+          <span>شماره دانشجویی</span>
+          <input pInputText [value]="currentCase.student.studentNumber ?? '—'" disabled />
+        </label>
+        <label class="field readonly-field">
+          <span>رشته</span>
+          <input pInputText [value]="currentCase.student.major ?? '—'" disabled />
+        </label>
+        <label class="field readonly-field">
+          <span>استاد راهنما</span>
+          <input pInputText [value]="currentCase.professor.fullName" disabled />
+        </label>
         <label class="field">
           <span>تعداد واحد گذرانده <b>*</b></span>
-          <p-inputnumber
-            formControlName="passedCredits"
-            [min]="0"
-            [max]="300"
-            [useGrouping]="false"
-          />
-          @if (
-            applicationForm.controls.passedCredits.touched &&
-            applicationForm.controls.passedCredits.invalid
-          ) {
-            <small>این فیلد الزامی است.</small>
+          <p-inputnumber formControlName="passedCredits" [min]="0" [max]="300" [useGrouping]="false" />
+          @if (applicationForm.controls.passedCredits.touched && applicationForm.controls.passedCredits.invalid) {
+            <small>تعداد واحد گذرانده الزامی است.</small>
           }
         </label>
         <label class="field">
-          <span>شماره موبایل <b>*</b></span>
-          <input
-            pInputText
-            formControlName="mobile"
-            dir="ltr"
-            placeholder="09123456789"
-          />
-          @if (
-            applicationForm.controls.mobile.touched &&
-            applicationForm.controls.mobile.invalid
-          ) {
-            <small>این فیلد الزامی است.</small>
+          <span>شماره تلفن همراه <b>*</b></span>
+          <input pInputText formControlName="mobile" dir="ltr" placeholder="09123456789" />
+          @if (applicationForm.controls.mobile.touched && applicationForm.controls.mobile.invalid) {
+            <small>شماره تلفن همراه الزامی است.</small>
           }
         </label>
       </form>
-    } @else {
-      <div class="detail-grid">
-        <div class="detail">
-          <span>نام دانشجو</span
-          ><strong>{{ currentCase.student.fullName }}</strong>
-        </div>
-        <div class="detail">
-          <span>شماره دانشجویی</span
-          ><strong>{{ currentCase.student.studentNumber ?? "—" }}</strong>
-        </div>
-        <div class="detail">
-          <span>رشته</span
-          ><strong>{{ currentCase.student.major ?? "—" }}</strong>
-        </div>
-        <div class="detail">
-          <span>استاد</span
-          ><strong>{{ currentCase.professor.fullName }}</strong>
-        </div>
-        <div class="detail">
-          <span>تعداد واحد گذرانده</span
-          ><strong>{{ currentCase.passedCredits | persianDigits }}</strong>
-        </div>
-        <div class="detail">
-          <span>شماره موبایل</span
-          ><strong>{{ currentCase.mobile ?? "—" }}</strong>
-        </div>
-      </div>
-    }
-    @if (isDraft) {
       <ng-template #footer>
         <div class="card-actions">
-          <p-button
-            label="ذخیره اطلاعات"
-            icon="pi pi-save"
-            [loading]="saving()"
-            (onClick)="saveApplication()"
-          />
+          <p-button label="ذخیره مشخصات" icon="pi pi-save" [loading]="saving()" (onClick)="saveApplication()" />
         </div>
       </ng-template>
+    } @else {
+      <div class="detail-grid">
+        <div class="detail"><span>نام دانشجو</span><strong>{{ currentCase.student.fullName }}</strong></div>
+        <div class="detail"><span>شماره دانشجویی</span><strong>{{ currentCase.student.studentNumber ?? "—" }}</strong></div>
+        <div class="detail"><span>رشته</span><strong>{{ currentCase.student.major ?? "—" }}</strong></div>
+        <div class="detail"><span>استاد راهنما</span><strong>{{ currentCase.professor.fullName }}</strong></div>
+        <div class="detail"><span>تعداد واحد گذرانده</span><strong>{{ currentCase.passedCredits | persianDigits }}</strong></div>
+        <div class="detail"><span>شماره تلفن همراه</span><strong>{{ currentCase.mobile ?? "—" }}</strong></div>
+      </div>
     }
   </p-card>
 
-  <p-card header="اولویت‌های محل کارآموزی">
+  @if (isDraft) {
+    <p-card header="فرصت‌های پذیرفته‌شده">
+      @if (acceptedApplications().length === 0) {
+        <div class="accepted-empty">
+          <i class="pi pi-info-circle" aria-hidden="true"></i>
+          <div>
+            <strong>هنوز درخواست پذیرفته‌شده‌ای ندارید.</strong>
+            <span>برای ارسال پرونده رسمی باید ابتدا پذیرش یک شرکت را دریافت کنید.</span>
+          </div>
+          <p-button label="مشاهده فرصت‌ها" severity="secondary" routerLink="/student/opportunities" />
+        </div>
+      } @else {
+        <div class="accepted-grid">
+          @for (application of acceptedApplications(); track application.id) {
+            <article class="accepted-card" [class.selected]="isSelected(application.id)">
+              <div class="accepted-card-heading">
+                <div>
+                  <strong>{{ application.opportunity.title }}</strong>
+                  <span>{{ application.opportunity.company.name }}</span>
+                </div>
+                <p-tag
+                  [value]="application.opportunity.company.isApproved ? 'مورد تأیید دانشکده' : 'شرکت جدید'"
+                  [severity]="application.opportunity.company.isApproved ? 'success' : 'warn'"
+                />
+              </div>
+              <div class="opportunity-meta">
+                <span><i class="pi pi-briefcase"></i>{{ application.opportunity.workField }}</span>
+                <span><i class="pi pi-map-marker"></i>{{ application.opportunity.location }}</span>
+              </div>
+              <p-button
+                [label]="isSelected(application.id) ? 'انتخاب شده' : 'افزودن به اولویت‌ها'"
+                [icon]="isSelected(application.id) ? 'pi pi-check' : 'pi pi-plus'"
+                [severity]="isSelected(application.id) ? 'success' : 'primary'"
+                [outlined]="!isSelected(application.id)"
+                [disabled]="isSelected(application.id) || currentCase.preferences.length >= 3 || preferenceSaving()"
+                (onClick)="selectApplication(application)"
+              />
+            </article>
+          }
+        </div>
+      }
+    </p-card>
+  }
+
+  <p-card header="اولویت‌های انتخاب‌شده">
     <div class="preference-summary">
-      <p>حداقل یک و حداکثر سه محل کارآموزی را به ترتیب اولویت وارد کنید.</p>
+      <p>اولویت ۱ انتخاب نخست شماست. برای ارسال نهایی باید اولویت‌ها از ۱ و بدون فاصله مرتب باشند.</p>
       <span>{{ currentCase.preferences.length | persianDigits }} از ۳ اولویت</span>
     </div>
 
     @if (currentCase.preferences.length === 0) {
-      <div class="inline-empty">هنوز اولویتی ثبت نشده است.</div>
+      <div class="inline-empty">هنوز هیچ فرصت پذیرفته‌شده‌ای انتخاب نشده است.</div>
     } @else {
       <div class="preference-list">
-        @for (preference of currentCase.preferences; track preference.id) {
+        @for (preference of currentCase.preferences; track preference.id; let first = $first; let last = $last) {
           <article class="preference-item">
-            <div class="priority-badge">
-              اولویت {{ priorityLabel(preference.priority) }}
-            </div>
+            <div class="priority-badge">اولویت {{ priorityLabel(preference.priority) }}</div>
             <div class="preference-details">
-              <strong>{{
-                preference.company?.name ?? preference.proposedCompanyName
-              }}</strong>
-              <span>
-                {{
-                  preference.companyId
-                    ? "شرکت مورد تأیید دانشگاه"
-                    : "شرکت پیشنهادی جدید"
-                }}
-              </span>
-              <span
-                ><i class="pi pi-map-marker"></i> {{ preference.city }}</span
-              >
-              <span
-                ><i class="pi pi-briefcase"></i>
-                {{ preference.workField }}</span
-              >
+              <strong>{{ preference.application.opportunity.title }}</strong>
+              <span>{{ preference.application.opportunity.company.name }}</span>
+              <span><i class="pi pi-briefcase"></i>{{ preference.application.opportunity.workField }}</span>
+              <span><i class="pi pi-map-marker"></i>{{ preference.application.opportunity.location }}</span>
+              <p-tag
+                [value]="preference.application.opportunity.company.isApproved ? 'مورد تأیید دانشکده' : 'شرکت جدید'"
+                [severity]="preference.application.opportunity.company.isApproved ? 'success' : 'warn'"
+              />
             </div>
             @if (isDraft) {
               <div class="item-actions">
-                <p-button
-                  icon="pi pi-pencil"
-                  label="ویرایش"
-                  severity="secondary"
-                  [text]="true"
-                  (onClick)="editPreference(preference)"
-                />
-                <p-button
-                  icon="pi pi-trash"
-                  label="حذف"
-                  severity="danger"
-                  [text]="true"
-                  (onClick)="deletePreference(preference)"
-                />
+                <p-button icon="pi pi-arrow-up" ariaLabel="افزایش اولویت" severity="secondary" [text]="true" [disabled]="first || preferenceSaving()" (onClick)="movePreference(preference, -1)" />
+                <p-button icon="pi pi-arrow-down" ariaLabel="کاهش اولویت" severity="secondary" [text]="true" [disabled]="last || preferenceSaving()" (onClick)="movePreference(preference, 1)" />
+                <p-button icon="pi pi-trash" ariaLabel="حذف اولویت" severity="danger" [text]="true" [disabled]="preferenceSaving()" (onClick)="deletePreference(preference)" />
               </div>
             }
           </article>
         }
-      </div>
-    }
-
-    @if (isDraft && (canAddPreference || editingPreferenceID() !== null)) {
-      <form
-        class="preference-editor"
-        [formGroup]="preferenceForm"
-        (ngSubmit)="savePreference()"
-      >
-        <div class="editor-title">
-          <h3>
-            {{
-              editingPreferenceID() === null ? "افزودن اولویت" : "ویرایش اولویت"
-            }}
-          </h3>
-          @if (editingPreferenceID() !== null) {
-            <p-button
-              label="انصراف"
-              severity="secondary"
-              [text]="true"
-              type="button"
-              (onClick)="cancelPreferenceEdit()"
-            />
-          }
-        </div>
-
-        <div class="editor-grid">
-          <label class="field">
-            <span>اولویت <b>*</b></span>
-            <p-select
-              formControlName="priority"
-              [options]="[1, 2, 3]"
-              placeholder="انتخاب اولویت"
-              appendTo="body"
-            />
-          </label>
-
-          <fieldset class="company-type">
-            <legend>نوع محل کارآموزی <b>*</b></legend>
-            <label>
-              <p-radiobutton
-                formControlName="companyType"
-                value="approved"
-                inputId="approved-company"
-              />
-              شرکت مورد تأیید دانشگاه
-            </label>
-            <label>
-              <p-radiobutton
-                formControlName="companyType"
-                value="proposed"
-                inputId="proposed-company"
-              />
-              شرکت پیشنهادی جدید
-            </label>
-          </fieldset>
-
-          @if (preferenceForm.controls.companyType.value === "approved") {
-            <label class="field full-width">
-              <span>شرکت مورد تأیید <b>*</b></span>
-              <p-select
-                formControlName="companyId"
-                [options]="companies()"
-                optionLabel="name"
-                optionValue="id"
-                placeholder="انتخاب شرکت"
-                appendTo="body"
-                [filter]="true"
-                filterBy="name"
-              />
-            </label>
-          } @else {
-            <label class="field full-width">
-              <span>نام شرکت <b>*</b></span>
-              <input pInputText formControlName="proposedCompanyName" />
-            </label>
-            <label class="field">
-              <span>وب‌سایت</span>
-              <input
-                pInputText
-                formControlName="proposedWebsite"
-                dir="ltr"
-                placeholder="https://example.com"
-              />
-            </label>
-            <label class="field">
-              <span>تلفن</span>
-              <input pInputText formControlName="proposedPhone" dir="ltr" />
-            </label>
-            <label class="field">
-              <span>ایمیل</span>
-              <input pInputText formControlName="proposedEmail" dir="ltr" />
-            </label>
-            <label class="field">
-              <span>نام مسئول کارآموزی</span>
-              <input pInputText formControlName="proposedSupervisorName" />
-            </label>
-          }
-
-          <label class="field">
-            <span>شهر <b>*</b></span>
-            <input pInputText formControlName="city" />
-          </label>
-          <label class="field">
-            <span>زمینه فعالیت <b>*</b></span>
-            <input pInputText formControlName="workField" />
-          </label>
-        </div>
-
-        <div class="card-actions">
-          <p-button
-            type="submit"
-            [label]="
-              editingPreferenceID() === null ? 'افزودن اولویت' : 'ذخیره تغییرات'
-            "
-            icon="pi pi-check"
-            [loading]="preferenceSaving()"
-          />
-        </div>
-      </form>
-    } @else if (isDraft && !canAddPreference) {
-      <div class="limit-notice">
-        <i class="pi pi-info-circle"></i>
-        <span>حداکثر سه اولویت ثبت شده است.</span>
-        <p-button
-          label="افزودن اولویت"
-          icon="pi pi-plus"
-          [disabled]="true"
-          size="small"
-        />
       </div>
     }
   </p-card>
@@ -338,16 +174,14 @@
   @if (isDraft) {
     <div class="submit-panel">
       <div>
-        <strong>ثبت نهایی درخواست</strong>
-        <p>
-          پیش از ثبت نهایی، از کامل بودن اطلاعات و ترتیب اولویت‌ها مطمئن شوید.
-        </p>
+        <strong>ارسال درخواست برای آموزش</strong>
+        <p>پس از ارسال، اطلاعات و ترتیب اولویت‌ها تا تعیین تکلیف پرونده قابل ویرایش نیست.</p>
       </div>
       <p-button
-        label="ثبت نهایی درخواست"
+        label="ارسال درخواست برای آموزش"
         icon="pi pi-send"
         [loading]="saving()"
-        [disabled]="currentCase.preferences.length < 1"
+        [disabled]="!canSubmit || preferenceSaving()"
         (onClick)="confirmSubmit()"
       />
     </div>
@@ -357,14 +191,8 @@
     <p-card header="نتیجه نهایی کارآموزی">
       <div class="detail-grid">
         <div class="detail"><span>وضعیت</span><strong>تکمیل شده</strong></div>
-        <div class="detail">
-          <span>نتیجه نهایی</span
-          ><strong>{{ finalResultLabel(currentCase) }}</strong>
-        </div>
-        <div class="detail full-width">
-          <span>نظر استاد</span
-          ><strong>{{ currentCase.professorComment || "—" }}</strong>
-        </div>
+        <div class="detail"><span>نتیجه نهایی</span><strong>{{ finalResultLabel(currentCase) }}</strong></div>
+        <div class="detail full-width"><span>نظر استاد</span><strong>{{ currentCase.professorComment || "—" }}</strong></div>
       </div>
     </p-card>
   }

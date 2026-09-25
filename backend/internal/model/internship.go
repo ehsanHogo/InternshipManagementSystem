@@ -122,10 +122,11 @@ type InternshipCase struct {
 }
 
 type InternshipPreference struct {
-	ID                       uint `gorm:"primaryKey"`
-	InternshipCaseID         uint `gorm:"not null;uniqueIndex:idx_case_priority"`
-	OpportunityApplicationID uint `gorm:"not null;index"`
-	Priority                 int  `gorm:"not null;uniqueIndex:idx_case_priority;check:priority >= 1 AND priority <= 3"`
+	ID                       uint                   `gorm:"primaryKey"`
+	InternshipCaseID         uint                   `gorm:"not null;uniqueIndex:idx_case_priority;uniqueIndex:idx_case_application"`
+	OpportunityApplicationID uint                   `gorm:"not null;uniqueIndex:idx_case_application"`
+	Priority                 int                    `gorm:"not null;uniqueIndex:idx_case_priority;check:priority >= 1 AND priority <= 3"`
+	OpportunityApplication   OpportunityApplication `gorm:"foreignKey:OpportunityApplicationID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 	CreatedAt                time.Time
 	UpdatedAt                time.Time
 }

@@ -48,6 +48,12 @@ type applicationStudentResponse struct {
 	Email    string `json:"email"`
 }
 
+type acceptedOpportunityApplicationResponse struct {
+	ID          uint                           `json:"id"`
+	Status      model.ApplicationStatus        `json:"status"`
+	Opportunity applicationOpportunityResponse `json:"opportunity"`
+}
+
 type opportunityApplicationResponse struct {
 	ID             uint                           `json:"id"`
 	Status         model.ApplicationStatus        `json:"status"`
@@ -175,6 +181,23 @@ func (handler *OpportunityApplicationHandler) ListStudent(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
+func (handler *OpportunityApplicationHandler) ListAcceptedStudent(ctx *gin.Context) {
+	studentID, ok := currentUserID(ctx)
+	if !ok {
+		return
+	}
+	applications, err := handler.service.ListAcceptedStudent(studentID)
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	response := make([]acceptedOpportunityApplicationResponse, 0, len(applications))
+	for _, application := range applications {
+		response = append(response, acceptedApplicationView(application))
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
 func (handler *OpportunityApplicationHandler) GetStudent(ctx *gin.Context) {
 	studentID, applicationID, ok := requestUserAndApplicationID(ctx)
 	if !ok {
@@ -260,6 +283,20 @@ func requestUserAndApplicationID(ctx *gin.Context) (uint, uint, bool) {
 		return 0, 0, false
 	}
 	return userID, applicationID, true
+}
+
+func acceptedApplicationView(application model.OpportunityApplication) acceptedOpportunityApplicationResponse {
+	return acceptedOpportunityApplicationResponse{
+		ID: application.ID, Status: application.Status,
+		Opportunity: applicationOpportunityResponse{
+			ID: application.Opportunity.ID, Title: application.Opportunity.Title,
+			WorkField: application.Opportunity.WorkField, Location: application.Opportunity.Location,
+			Company: opportunityCompanyResponse{
+				ID: application.Opportunity.Company.ID, Name: application.Opportunity.Company.Name,
+				IsApproved: application.Opportunity.Company.IsApproved,
+			},
+		},
+	}
 }
 
 func applicationView(application model.OpportunityApplication, includeStudent bool) opportunityApplicationResponse {

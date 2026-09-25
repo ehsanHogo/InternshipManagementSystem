@@ -22,19 +22,23 @@ export interface Company {
   isApproved: boolean;
 }
 
+export interface AcceptedOpportunityApplication {
+  id: number;
+  status: "ACCEPTED";
+  opportunity: {
+    id: number;
+    title: string;
+    workField: string;
+    location: string;
+    company: Pick<Company, "id" | "name" | "isApproved">;
+  };
+}
+
 export interface InternshipPreference {
   id: number;
   priority: number;
   opportunityApplicationId: number;
-  companyId?: number;
-  company?: Company;
-  proposedCompanyName?: string;
-  proposedWebsite?: string;
-  proposedPhone?: string;
-  proposedEmail?: string;
-  proposedSupervisorName?: string;
-  city: string;
-  workField: string;
+  application: AcceptedOpportunityApplication;
 }
 
 export interface InternshipCase {
@@ -214,24 +218,16 @@ export interface CompanyConfirmationPayload {
 
 export const internshipStatusLabels: Record<InternshipCaseStatus, string> = {
   DRAFT: 'پیش‌نویس',
-  PENDING_UNIVERSITY_REVIEW: 'در انتظار بررسی دانشگاه',
-  PENDING_COMPANY_DETAILS: 'در انتظار تکمیل اطلاعات شرکت',
-  PENDING_FINAL_APPROVAL: 'در انتظار تأیید نهایی',
-  READY_TO_START: 'آماده شروع',
-  ACTIVE: 'کارآموزی فعال',
+  PENDING_UNIVERSITY_REVIEW: 'در انتظار بررسی آموزش',
+  PENDING_COMPANY_DETAILS: 'در انتظار ثبت اطلاعات شروع توسط شرکت',
+  PENDING_FINAL_APPROVAL: 'در انتظار تأیید نهایی آموزش',
+  READY_TO_START: 'آماده شروع کارآموزی',
+  ACTIVE: 'در حال انجام کارآموزی',
   COMPLETED: 'تکمیل شده',
-  CANCELLED: 'لغوشده'
+  CANCELLED: 'لغو شده'
 };
 
 export interface PreferencePayload {
   priority: number;
-  opportunityApplicationId?: number;
-  companyId?: number;
-  proposedCompanyName?: string;
-  proposedWebsite?: string;
-  proposedPhone?: string;
-  proposedEmail?: string;
-  proposedSupervisorName?: string;
-  city: string;
-  workField: string;
+  opportunityApplicationId: number;
 }

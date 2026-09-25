@@ -54,7 +54,7 @@ export class UniversityApplicationsComponent {
 
   placementName(item: InternshipCase): string {
     const preference = item.selectedPreference;
-    return preference?.company?.name ?? preference?.proposedCompanyName ?? 'هنوز انتخاب نشده';
+    return preference?.application.opportunity.company.name ?? 'هنوز انتخاب نشده';
   }
 
   private loadCases(): void {

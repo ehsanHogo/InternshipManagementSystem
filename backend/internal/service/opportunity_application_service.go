@@ -159,6 +159,15 @@ func (service *OpportunityApplicationService) ListStudent(studentID uint) ([]mod
 	return applications, nil
 }
 
+func (service *OpportunityApplicationService) ListAcceptedStudent(studentID uint) ([]model.OpportunityApplication, error) {
+	var applications []model.OpportunityApplication
+	if err := applicationQuery(service.db).Where("student_id = ? AND status = ?", studentID, model.ApplicationStatusAccepted).
+		Order("reviewed_at DESC NULLS LAST, applied_at DESC").Find(&applications).Error; err != nil {
+		return nil, fmt.Errorf("list accepted student opportunity applications: %w", err)
+	}
+	return applications, nil
+}
+
 func (service *OpportunityApplicationService) GetStudent(studentID, applicationID uint) (*model.OpportunityApplication, error) {
 	var application model.OpportunityApplication
 	result := applicationQuery(service.db).Where("opportunity_applications.id = ? AND student_id = ?", applicationID, studentID).First(&application)

@@ -226,7 +226,7 @@ export class CompanyCaseComponent {
   }
 
   preferenceName(preference?: InternshipPreference): string {
-    return preference?.company?.name ?? preference?.proposedCompanyName ?? '—';
+    return preference?.application.opportunity.company.name ?? '—';
   }
 
   confirmSubmission(): void {

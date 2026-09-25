@@ -56,18 +56,18 @@
       <div class="detail">
         <span>نوع شرکت</span
         ><strong>{{
-          item.selectedPreference?.companyId
+          item.selectedPreference?.application?.opportunity?.company?.isApproved
             ? "مورد تأیید دانشگاه"
             : "پیشنهادی دانشجو"
         }}</strong>
       </div>
       <div class="detail">
         <span>شهر</span
-        ><strong>{{ item.selectedPreference?.city ?? "—" }}</strong>
+        ><strong>{{ item.selectedPreference?.application?.opportunity?.location ?? "—" }}</strong>
       </div>
       <div class="detail">
         <span>زمینه فعالیت</span
-        ><strong>{{ item.selectedPreference?.workField ?? "—" }}</strong>
+        ><strong>{{ item.selectedPreference?.application?.opportunity?.workField ?? "—" }}</strong>
       </div>
       <div class="detail">
         <span>شماره نامه معرفی</span
