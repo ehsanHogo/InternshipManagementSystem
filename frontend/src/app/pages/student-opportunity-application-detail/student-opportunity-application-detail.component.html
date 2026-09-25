@@ -1,0 +1,28 @@
+<section class="page-heading">
+  <div><span class="eyebrow">جزئیات درخواست</span><h1>{{ application()?.opportunity?.title || 'درخواست فرصت کارآموزی' }}</h1><p>اطلاعات درخواست و نتیجه بررسی شرکت را مشاهده کنید.</p></div>
+  <p-button label="بازگشت به درخواست‌های من" icon="pi pi-arrow-right" severity="secondary" [outlined]="true" routerLink="/student/opportunity-applications" />
+</section>
+@if (loading()) {
+  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت جزئیات...</span></div>
+} @else if (loadFailed()) {
+  <div class="state-card"><p>درخواست یافت نشد یا اجازه مشاهده آن را ندارید.</p></div>
+} @else if (application(); as item) {
+  <p-card header="فرصت و شرکت">
+    <div class="detail-grid">
+      <div class="detail"><span>عنوان فرصت</span><strong>{{ item.opportunity.title }}</strong></div>
+      <div class="detail"><span>نام شرکت</span><strong>{{ item.opportunity.company.name }}</strong></div>
+      <div class="detail"><span>زمینه کاری</span><strong>{{ item.opportunity.workField }}</strong></div>
+      <div class="detail"><span>محل</span><strong>{{ item.opportunity.location }}</strong></div>
+    </div>
+  </p-card>
+  <p-card header="وضعیت درخواست">
+    <div class="detail-grid">
+      <div class="detail"><span>وضعیت</span><p-tag [value]="statusLabel(item.status)" [severity]="statusSeverity(item.status)" /></div>
+      <div class="detail"><span>تاریخ ارسال</span><strong>{{ item.appliedAt | jalaliDate }}</strong></div>
+      <div class="detail"><span>تاریخ بررسی</span><strong>{{ item.reviewedAt ? (item.reviewedAt | jalaliDate) : 'هنوز بررسی نشده' }}</strong></div>
+      <div class="detail"><span>رزومه</span><strong>{{ item.resume.originalName }}</strong></div>
+      <div class="detail full-width"><span>نظر شرکت</span><strong>{{ item.companyComment || 'نظری ثبت نشده است.' }}</strong></div>
+    </div>
+    <div class="card-actions"><p-button label="دریافت رزومه" icon="pi pi-download" [loading]="downloading()" [disabled]="downloading()" (onClick)="download()" /></div>
+  </p-card>
+}

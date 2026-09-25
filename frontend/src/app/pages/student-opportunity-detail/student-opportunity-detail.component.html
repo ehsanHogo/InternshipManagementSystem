@@ -56,4 +56,35 @@
       <div class="detail"><span>آدرس شرکت</span><strong>{{ item.company.address || '—' }}</strong></div>
     </div>
   </p-card>
+
+  <p-card header="ارسال درخواست">
+    @if (item.existingApplication; as application) {
+      <div class="application-state success-state">
+        <i class="pi pi-check-circle"></i>
+        <div>
+          <strong>درخواست شما برای این فرصت ثبت شده است.</strong>
+          <p>وضعیت فعلی: <p-tag [value]="statusLabel(application.status)" [severity]="application.status === 'ACCEPTED' ? 'success' : application.status === 'REJECTED' ? 'danger' : 'warn'" /></p>
+        </div>
+        <p-button label="مشاهده جزئیات" icon="pi pi-arrow-left" iconPos="right" [routerLink]="['/student/opportunity-applications', application.id]" />
+      </div>
+    } @else if (item.canApply) {
+      <div class="apply-panel">
+        <div>
+          <strong>رزومه خود را برای این فرصت ارسال کنید.</strong>
+          <p>فقط فایل پی‌دی‌اف با حداکثر حجم ۵ مگابایت پذیرفته می‌شود. رزومه پس از ثبت قابل جایگزینی نیست.</p>
+        </div>
+        <div class="file-picker">
+          <input #resumeInput type="file" accept="application/pdf,.pdf" hidden (change)="selectResume($event)" />
+          <p-button label="انتخاب رزومه" icon="pi pi-file-pdf" severity="secondary" [outlined]="true" [disabled]="applying()" (onClick)="resumeInput.click()" />
+          <span>{{ selectedResume()?.name || 'فایلی انتخاب نشده است.' }}</span>
+          <p-button label="ارسال درخواست" icon="pi pi-send" [loading]="applying()" [disabled]="!selectedResume() || applying()" (onClick)="apply()" />
+        </div>
+      </div>
+    } @else {
+      <div class="application-state blocked-state">
+        <i class="pi pi-info-circle"></i>
+        <strong>{{ restrictionMessage(item.applyRestrictionCode) }}</strong>
+      </div>
+    }
+  </p-card>
 }

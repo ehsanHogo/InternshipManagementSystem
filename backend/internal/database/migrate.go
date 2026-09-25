@@ -22,6 +22,7 @@ func MigrateAndSeed(db *gorm.DB) error {
 		&model.InternshipOpportunity{},
 		&model.ProfessorAssignment{},
 		&model.File{},
+		&model.OpportunityApplication{},
 		&model.InternshipCase{},
 		&model.InternshipPreference{},
 		&model.WeeklyReport{},

@@ -293,24 +293,45 @@ func (service *InternshipService) GetAccessibleFile(userID uint, role model.Role
 	} else if err != nil {
 		return nil, fmt.Errorf("get file: %w", err)
 	}
-	query := service.db.Model(&model.InternshipCase{}).Where("final_report_file_id = ?", fileID)
+
+	finalReportQuery := service.db.Model(&model.InternshipCase{}).Where("final_report_file_id = ?", fileID)
 	switch role {
 	case model.RoleStudent:
-		query = query.Where("student_id = ?", userID)
+		finalReportQuery = finalReportQuery.Where("student_id = ?", userID)
 	case model.RoleProfessor:
-		query = query.Where("professor_id = ?", userID)
+		finalReportQuery = finalReportQuery.Where("professor_id = ?", userID)
 	case model.RoleCompanySupervisor:
-		query = query.Where("company_supervisor_id = ?", userID)
+		finalReportQuery = finalReportQuery.Where("company_supervisor_id = ?", userID)
 	case model.RoleUniversitySupervisor:
-		// University supervisors already have system-wide read access to internship cases.
+		// University supervisors retain their existing system-wide final-report access.
 	default:
 		return nil, ErrCaseAccessDenied
 	}
-	var count int64
-	if err := query.Count(&count).Error; err != nil {
-		return nil, fmt.Errorf("authorize file: %w", err)
+	var finalReportCount int64
+	if err := finalReportQuery.Count(&finalReportCount).Error; err != nil {
+		return nil, fmt.Errorf("authorize final report file: %w", err)
 	}
-	if count == 0 {
+	if finalReportCount > 0 {
+		return &file, nil
+	}
+
+	var resumeCount int64
+	resumeQuery := service.db.Model(&model.OpportunityApplication{}).
+		Joins("JOIN internship_opportunities ON internship_opportunities.id = opportunity_applications.opportunity_id").
+		Where("opportunity_applications.resume_file_id = ?", fileID)
+	switch role {
+	case model.RoleStudent:
+		resumeQuery = resumeQuery.Where("opportunity_applications.student_id = ?", userID)
+	case model.RoleCompanySupervisor:
+		resumeQuery = resumeQuery.Joins("JOIN users AS resume_supervisors ON resume_supervisors.company_id = internship_opportunities.company_id").
+			Where("resume_supervisors.id = ? AND resume_supervisors.role = ?", userID, model.RoleCompanySupervisor)
+	default:
+		return nil, ErrCaseAccessDenied
+	}
+	if err := resumeQuery.Count(&resumeCount).Error; err != nil {
+		return nil, fmt.Errorf("authorize resume file: %w", err)
+	}
+	if resumeCount == 0 {
 		return nil, ErrCaseAccessDenied
 	}
 	return &file, nil

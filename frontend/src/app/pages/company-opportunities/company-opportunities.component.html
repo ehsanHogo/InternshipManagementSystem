@@ -36,6 +36,7 @@
         <td>
           <div class="row-actions">
             <p-button label="مشاهده" icon="pi pi-eye" size="small" [text]="true" (onClick)="openView(opportunity)" />
+            <p-button label="متقاضیان" icon="pi pi-users" size="small" [text]="true" [routerLink]="['/company/opportunities', opportunity.id, 'applications']" />
             <p-button label="ویرایش" icon="pi pi-pencil" size="small" severity="secondary" [text]="true" (onClick)="openEdit(opportunity)" />
             @if (opportunity.status === 'OPEN') {
               <p-button label="بستن فرصت" icon="pi pi-lock" size="small" severity="danger" [text]="true" (onClick)="askToClose(opportunity)" />

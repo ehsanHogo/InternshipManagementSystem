@@ -1,0 +1,25 @@
+<section class="page-heading">
+  <div><span class="eyebrow">متقاضیان فرصت</span><h1>{{ opportunity()?.title || 'متقاضیان' }}</h1><p>درخواست‌های این فرصت را حتی پس از بسته شدن آن بررسی کنید.</p></div>
+  <p-button label="بازگشت به فرصت‌ها" icon="pi pi-arrow-right" severity="secondary" [outlined]="true" routerLink="/company/opportunities" />
+</section>
+@if (loading()) {
+  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت متقاضیان...</span></div>
+} @else if (loadFailed()) {
+  <div class="state-card"><p>این فرصت یافت نشد یا متعلق به شرکت شما نیست.</p></div>
+} @else if (applications().length === 0) {
+  <div class="empty-state"><div><i class="pi pi-users"></i><p>هنوز درخواستی برای این فرصت ثبت نشده است.</p></div></div>
+} @else {
+  <p-table [value]="applications()" [rowHover]="true" responsiveLayout="scroll">
+    <ng-template #header><tr><th>نام دانشجو</th><th>ایمیل</th><th>وضعیت</th><th>تاریخ ارسال</th><th>تاریخ بررسی</th><th>عملیات</th></tr></ng-template>
+    <ng-template #body let-application>
+      <tr>
+        <td><strong>{{ application.student?.fullName }}</strong></td>
+        <td dir="ltr">{{ application.student?.email }}</td>
+        <td><p-tag [value]="statusLabel(application.status)" [severity]="statusSeverity(application.status)" /></td>
+        <td>{{ application.appliedAt | jalaliDate }}</td>
+        <td>{{ application.reviewedAt ? (application.reviewedAt | jalaliDate) : '—' }}</td>
+        <td><p-button label="مشاهده" icon="pi pi-eye" size="small" [text]="true" [routerLink]="['/company/opportunity-applications', application.id]" /></td>
+      </tr>
+    </ng-template>
+  </p-table>
+}

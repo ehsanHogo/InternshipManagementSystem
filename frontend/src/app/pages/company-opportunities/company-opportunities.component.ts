@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -24,6 +25,7 @@ import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
   selector: 'app-company-opportunities',
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     ButtonModule,
     DialogModule,
     InputTextModule,

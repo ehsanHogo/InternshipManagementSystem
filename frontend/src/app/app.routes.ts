@@ -48,6 +48,22 @@ export const routes: Routes = [
           )
       },
       {
+        path: 'student/opportunity-applications',
+        canActivate: [studentGuard],
+        loadComponent: () =>
+          import('./pages/student-opportunity-applications/student-opportunity-applications.component').then(
+            (module) => module.StudentOpportunityApplicationsComponent
+          )
+      },
+      {
+        path: 'student/opportunity-applications/:id',
+        canActivate: [studentGuard],
+        loadComponent: () =>
+          import('./pages/student-opportunity-application-detail/student-opportunity-application-detail.component').then(
+            (module) => module.StudentOpportunityApplicationDetailComponent
+          )
+      },
+      {
         path: 'student/application',
         canActivate: [studentGuard],
         loadComponent: () =>
@@ -151,6 +167,22 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/company-opportunities/company-opportunities.component').then(
             (module) => module.CompanyOpportunitiesComponent
+          )
+      },
+      {
+        path: 'company/opportunities/:id/applications',
+        canActivate: [companySupervisorGuard],
+        loadComponent: () =>
+          import('./pages/company-opportunity-applications/company-opportunity-applications.component').then(
+            (module) => module.CompanyOpportunityApplicationsComponent
+          )
+      },
+      {
+        path: 'company/opportunity-applications/:id',
+        canActivate: [companySupervisorGuard],
+        loadComponent: () =>
+          import('./pages/company-opportunity-application-detail/company-opportunity-application-detail.component').then(
+            (module) => module.CompanyOpportunityApplicationDetailComponent
           )
       },
       {

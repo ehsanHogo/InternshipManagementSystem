@@ -1,0 +1,37 @@
+<p-confirmDialog [baseZIndex]="1300" [style]="{ width: 'min(92vw, 34rem)' }" />
+<section class="page-heading">
+  <div><span class="eyebrow">بررسی متقاضی</span><h1>{{ application()?.student?.fullName || 'جزئیات درخواست' }}</h1><p>رزومه دانشجو را بررسی و تصمیم نهایی شرکت را ثبت کنید.</p></div>
+  @if (application(); as item) {
+    <p-button label="بازگشت به متقاضیان" icon="pi pi-arrow-right" severity="secondary" [outlined]="true" [routerLink]="['/company/opportunities', item.opportunity.id, 'applications']" />
+  }
+</section>
+@if (loading()) {
+  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت درخواست...</span></div>
+} @else if (loadFailed()) {
+  <div class="state-card"><p>درخواست یافت نشد یا متعلق به شرکت شما نیست.</p></div>
+} @else if (application(); as item) {
+  <p-card header="اطلاعات درخواست">
+    <div class="detail-grid">
+      <div class="detail"><span>نام دانشجو</span><strong>{{ item.student?.fullName }}</strong></div>
+      <div class="detail"><span>ایمیل دانشجو</span><strong dir="ltr">{{ item.student?.email }}</strong></div>
+      <div class="detail"><span>عنوان فرصت</span><strong>{{ item.opportunity.title }}</strong></div>
+      <div class="detail"><span>وضعیت</span><p-tag [value]="statusLabel(item.status)" [severity]="statusSeverity(item.status)" /></div>
+      <div class="detail"><span>تاریخ ارسال</span><strong>{{ item.appliedAt | jalaliDate }}</strong></div>
+      <div class="detail"><span>تاریخ بررسی</span><strong>{{ item.reviewedAt ? (item.reviewedAt | jalaliDate) : 'هنوز بررسی نشده' }}</strong></div>
+      <div class="detail full-width"><span>رزومه</span><strong>{{ item.resume.originalName }}</strong></div>
+    </div>
+    <div class="card-actions"><p-button label="دریافت رزومه" icon="pi pi-download" [loading]="downloading()" [disabled]="downloading()" (onClick)="download()" /></div>
+  </p-card>
+  <p-card header="تصمیم شرکت">
+    @if (item.status === 'PENDING') {
+      <label class="field"><span>نظر شرکت (اختیاری)</span><textarea pTextarea rows="5" maxlength="5000" [(ngModel)]="companyComment"></textarea></label>
+      <p class="terminal-note"><i class="pi pi-info-circle"></i> پس از پذیرش یا رد، تصمیم در حال حاضر قابل تغییر نیست.</p>
+      <div class="decision-actions">
+        <p-button label="تأیید درخواست" icon="pi pi-check" severity="success" [disabled]="reviewing()" (onClick)="confirmReview('accept')" />
+        <p-button label="رد درخواست" icon="pi pi-times" severity="danger" [outlined]="true" [disabled]="reviewing()" (onClick)="confirmReview('reject')" />
+      </div>
+    } @else {
+      <div class="decision-result"><p-tag [value]="statusLabel(item.status)" [severity]="statusSeverity(item.status)" /><p>{{ item.companyComment || 'نظری از طرف شرکت ثبت نشده است.' }}</p></div>
+    }
+  </p-card>
+}

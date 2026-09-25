@@ -14,7 +14,8 @@ import (
 )
 
 type OpportunityHandler struct {
-	service *service.OpportunityService
+	service      *service.OpportunityService
+	applications *service.OpportunityApplicationService
 }
 
 type opportunityRequest struct {
@@ -45,18 +46,30 @@ type opportunityCompanyResponse struct {
 	IsApproved bool    `json:"isApproved"`
 }
 
-type studentOpportunityResponse struct {
-	ID          uint                       `json:"id"`
-	Title       string                     `json:"title"`
-	Description string                     `json:"description"`
-	WorkField   string                     `json:"workField"`
-	Location    string                     `json:"location"`
-	CreatedAt   time.Time                  `json:"createdAt"`
-	Company     opportunityCompanyResponse `json:"company"`
+type existingApplicationResponse struct {
+	ID     uint                    `json:"id"`
+	Status model.ApplicationStatus `json:"status"`
 }
 
-func NewOpportunityHandler(opportunityService *service.OpportunityService) *OpportunityHandler {
-	return &OpportunityHandler{service: opportunityService}
+type studentOpportunityResponse struct {
+	ID                   uint                         `json:"id"`
+	Title                string                       `json:"title"`
+	Description          string                       `json:"description"`
+	WorkField            string                       `json:"workField"`
+	Location             string                       `json:"location"`
+	CreatedAt            time.Time                    `json:"createdAt"`
+	Company              opportunityCompanyResponse   `json:"company"`
+	CanApply             bool                         `json:"canApply"`
+	ApplyRestrictionCode string                       `json:"applyRestrictionCode,omitempty"`
+	ExistingApplication  *existingApplicationResponse `json:"existingApplication,omitempty"`
+}
+
+func NewOpportunityHandler(opportunityService *service.OpportunityService, applicationServices ...*service.OpportunityApplicationService) *OpportunityHandler {
+	handler := &OpportunityHandler{service: opportunityService}
+	if len(applicationServices) > 0 {
+		handler.applications = applicationServices[0]
+	}
+	return handler
 }
 
 func (handler *OpportunityHandler) Create(ctx *gin.Context) {
@@ -150,6 +163,10 @@ func (handler *OpportunityHandler) ListStudent(ctx *gin.Context) {
 }
 
 func (handler *OpportunityHandler) GetStudent(ctx *gin.Context) {
+	studentID, ok := currentUserID(ctx)
+	if !ok {
+		return
+	}
 	opportunityID, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
 	if err != nil || opportunityID == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_OPPORTUNITY_ID", "error": "شناسه فرصت کارآموزی معتبر نیست."})
@@ -160,7 +177,23 @@ func (handler *OpportunityHandler) GetStudent(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, studentOpportunityView(*opportunity))
+	response := studentOpportunityView(*opportunity)
+	response.CanApply = true
+	if handler.applications != nil {
+		eligibility, eligibilityErr := handler.applications.CheckEligibility(studentID, uint(opportunityID))
+		if eligibilityErr != nil {
+			handler.writeError(ctx, eligibilityErr)
+			return
+		}
+		response.CanApply = eligibility.CanApply
+		response.ApplyRestrictionCode = eligibility.RestrictionCode
+		if eligibility.ExistingApplicationID != nil && eligibility.ExistingStatus != nil {
+			response.ExistingApplication = &existingApplicationResponse{
+				ID: *eligibility.ExistingApplicationID, Status: *eligibility.ExistingStatus,
+			}
+		}
+	}
+	ctx.JSON(http.StatusOK, response)
 }
 
 func bindOpportunityRequest(ctx *gin.Context) (opportunityRequest, bool) {

@@ -54,7 +54,9 @@ func main() {
 	companyAccountService := service.NewCompanyAccountService(db)
 	companyAccountHandler := handler.NewCompanyAccountHandler(companyAccountService)
 	opportunityService := service.NewOpportunityService(db)
-	opportunityHandler := handler.NewOpportunityHandler(opportunityService)
+	applicationService := service.NewOpportunityApplicationService(db)
+	opportunityHandler := handler.NewOpportunityHandler(opportunityService, applicationService)
+	applicationHandler := handler.NewOpportunityApplicationHandler(applicationService, cfg.UploadDir)
 
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery(), appmiddleware.CORS(cfg.FrontendOrigin))
@@ -85,6 +87,9 @@ func main() {
 	student.POST("/internship-case/final-report", internshipHandler.UploadFinalReport)
 	student.GET("/opportunities", opportunityHandler.ListStudent)
 	student.GET("/opportunities/:id", opportunityHandler.GetStudent)
+	student.POST("/opportunities/:id/apply", applicationHandler.Apply)
+	student.GET("/opportunity-applications", applicationHandler.ListStudent)
+	student.GET("/opportunity-applications/:id", applicationHandler.GetStudent)
 
 	university := authenticated.Group("/university")
 	university.Use(appmiddleware.RequireRole(model.RoleUniversitySupervisor))
@@ -122,6 +127,10 @@ func main() {
 	company.GET("/opportunities/:id", opportunityHandler.GetCompany)
 	company.PUT("/opportunities/:id", opportunityHandler.Update)
 	company.POST("/opportunities/:id/close", opportunityHandler.Close)
+	company.GET("/opportunities/:id/applications", applicationHandler.ListCompany)
+	company.GET("/opportunity-applications/:id", applicationHandler.GetCompany)
+	company.POST("/opportunity-applications/:id/accept", applicationHandler.Accept)
+	company.POST("/opportunity-applications/:id/reject", applicationHandler.Reject)
 
 	professor := authenticated.Group("/professor")
 	professor.Use(appmiddleware.RequireRole(model.RoleProfessor))

@@ -6,25 +6,47 @@
   line-height: 1.9;
 }
 
-.approval {
+
+
+.apply-panel,
+.application-state {
   display: flex;
-  align-items: flex-start;
-  gap: 0.9rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   padding: 1rem;
-  border: 1px solid #cbd5e1;
   border-radius: 0.8rem;
-  background: #f8fafc;
-
-  > i { color: #64748b; font-size: 1.5rem; }
-  p { margin: 0.45rem 0 0; color: #475569; line-height: 1.8; }
-
-  &.approved {
-    border-color: #bbf7d0;
-    background: #f0fdf4;
-    > i { color: #16a34a; }
-  }
 }
 
-.company-details { margin-top: 1rem; }
-.detail a { color: #1d4ed8; font-weight: 600; overflow-wrap: anywhere; }
-.error-state > div { text-align: center; }
+.apply-panel {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  p { margin: 0.35rem 0 0; color: #475569; line-height: 1.8; }
+}
+
+.file-picker {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  min-width: min(100%, 25rem);
+  span { color: #475569; overflow-wrap: anywhere; }
+}
+
+.application-state {
+  justify-content: flex-start;
+  border: 1px solid #cbd5e1;
+  i { font-size: 1.5rem; }
+  p { margin: 0.5rem 0 0; }
+  p-button { margin-right: auto; }
+}
+
+.success-state { border-color: #bbf7d0; background: #f0fdf4; i { color: #16a34a; } }
+.blocked-state { border-color: #fde68a; background: #fffbeb; i { color: #d97706; } }
+
+@media (max-width: 52rem) {
+  .apply-panel,
+  .application-state { align-items: stretch; flex-direction: column; }
+  .file-picker { justify-content: flex-start; }
+  .application-state p-button { margin-right: 0; }
+}
