@@ -56,6 +56,11 @@ export class UniversityCaseComponent {
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly cancelDialogVisible = signal(false);
+  readonly correctionDialogVisible = signal(false);
+
+  readonly correctionForm = this.formBuilder.group({
+    comment: this.formBuilder.nonNullable.control('', [Validators.required, Validators.pattern(/\S/)])
+  });
 
   readonly reviewForm = this.formBuilder.group({
     preferenceId: this.formBuilder.control<number | null>(null, Validators.required),
@@ -138,6 +143,63 @@ export class UniversityCaseComponent {
         next: (internshipCase) => {
           this.internshipCase.set(internshipCase);
           this.syncReviewForm(internshipCase);
+        },
+        error: (error: HttpErrorResponse) => this.showError(error)
+      });
+  }
+
+  confirmFinalApproval(): void {
+    if (!this.canReviewPlacement()) return;
+    this.confirmation.confirm({
+      header: 'تأیید نهایی',
+      message: 'آیا از تأیید نهایی اطلاعات محل و شروع کارآموزی اطمینان دارید؟',
+      icon: 'pi pi-check-circle',
+      acceptLabel: 'بله، تأیید شود',
+      rejectLabel: 'انصراف',
+      accept: () => this.approvePlacementDetails()
+    });
+  }
+
+  openCorrection(): void {
+    if (!this.canReviewPlacement()) return;
+    this.correctionForm.reset({ comment: '' });
+    this.correctionDialogVisible.set(true);
+  }
+
+  requestCorrection(): void {
+    if (!this.canReviewPlacement()) return;
+    if (this.correctionForm.invalid) {
+      this.correctionForm.markAllAsTouched();
+      return;
+    }
+    this.saving.set(true);
+    this.internshipService.requestPlacementCorrection(this.caseID, this.correctionForm.controls.comment.value.trim())
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (item) => {
+          this.internshipCase.set(item);
+          this.syncReviewForm(item);
+          this.correctionDialogVisible.set(false);
+          this.messages.add({ severity: 'success', summary: 'درخواست اصلاح ثبت شد', detail: 'پرونده برای اصلاح اطلاعات محل کارآموزی به شرکت بازگردانده شد.' });
+        },
+        error: (error: HttpErrorResponse) => this.showError(error)
+      });
+  }
+
+  private canReviewPlacement(): boolean {
+    return !this.saving() && this.internshipCase()?.status === 'PENDING_FINAL_APPROVAL';
+  }
+
+  private approvePlacementDetails(): void {
+    if (!this.canReviewPlacement()) return;
+    this.saving.set(true);
+    this.internshipService.approvePlacementDetails(this.caseID)
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (item) => {
+          this.internshipCase.set(item);
+          this.syncReviewForm(item);
+          this.messages.add({ severity: 'success', summary: 'تأیید نهایی شد', detail: 'پرونده آماده شروع کارآموزی است.' });
         },
         error: (error: HttpErrorResponse) => this.showError(error)
       });

@@ -14,9 +14,9 @@ import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 
 import {
-  InternshipCase,
+  CompanyInternshipCase,
   InternshipCaseStatus,
-  InternshipPreference,
+  CompanyPlacement,
   CompanyEvaluation,
   EvaluationRating,
   WeeklyReport,
@@ -45,7 +45,7 @@ export class CompanyCaseComponent {
   private readonly confirmation = inject(ConfirmationService);
   private readonly caseID = Number(this.route.snapshot.paramMap.get('id'));
 
-  readonly internshipCase = signal<InternshipCase | null>(null);
+  readonly internshipCase = signal<CompanyInternshipCase | null>(null);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly reports = signal<WeeklyReport[]>([]);
@@ -122,7 +122,7 @@ export class CompanyCaseComponent {
     return evaluationRatingLabels[rating];
   }
 
-  finalResultLabel(item: InternshipCase): string {
+  finalResultLabel(item: CompanyInternshipCase): string {
     return item.finalResult ? professorFinalResultLabels[item.finalResult] : '—';
   }
 
@@ -227,7 +227,7 @@ export class CompanyCaseComponent {
     return internshipStatusLabels[status];
   }
 
-  preferenceName(preference?: InternshipPreference): string {
+  preferenceName(preference?: CompanyPlacement): string {
     return preference?.application.opportunity.company.name ?? '—';
   }
 
@@ -270,7 +270,7 @@ export class CompanyCaseComponent {
     });
   }
 
-  private syncPlacementForm(item: InternshipCase): void {
+  private syncPlacementForm(item: CompanyInternshipCase): void {
     this.placementForm.reset({
       internshipSubject: item.internshipSubject ?? '',
       startDate: item.startDate?.slice(0, 10) ?? '',

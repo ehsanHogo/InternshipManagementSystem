@@ -9,6 +9,7 @@ import {
   CompanyEvaluationPayload,
   PlacementDetailsPayload,
   InternshipCase,
+  CompanyInternshipCase,
   InternshipCaseStatus,
   InternshipPreference,
   PreferencePayload,
@@ -87,20 +88,32 @@ export class InternshipService {
     return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/cancel`, payload);
   }
 
-  listCompanyCases(): Observable<InternshipCase[]> {
-    return this.http.get<InternshipCase[]>('/api/company/internship-cases');
+  listPendingFinalApprovalCases(): Observable<InternshipCase[]> {
+    return this.http.get<InternshipCase[]>('/api/university/internship-cases/pending-final-approval');
   }
 
-  listPendingCompanyDetailsCases(): Observable<InternshipCase[]> {
-    return this.http.get<InternshipCase[]>('/api/company/internship-cases/pending-details');
+  approvePlacementDetails(id: number): Observable<InternshipCase> {
+    return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/final-approve`, {});
   }
 
-  getCompanyCase(id: number): Observable<InternshipCase> {
-    return this.http.get<InternshipCase>(`/api/company/internship-cases/${id}`);
+  requestPlacementCorrection(id: number, comment: string): Observable<InternshipCase> {
+    return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/request-placement-correction`, { comment });
   }
 
-  submitPlacementDetails(id: number, payload: PlacementDetailsPayload): Observable<InternshipCase> {
-    return this.http.post<InternshipCase>(`/api/company/internship-cases/${id}/placement-details`, payload);
+  listCompanyCases(): Observable<CompanyInternshipCase[]> {
+    return this.http.get<CompanyInternshipCase[]>('/api/company/internship-cases');
+  }
+
+  listPendingCompanyDetailsCases(): Observable<CompanyInternshipCase[]> {
+    return this.http.get<CompanyInternshipCase[]>('/api/company/internship-cases/pending-details');
+  }
+
+  getCompanyCase(id: number): Observable<CompanyInternshipCase> {
+    return this.http.get<CompanyInternshipCase>(`/api/company/internship-cases/${id}`);
+  }
+
+  submitPlacementDetails(id: number, payload: PlacementDetailsPayload): Observable<CompanyInternshipCase> {
+    return this.http.post<CompanyInternshipCase>(`/api/company/internship-cases/${id}/placement-details`, payload);
   }
 
   listStudentWeeklyReports(): Observable<WeeklyReport[]> {

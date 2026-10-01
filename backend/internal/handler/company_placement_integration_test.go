@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -72,8 +73,11 @@ func TestCompanyPlacementAPI(t *testing.T) {
 	universities := api.Group("/university")
 	universities.Use(appmiddleware.RequireRole(model.RoleUniversitySupervisor))
 	universities.GET("/internship-cases", handler.ListUniversityCases)
+	universities.GET("/internship-cases/pending-final-approval", handler.ListPendingFinalApprovalCases)
 	universities.GET("/internship-cases/:id", handler.GetUniversityCase)
 	universities.POST("/internship-cases/:id/approve-placement", handler.ApproveUniversityPlacement)
+	universities.POST("/internship-cases/:id/final-approve", handler.ApprovePlacementDetails)
+	universities.POST("/internship-cases/:id/request-placement-correction", handler.RequestPlacementCorrection)
 	credits, mobile := 90, "09123456789"
 	item := model.InternshipCase{StudentID: student.ID, ProfessorID: professor.ID, Status: model.InternshipCaseStatusDraft, PassedCredits: &credits, Mobile: &mobile}
 	if err := tx.Create(&item).Error; err != nil {
@@ -147,11 +151,14 @@ func TestCompanyPlacementAPI(t *testing.T) {
 		if result.Code != http.StatusOK {
 			t.Fatalf("detail=%d %s", result.Code, result.Body)
 		}
+		if bytes.Contains(result.Body.Bytes(), []byte(`"priority"`)) {
+			t.Fatal("company JSON exposes preference priority")
+		}
 		var view internshipCaseResponse
 		if err := json.Unmarshal(result.Body.Bytes(), &view); err != nil {
 			t.Fatal(err)
 		}
-		if len(view.Preferences) != 1 || view.Preferences[0].Priority != 2 || view.SelectedPreference == nil || view.CompanySupervisor == nil || view.CompanySupervisor.ID != supervisorB.ID || view.LetterNumber == nil || view.Mobile == nil || view.PassedCredits != nil || view.Student.Email != student.Email {
+		if len(view.Preferences) != 1 || view.Preferences[0].Priority != 0 || view.SelectedPreference == nil || view.SelectedPreference.Priority != 0 || view.CompanySupervisor == nil || view.CompanySupervisor.ID != supervisorB.ID || view.LetterNumber == nil || view.Mobile == nil || view.PassedCredits != nil || view.Student.Email != student.Email {
 			t.Fatalf("incorrect or excessive company response: %+v", view)
 		}
 	})
@@ -262,6 +269,163 @@ func TestCompanyPlacementAPI(t *testing.T) {
 		}
 		if company.IsApproved {
 			t.Fatal("company auto-approved")
+		}
+	})
+	t.Run("university final review role security including admin and unauthenticated", func(t *testing.T) {
+		for _, endpoint := range []struct{ method, path string }{
+			{http.MethodGet, "/api/university/internship-cases/pending-final-approval"},
+			{http.MethodGet, universityPath},
+			{http.MethodPost, universityPath + "/final-approve"},
+			{http.MethodPost, universityPath + "/request-placement-correction"},
+		} {
+			for _, user := range []model.User{student, professor, supervisorA, supervisorB, admin} {
+				before := load()
+				result := performJSONRequest(t, router, endpoint.method, endpoint.path, map[string]any{"comment": "اصلاح"}, token(user))
+				if result.Code != http.StatusForbidden {
+					t.Fatalf("%s %s as %s: %d %s", endpoint.method, endpoint.path, user.Role, result.Code, result.Body)
+				}
+				assertUnchanged(before)
+			}
+			before := load()
+			result := performJSONRequest(t, router, endpoint.method, endpoint.path, map[string]any{"comment": "اصلاح"}, "")
+			if result.Code != http.StatusUnauthorized {
+				t.Fatalf("unauthenticated %s: %d", endpoint.path, result.Code)
+			}
+			assertUnchanged(before)
+		}
+	})
+	t.Run("final approval integrity and correction validation use stable errors", func(t *testing.T) {
+		before := load()
+		if err := tx.Model(&model.InternshipCase{}).Where("id = ?", item.ID).Update("workplace_phone", nil).Error; err != nil {
+			t.Fatal(err)
+		}
+		corrupt := load()
+		assertAPIError(t, performJSONRequest(t, router, http.MethodPost, universityPath+"/final-approve", map[string]any{}, tokenUniversity), http.StatusConflict, "PLACEMENT_DETAILS_INCOMPLETE")
+		assertUnchanged(corrupt)
+		if err := tx.Model(&model.InternshipCase{}).Where("id = ?", item.ID).Update("workplace_phone", before.WorkplacePhone).Error; err != nil {
+			t.Fatal(err)
+		}
+		var selected model.InternshipPreference
+		if err := tx.First(&selected, *before.SelectedPreferenceID).Error; err != nil {
+			t.Fatal(err)
+		}
+		if err := tx.Model(&model.OpportunityApplication{}).Where("id = ?", selected.OpportunityApplicationID).Update("status", model.ApplicationStatusRejected).Error; err != nil {
+			t.Fatal(err)
+		}
+		corrupt = load()
+		assertAPIError(t, performJSONRequest(t, router, http.MethodPost, universityPath+"/final-approve", map[string]any{}, tokenUniversity), http.StatusConflict, "PLACEMENT_RELATIONSHIP_INVALID")
+		assertUnchanged(corrupt)
+		if err := tx.Model(&model.OpportunityApplication{}).Where("id = ?", selected.OpportunityApplicationID).Update("status", model.ApplicationStatusAccepted).Error; err != nil {
+			t.Fatal(err)
+		}
+		for _, body := range []map[string]any{{}, {"comment": ""}, {"comment": " \t\n "}} {
+			before := load()
+			assertAPIError(t, performJSONRequest(t, router, http.MethodPost, universityPath+"/request-placement-correction", body, tokenUniversity), http.StatusBadRequest, "COMPANY_DETAILS_REVISION_COMMENT_REQUIRED")
+			assertUnchanged(before)
+		}
+		for _, field := range []string{"internshipSubject", "startDate", "workplaceAddress", "workplacePhone", "selectedPreferenceId", "companySupervisorId", "letterNumber", "letterDate", "status"} {
+			before := load()
+			assertAPIError(t, performJSONRequest(t, router, http.MethodPost, universityPath+"/request-placement-correction", map[string]any{"comment": "اصلاح", field: "changed"}, tokenUniversity), http.StatusBadRequest, "INVALID_PLACEMENT_CORRECTION")
+			assertUnchanged(before)
+		}
+		for _, action := range []string{"/final-approve", "/request-placement-correction"} {
+			assertAPIError(t, performJSONRequest(t, router, http.MethodPost, "/api/university/internship-cases/9223372036854775807"+action, map[string]any{"comment": "اصلاح"}, tokenUniversity), http.StatusNotFound, "INTERNSHIP_CASE_NOT_FOUND")
+		}
+	})
+	t.Run("university correction company resubmission final approval API loop", func(t *testing.T) {
+		assertList := func(path, token string, count int) {
+			t.Helper()
+			result := performJSONRequest(t, router, http.MethodGet, path, nil, token)
+			var values []internshipCaseResponse
+			if result.Code != http.StatusOK {
+				t.Fatalf("list %s: %d %s", path, result.Code, result.Body)
+			}
+			if err := json.Unmarshal(result.Body.Bytes(), &values); err != nil {
+				t.Fatal(err)
+			}
+			if len(values) != count {
+				t.Fatalf("list %s count=%d want=%d", path, len(values), count)
+			}
+		}
+		assertList("/api/university/internship-cases/pending-final-approval", tokenUniversity, 1)
+		before := load()
+		result := performJSONRequest(t, router, http.MethodPost, universityPath+"/request-placement-correction", map[string]any{"comment": "  آدرس را اصلاح کنید  "}, tokenUniversity)
+		if result.Code != http.StatusOK {
+			t.Fatalf("correct: %d %s", result.Code, result.Body)
+		}
+		comment := "آدرس را اصلاح کنید"
+		after := load()
+		before.Status, before.CompanyDetailsRevisionComment, before.UpdatedAt = model.InternshipCaseStatusPendingCompanyDetails, &comment, after.UpdatedAt
+		if !reflect.DeepEqual(before, after) {
+			t.Fatalf("correction changed other case data: %+v -> %+v", before, after)
+		}
+		assertList("/api/university/internship-cases/pending-final-approval", tokenUniversity, 0)
+		assertList("/api/company/internship-cases/pending-details", tokenB, 1)
+		assertList("/api/company/internship-cases/pending-details", tokenA, 0)
+		assertAPIError(t, performJSONRequest(t, router, http.MethodPost, universityPath+"/request-placement-correction", map[string]any{"comment": "دوباره"}, tokenUniversity), http.StatusConflict, "INTERNSHIP_CASE_NOT_PENDING_FINAL_APPROVAL")
+		assertAPIError(t, performJSONRequest(t, router, http.MethodPost, universityPath+"/final-approve", map[string]any{}, tokenUniversity), http.StatusConflict, "INTERNSHIP_CASE_NOT_PENDING_FINAL_APPROVAL")
+		assertUnchanged(after)
+		result = performJSONRequest(t, router, http.MethodGet, path, nil, tokenB)
+		var companyView internshipCaseResponse
+		if result.Code != http.StatusOK {
+			t.Fatalf("company correction detail: %d %s", result.Code, result.Body)
+		}
+		if err := json.Unmarshal(result.Body.Bytes(), &companyView); err != nil {
+			t.Fatal(err)
+		}
+		if companyView.CompanyDetailsRevisionComment == nil || *companyView.CompanyDetailsRevisionComment != comment || companyView.WorkplaceAddress == nil || *companyView.WorkplaceAddress != "آدرس محل" || bytes.Contains(result.Body.Bytes(), []byte(`"priority"`)) {
+			t.Fatalf("company correction detail: %s", result.Body)
+		}
+		assertAPIError(t, performJSONRequest(t, router, http.MethodPost, path+"/placement-details", payload, tokenA), http.StatusForbidden, "INTERNSHIP_CASE_NOT_ASSIGNED_TO_COMPANY")
+		assertUnchanged(after)
+		payload["workplaceAddress"] = "آدرس اصلاح‌شده"
+		result = performJSONRequest(t, router, http.MethodPost, path+"/placement-details", payload, tokenB)
+		if result.Code != http.StatusOK {
+			t.Fatalf("resubmit: %d %s", result.Code, result.Body)
+		}
+		after = load()
+		if after.Status != model.InternshipCaseStatusPendingFinalApproval || after.CompanyDetailsRevisionComment != nil || *after.WorkplaceAddress != "آدرس اصلاح‌شده" {
+			t.Fatalf("resubmit: %+v", after)
+		}
+		assertList("/api/university/internship-cases/pending-final-approval", tokenUniversity, 1)
+		result = performJSONRequest(t, router, http.MethodPost, universityPath+"/final-approve", map[string]any{"workplaceAddress": "must not overwrite", "letterNumber": "must not overwrite"}, tokenUniversity)
+		if result.Code != http.StatusOK {
+			t.Fatalf("approve: %d %s", result.Code, result.Body)
+		}
+		ready := load()
+		after.Status, after.UpdatedAt = model.InternshipCaseStatusReadyToStart, ready.UpdatedAt
+		if !reflect.DeepEqual(after, ready) {
+			t.Fatalf("approval changed other case data: %+v -> %+v", after, ready)
+		}
+		assertList("/api/university/internship-cases/pending-final-approval", tokenUniversity, 0)
+		assertList("/api/company/internship-cases/pending-details", tokenB, 0)
+		for _, action := range []string{"/final-approve", "/request-placement-correction"} {
+			assertAPIError(t, performJSONRequest(t, router, http.MethodPost, universityPath+action, map[string]any{"comment": "اصلاح"}, tokenUniversity), http.StatusConflict, "INTERNSHIP_CASE_NOT_PENDING_FINAL_APPROVAL")
+		}
+		assertAPIError(t, performJSONRequest(t, router, http.MethodPost, path+"/placement-details", payload, tokenB), http.StatusConflict, "INTERNSHIP_CASE_NOT_PENDING_COMPANY_DETAILS")
+		assertUnchanged(ready)
+		for _, get := range []struct {
+			path, token string
+			company     bool
+		}{{path, tokenB, true}, {"/api/student/internship-case", tokenStudent, false}, {universityPath, tokenUniversity, false}} {
+			result := performJSONRequest(t, router, http.MethodGet, get.path, nil, get.token)
+			var view internshipCaseResponse
+			if result.Code != http.StatusOK {
+				t.Fatalf("ready detail: %d %s", result.Code, result.Body)
+			}
+			if err := json.Unmarshal(result.Body.Bytes(), &view); err != nil {
+				t.Fatal(err)
+			}
+			if view.Status != model.InternshipCaseStatusReadyToStart || view.ActivatedAt != nil || view.WorkplaceAddress == nil || *view.WorkplaceAddress != "آدرس اصلاح‌شده" || view.SelectedPreference == nil {
+				t.Fatalf("ready detail: %+v", view)
+			}
+			if get.company {
+				if bytes.Contains(result.Body.Bytes(), []byte(`"priority"`)) {
+					t.Fatal("company ready response exposes priority")
+				}
+			} else if view.SelectedPreference.Priority != 2 || len(view.Preferences) != 2 {
+				t.Fatal("student/university preference ordering lost")
+			}
 		}
 	})
 }

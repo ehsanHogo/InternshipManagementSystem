@@ -77,7 +77,7 @@ type fileMetadataResponse struct {
 
 type internshipPreferenceResponse struct {
 	ID                       uint                                   `json:"id"`
-	Priority                 int                                    `json:"priority"`
+	Priority                 int                                    `json:"priority,omitempty"`
 	OpportunityApplicationID uint                                   `json:"opportunityApplicationId"`
 	Application              acceptedOpportunityApplicationResponse `json:"application"`
 }
@@ -261,7 +261,8 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		errors.Is(err, service.ErrIntroductionLetterDateRequired), errors.Is(err, service.ErrCancellationCommentRequired),
 		errors.Is(err, service.ErrInternshipSubjectRequired), errors.Is(err, service.ErrStartDateRequired),
 		errors.Is(err, service.ErrWorkplaceAddressRequired), errors.Is(err, service.ErrWorkplacePhoneRequired),
-		errors.Is(err, service.ErrInvalidStartDate), errors.Is(err, service.ErrPlacementDetailsTooLong):
+		errors.Is(err, service.ErrInvalidStartDate), errors.Is(err, service.ErrPlacementDetailsTooLong),
+		errors.Is(err, service.ErrCompanyDetailsRevisionCommentRequired):
 		status = http.StatusBadRequest
 	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit),
 		errors.Is(err, service.ErrDuplicatePriority), errors.Is(err, service.ErrPreferenceAlreadyExists),
@@ -272,7 +273,8 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		errors.Is(err, service.ErrInvalidTransition), errors.Is(err, service.ErrInternshipCompleted),
 		errors.Is(err, service.ErrObsoleteWorkflow), errors.Is(err, service.ErrCaseNotPendingUniversityReview),
 		errors.Is(err, service.ErrCompanySupervisorResolution), errors.Is(err, service.ErrInvalidCompanyPlacement),
-		errors.Is(err, service.ErrCaseNotPendingCompanyDetails):
+		errors.Is(err, service.ErrCaseNotPendingCompanyDetails), errors.Is(err, service.ErrCaseNotPendingFinalApproval),
+		errors.Is(err, service.ErrPlacementDetailsIncomplete), errors.Is(err, service.ErrPlacementRelationshipInvalid):
 		status = http.StatusConflict
 	case errors.Is(err, service.ErrCaseAccessDenied), errors.Is(err, service.ErrCaseNotAssignedToCompany):
 		status = http.StatusForbidden
@@ -294,6 +296,14 @@ func currentUserID(ctx *gin.Context) (uint, bool) {
 
 func internshipErrorCode(err error) string {
 	switch {
+	case errors.Is(err, service.ErrCaseNotPendingFinalApproval):
+		return "INTERNSHIP_CASE_NOT_PENDING_FINAL_APPROVAL"
+	case errors.Is(err, service.ErrPlacementDetailsIncomplete):
+		return "PLACEMENT_DETAILS_INCOMPLETE"
+	case errors.Is(err, service.ErrPlacementRelationshipInvalid):
+		return "PLACEMENT_RELATIONSHIP_INVALID"
+	case errors.Is(err, service.ErrCompanyDetailsRevisionCommentRequired):
+		return "COMPANY_DETAILS_REVISION_COMMENT_REQUIRED"
 	case errors.Is(err, service.ErrCaseNotAssignedToCompany):
 		return "INTERNSHIP_CASE_NOT_ASSIGNED_TO_COMPANY"
 	case errors.Is(err, service.ErrCaseNotPendingCompanyDetails):
@@ -353,6 +363,14 @@ func internshipErrorCode(err error) string {
 
 func publicInternshipError(err error) string {
 	switch {
+	case errors.Is(err, service.ErrCaseNotPendingFinalApproval):
+		return "این پرونده در انتظار تأیید نهایی آموزش نیست."
+	case errors.Is(err, service.ErrPlacementDetailsIncomplete):
+		return "اطلاعات محل کارآموزی یا معرفی‌نامه کامل نیست."
+	case errors.Is(err, service.ErrPlacementRelationshipInvalid):
+		return "ارتباط محل انتخاب‌شده، درخواست پذیرفته‌شده یا سرپرست شرکت معتبر نیست."
+	case errors.Is(err, service.ErrCompanyDetailsRevisionCommentRequired):
+		return "ثبت توضیحات اصلاحات مورد نیاز الزامی است."
 	case errors.Is(err, service.ErrCaseNotAssignedToCompany):
 		return "این پرونده به شرکت و سرپرست شما اختصاص نیافته است."
 	case errors.Is(err, service.ErrCaseNotPendingCompanyDetails):

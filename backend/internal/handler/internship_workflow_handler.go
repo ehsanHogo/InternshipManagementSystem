@@ -66,6 +66,45 @@ func (handler *InternshipHandler) GetUniversityCase(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
 }
 
+func (handler *InternshipHandler) ListPendingFinalApprovalCases(ctx *gin.Context) {
+	cases, err := handler.service.ListPendingFinalApprovalCases()
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, caseResponses(cases))
+}
+
+func (handler *InternshipHandler) ApprovePlacementDetails(ctx *gin.Context) {
+	handler.performUniversityAction(ctx, handler.service.ApprovePlacementDetails)
+}
+
+func (handler *InternshipHandler) RequestPlacementCorrection(ctx *gin.Context) {
+	caseID, ok := caseIDFromContext(ctx)
+	if !ok {
+		return
+	}
+	var request struct {
+		Comment string `json:"comment"`
+	}
+	decoder := json.NewDecoder(ctx.Request.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_PLACEMENT_CORRECTION", "error": "توضیحات اصلاحات معتبر نیست؛ فقط توضیحات را ارسال کنید."})
+		return
+	}
+	if err := decoder.Decode(new(any)); err != io.EOF {
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_PLACEMENT_CORRECTION", "error": "توضیحات اصلاحات معتبر نیست."})
+		return
+	}
+	item, err := handler.service.RequestPlacementCorrection(caseID, request.Comment)
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, caseResponse(item))
+}
+
 func (handler *InternshipHandler) ApproveUniversityPlacement(ctx *gin.Context) {
 	caseID, ok := caseIDFromContext(ctx)
 	if !ok {
@@ -219,13 +258,14 @@ func (handler *InternshipHandler) SubmitPlacementDetails(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, companyCaseResponse(internshipCase))
 }
 
-// A company sees only its selected placement, not other recruitment preferences
-// or the student's passed-credit information.
+// A company sees only its selected placement, without student preference priority
+// or other recruitment preferences or passed-credit information.
 func companyCaseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 	response := caseResponse(internshipCase)
 	response.PassedCredits = nil
 	response.Preferences = []internshipPreferenceResponse{}
 	if response.SelectedPreference != nil {
+		response.SelectedPreference.Priority = 0 // omitted from the company JSON
 		response.Preferences = append(response.Preferences, *response.SelectedPreference)
 	}
 	return response

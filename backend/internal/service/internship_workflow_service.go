@@ -177,7 +177,7 @@ func (service *InternshipService) ConfirmCompanyCase(supervisorID, caseID uint, 
 	return nil, ErrObsoleteWorkflow
 }
 
-// Deprecated: final approval transitions belong to the V2 workflow milestone.
+// Deprecated: use ApprovePlacementDetails for V2 final review.
 func (service *InternshipService) ApproveUniversityCase(caseID uint) (*model.InternshipCase, error) {
 	return nil, ErrObsoleteWorkflow
 }

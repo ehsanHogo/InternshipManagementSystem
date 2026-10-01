@@ -84,6 +84,13 @@ export interface FileMetadata {
   uploadedAt: string;
 }
 
+export type CompanyPlacement = Omit<InternshipPreference, 'priority'>;
+
+export interface CompanyInternshipCase extends Omit<InternshipCase, 'preferences' | 'selectedPreference'> {
+  preferences: CompanyPlacement[];
+  selectedPreference?: CompanyPlacement;
+}
+
 export interface WeeklyReport {
   id: number;
   internshipCaseId: number;
@@ -223,7 +230,7 @@ export interface PlacementDetailsPayload {
 export const internshipStatusLabels: Record<InternshipCaseStatus, string> = {
   DRAFT: 'پیش‌نویس',
   PENDING_UNIVERSITY_REVIEW: 'در انتظار بررسی آموزش',
-  PENDING_COMPANY_DETAILS: 'در انتظار ثبت اطلاعات شروع توسط شرکت',
+  PENDING_COMPANY_DETAILS: 'در انتظار اصلاح/ثبت اطلاعات توسط شرکت',
   PENDING_FINAL_APPROVAL: 'در انتظار تأیید نهایی آموزش',
   READY_TO_START: 'آماده شروع کارآموزی',
   ACTIVE: 'در حال انجام کارآموزی',

@@ -4,11 +4,14 @@
     <h1>پرونده‌های کارآموزی</h1>
     <p>{{ selectedStatus() === 'PENDING_UNIVERSITY_REVIEW'
       ? 'پرونده‌های رسمی ارسال‌شده را بررسی و یک محل کارآموزی را انتخاب کنید، یا کل پرونده را با ذکر دلیل لغو کنید.'
-      : 'اطلاعات شروع ثبت‌شده توسط شرکت را مشاهده کنید.' }}</p>
+      : selectedStatus() === 'PENDING_FINAL_APPROVAL'
+        ? 'اطلاعات شروع ثبت‌شده توسط شرکت را تأیید کنید یا برای اصلاح به شرکت بازگردانید.'
+        : 'پرونده‌های تأییدشده و آماده شروع کارآموزی را مشاهده کنید.' }}</p>
   </div>
   <div class="heading-actions">
     <p-button label="در انتظار بررسی آموزش" [outlined]="selectedStatus() !== 'PENDING_UNIVERSITY_REVIEW'" [disabled]="loading()" (onClick)="loadCases('PENDING_UNIVERSITY_REVIEW')" />
     <p-button label="در انتظار تأیید نهایی" [outlined]="selectedStatus() !== 'PENDING_FINAL_APPROVAL'" [disabled]="loading()" (onClick)="loadCases('PENDING_FINAL_APPROVAL')" />
+    <p-button label="آماده شروع کارآموزی" [outlined]="selectedStatus() !== 'READY_TO_START'" [disabled]="loading()" (onClick)="loadCases('READY_TO_START')" />
   </div>
 </section>
 
@@ -23,8 +26,9 @@
         <th>شماره دانشجویی</th>
         <th>استاد تخصیص‌یافته</th>
         <th>تعداد اولویت‌ها</th>
-        <th>{{ selectedStatus() === 'PENDING_FINAL_APPROVAL' ? 'محل انتخاب‌شده' : 'اولویت نخست' }}</th>
+        <th>{{ selectedStatus() !== 'PENDING_UNIVERSITY_REVIEW' ? 'محل انتخاب‌شده' : 'اولویت نخست' }}</th>
         <th>تاریخ ارسال</th>
+        <th>تاریخ شروع</th>
         <th>وضعیت</th>
         <th>عملیات</th>
       </tr>
@@ -37,11 +41,12 @@
         <td>{{ item.professor.fullName }}</td>
         <td>{{ item.preferences.length | persianDigits }}</td>
         <td>
-          @if (selectedStatus() === 'PENDING_FINAL_APPROVAL' ? item.selectedPreference : item.preferences[0]; as first) {
+          @if (selectedStatus() !== 'PENDING_UNIVERSITY_REVIEW' ? item.selectedPreference : item.preferences[0]; as first) {
             {{ first.application.opportunity.company.name }} — {{ first.application.opportunity.title }}
           } @else { — }
         </td>
         <td>{{ item.submittedAt | jalaliDate }}</td>
+        <td>{{ item.startDate | jalaliDate }}</td>
         <td><p-tag [value]="statusLabel()" severity="warn" /></td>
         <td>
           <p-button
@@ -54,7 +59,7 @@
       </tr>
     </ng-template>
     <ng-template #emptymessage>
-      <tr><td colspan="9" class="muted">پرونده‌ای در این مرحله وجود ندارد.</td></tr>
+      <tr><td colspan="10" class="muted">پرونده‌ای در این مرحله وجود ندارد.</td></tr>
     </ng-template>
   </p-table>
 }

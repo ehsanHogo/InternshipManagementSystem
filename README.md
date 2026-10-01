@@ -68,8 +68,8 @@ Open <http://localhost:4200/login>. Restart `go run` after backend changes. Data
 ## Main Roles
 
 - Student: creates and submits an application, maintains unconfirmed weekly reports, uploads/replaces the final PDF while active, and views the completed result.
-- University supervisor: manages users/companies/assignments and advances submitted cases through university workflow stages.
-- Company supervisor: confirms assigned placements and weekly reports, then submits one final company evaluation.
+- University supervisor: manages users/companies/assignments, selects the placement and records introduction-letter metadata, and views submitted company details.
+- Company supervisor: recruits students through opportunity applications and submits start/placement details for the university-selected official case.
 - Professor: reviews assigned active/completed cases and records the final qualitative result when every prerequisite is complete.
 - Admin: retains a deliberately minimal dashboard and receives no workflow mutation permissions.
 
@@ -80,25 +80,25 @@ Frontend route guards improve navigation UX; backend role middleware and case-ow
 The statuses are:
 
 ```text
-DRAFT
-→ PENDING_UNIVERSITY_APPROVAL
-→ PENDING_COMPANY_APPROVAL
-→ COMPANY_APPROVED
-→ UNIVERSITY_APPROVED
-→ ACTIVE
-→ COMPLETED
+OpportunityApplication: PENDING → ACCEPTED (company recruitment)
+
+InternshipCase:
+DRAFT → PENDING_UNIVERSITY_REVIEW
+      → PENDING_COMPANY_DETAILS
+      → PENDING_FINAL_APPROVAL
+
+PENDING_UNIVERSITY_REVIEW → CANCELLED (university cancellation)
 ```
 
 Recommended demonstration order:
 
-1. Sign in as the student, create the application, add one to three preferences, and submit it.
-2. Sign in as the university supervisor, select a preference and company supervisor, enter letter details, and send the case to the company.
-3. Sign in as the company supervisor and confirm placement details. A student-proposed company is approved and added to the company table only at this point.
-4. Sign in as the university supervisor, approve the company-confirmed case, and activate it.
-5. Sign in as the student and submit weeks 1–8 plus a final PDF.
-6. Sign in as the company supervisor, confirm all eight reports, and submit the company evaluation.
-7. Sign in as the professor, review the historical record and final PDF, choose `عالی`, `خوب`, or `مردود`, optionally comment, and complete the case.
-8. Sign in as the student and verify the completed status, final result, comment, reports, and final file remain visible.
+1. Register a company, publish an opportunity, and accept the student's opportunity application.
+2. As the student, create the official case, enter credits/mobile, select one to three accepted applications in priority order, and submit.
+3. As the university supervisor, select one preference and enter introduction-letter number/date. The selected opportunity determines the company supervisor automatically.
+4. As that company supervisor, open **پرونده‌های کارآموزی**, enter subject, Jalali start date, actual workplace address/phone, and confirm submission to university.
+5. Refresh the company case and inspect the student and university views. Placement details are read-only in **در انتظار تأیید نهایی آموزش**.
+
+There is no second company acceptance after the introduction letter. University final approval/correction and activation are deferred to later milestones. Existing legacy reporting/evaluation code is retained; this milestone adds no reporting or completion actions.
 
 ## Excel Import Format
 

@@ -24,14 +24,17 @@ export class UniversityApplicationsComponent {
   readonly cases = signal<InternshipCase[]>([]);
   readonly loading = signal(true);
 
-  readonly selectedStatus = signal<'PENDING_UNIVERSITY_REVIEW' | 'PENDING_FINAL_APPROVAL'>('PENDING_UNIVERSITY_REVIEW');
+  readonly selectedStatus = signal<ReviewListStatus>('PENDING_UNIVERSITY_REVIEW');
 
   constructor() { this.loadCases('PENDING_UNIVERSITY_REVIEW'); }
 
-  loadCases(status: 'PENDING_UNIVERSITY_REVIEW' | 'PENDING_FINAL_APPROVAL'): void {
+  loadCases(status: ReviewListStatus): void {
     this.selectedStatus.set(status);
     this.loading.set(true);
-    this.internshipService.listUniversityCases(status).subscribe({
+    const request = status === 'PENDING_FINAL_APPROVAL'
+      ? this.internshipService.listPendingFinalApprovalCases()
+      : this.internshipService.listUniversityCases(status);
+    request.subscribe({
       next: (cases) => {
         this.cases.set(cases);
         this.loading.set(false);
@@ -49,3 +52,5 @@ export class UniversityApplicationsComponent {
 
   statusLabel(): string { return internshipStatusLabels[this.selectedStatus()]; }
 }
+
+type ReviewListStatus = 'PENDING_UNIVERSITY_REVIEW' | 'PENDING_FINAL_APPROVAL' | 'READY_TO_START';

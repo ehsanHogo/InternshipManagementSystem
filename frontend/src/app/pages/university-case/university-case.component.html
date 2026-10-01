@@ -1,6 +1,32 @@
 <p-confirmDialog [baseZIndex]="1400" [style]="{ width: 'min(92vw, 34rem)' }" />
 
 <p-dialog
+  header="درخواست اصلاح"
+  [visible]="correctionDialogVisible()"
+  (visibleChange)="correctionDialogVisible.set($event)"
+  [modal]="true"
+  [closable]="!saving()"
+  appendTo="body"
+  [baseZIndex]="1300"
+  [style]="{ width: 'min(92vw, 38rem)' }"
+>
+  <p class="muted">لطفاً مواردی را که شرکت باید اصلاح کند مشخص کنید.</p>
+  <form class="form-grid" [formGroup]="correctionForm" (ngSubmit)="requestCorrection()">
+    <label class="field full-width">
+      <span>توضیحات اصلاحات مورد نیاز <b>*</b></span>
+      <textarea pTextarea formControlName="comment" rows="5" required></textarea>
+      @if (correctionForm.controls.comment.touched && correctionForm.controls.comment.invalid) {
+        <small>ثبت توضیحات اصلاحات مورد نیاز الزامی است.</small>
+      }
+    </label>
+    <div class="dialog-actions full-width">
+      <p-button label="انصراف" severity="secondary" [text]="true" [disabled]="saving()" (onClick)="correctionDialogVisible.set(false)" />
+      <p-button label="ثبت درخواست اصلاح" icon="pi pi-send" type="submit" [loading]="saving()" [disabled]="saving()" />
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
   header="لغو پرونده کارآموزی"
   [visible]="cancelDialogVisible()"
   (visibleChange)="cancelDialogVisible.set($event)"
@@ -196,6 +222,30 @@
         <div class="detail"><span>تاریخ شروع</span><strong>{{ item.startDate | jalaliDate }}</strong></div>
         <div class="detail full-width"><span>آدرس محل کارآموزی</span><strong>{{ item.workplaceAddress ?? "—" }}</strong></div>
         <div class="detail"><span>شماره تماس محل کارآموزی</span><strong>{{ item.workplacePhone ?? "—" }}</strong></div>
+      </div>
+    </p-card>
+  }
+
+  @if (item.companySupervisor; as supervisor) {
+    <p-card header="سرپرست شرکت">
+      <div class="detail-grid">
+        <div class="detail"><span>نام و نام خانوادگی</span><strong>{{ supervisor.fullName }}</strong></div>
+        <div class="detail"><span>شماره تماس</span><strong>{{ supervisor.phone ?? "—" }}</strong></div>
+        <div class="detail"><span>سمت</span><strong>{{ supervisor.jobTitle ?? "—" }}</strong></div>
+      </div>
+    </p-card>
+  }
+
+  @if (item.companyDetailsRevisionComment) {
+    <p-card header="اصلاحات درخواستی آموزش"><p>{{ item.companyDetailsRevisionComment }}</p></p-card>
+  }
+
+  @if (item.status === 'PENDING_FINAL_APPROVAL') {
+    <p-card header="بررسی نهایی آموزش">
+      <p class="muted">اطلاعات ثبت‌شده توسط شرکت را بررسی و تأیید کنید، یا توضیحات اصلاحات مورد نیاز را برای شرکت ارسال کنید.</p>
+      <div class="card-actions">
+        <p-button label="درخواست اصلاح" icon="pi pi-pencil" severity="warn" [outlined]="true" [disabled]="saving()" (onClick)="openCorrection()" />
+        <p-button label="تأیید نهایی" icon="pi pi-check" [loading]="saving()" [disabled]="saving()" (onClick)="confirmFinalApproval()" />
       </div>
     </p-card>
   }

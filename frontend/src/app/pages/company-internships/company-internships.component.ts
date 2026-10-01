@@ -5,7 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 
-import { InternshipCase, InternshipCaseStatus, internshipStatusLabels } from '../../internship/internship.models';
+import { CompanyInternshipCase, InternshipCaseStatus, internshipStatusLabels } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 
@@ -19,7 +19,7 @@ export class CompanyInternshipsComponent {
   private readonly internshipService = inject(InternshipService);
   private readonly messages = inject(MessageService);
 
-  readonly cases = signal<InternshipCase[]>([]);
+  readonly cases = signal<CompanyInternshipCase[]>([]);
   readonly loading = signal(true);
   readonly pendingOnly = signal(true);
   readonly visibleCases = computed(() => this.pendingOnly()
@@ -42,7 +42,7 @@ export class CompanyInternshipsComponent {
     return internshipStatusLabels[status];
   }
 
-  placementName(item: InternshipCase): string {
+  placementName(item: CompanyInternshipCase): string {
     return item.selectedPreference?.application.opportunity.company.name ?? '—';
   }
 }
