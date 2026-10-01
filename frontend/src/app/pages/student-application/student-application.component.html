@@ -178,6 +178,9 @@
     <p-card header="نتیجه بررسی آموزش">
       <div class="detail-grid">
         <div class="detail"><span>وضعیت</span><strong>{{ statusLabel(currentCase.status) }}</strong></div>
+        @if (currentCase.activatedAt) {
+          <div class="detail"><span>تاریخ فعال‌سازی</span><strong>{{ currentCase.activatedAt | jalaliDate }}</strong></div>
+        }
         <div class="detail"><span>اولویت انتخاب‌شده</span><strong>اولویت {{ priorityLabel(currentCase.selectedPreference.priority) }}</strong></div>
         <div class="detail"><span>شرکت انتخاب‌شده</span><strong>{{ currentCase.selectedPreference.application.opportunity.company.name }}</strong></div>
         <div class="detail"><span>فرصت انتخاب‌شده</span><strong>{{ currentCase.selectedPreference.application.opportunity.title }}</strong></div>

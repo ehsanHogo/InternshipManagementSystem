@@ -100,6 +100,10 @@ export class InternshipService {
     return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/request-placement-correction`, { comment });
   }
 
+  activateUniversityCase(id: number): Observable<InternshipCase> {
+    return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/activate`, null);
+  }
+
   listCompanyCases(): Observable<CompanyInternshipCase[]> {
     return this.http.get<CompanyInternshipCase[]>('/api/company/internship-cases');
   }

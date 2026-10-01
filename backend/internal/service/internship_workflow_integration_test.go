@@ -25,7 +25,6 @@ func TestObsoleteCompanyWorkflowIsDisabled(t *testing.T) {
 			return err
 		}},
 		{name: "legacy university approval", run: func() error { _, err := workflow.ApproveUniversityCase(1); return err }},
-		{name: "manual activation", run: func() error { _, err := workflow.ActivateUniversityCase(1); return err }},
 	}
 	for _, check := range checks {
 		if err := check.run(); !errors.Is(err, service.ErrObsoleteWorkflow) {

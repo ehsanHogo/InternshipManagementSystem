@@ -89,6 +89,9 @@
     <div class="detail-grid">
       <div class="detail"><span>وضعیت پرونده</span><strong>{{ statusLabel(item.status) }}</strong></div>
       <div class="detail"><span>تاریخ ارسال</span><strong>{{ item.submittedAt | jalaliDate }}</strong></div>
+      @if (item.activatedAt) {
+        <div class="detail"><span>تاریخ فعال‌سازی</span><strong>{{ item.activatedAt | jalaliDate }}</strong></div>
+      }
       <div class="detail"><span>تعداد اولویت‌ها</span><strong>{{ item.preferences.length | persianDigits }}</strong></div>
     </div>
   </p-card>
@@ -246,6 +249,15 @@
       <div class="card-actions">
         <p-button label="درخواست اصلاح" icon="pi pi-pencil" severity="warn" [outlined]="true" [disabled]="saving()" (onClick)="openCorrection()" />
         <p-button label="تأیید نهایی" icon="pi pi-check" [loading]="saving()" [disabled]="saving()" (onClick)="confirmFinalApproval()" />
+      </div>
+    </p-card>
+  }
+
+  @if (item.status === 'READY_TO_START') {
+    <p-card header="فعال‌سازی کارآموزی">
+      <p class="muted">اطلاعات محل کارآموزی تأیید شده است. با فعال‌سازی، پرونده وارد مرحله انجام کارآموزی خواهد شد.</p>
+      <div class="card-actions">
+        <p-button label="فعال‌سازی کارآموزی" icon="pi pi-play" [loading]="saving()" [disabled]="saving()" (onClick)="confirmActivation()" />
       </div>
     </p-card>
   }

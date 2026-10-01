@@ -159,6 +159,13 @@ func (handler *InternshipHandler) ApproveUniversityCase(ctx *gin.Context) {
 }
 
 func (handler *InternshipHandler) ActivateUniversityCase(ctx *gin.Context) {
+	if ctx.Request.Body != nil {
+		body, err := io.ReadAll(io.LimitReader(ctx.Request.Body, 1))
+		if err != nil || len(body) != 0 {
+			ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_INTERNSHIP_CASE_ACTIVATION", "error": "برای فعال‌سازی پرونده بدنه درخواست ارسال نکنید."})
+			return
+		}
+	}
 	handler.performUniversityAction(ctx, handler.service.ActivateUniversityCase)
 }
 

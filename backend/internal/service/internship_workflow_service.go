@@ -182,11 +182,6 @@ func (service *InternshipService) ApproveUniversityCase(caseID uint) (*model.Int
 	return nil, ErrObsoleteWorkflow
 }
 
-// Deprecated: automatic activation is intentionally deferred.
-func (service *InternshipService) ActivateUniversityCase(caseID uint) (*model.InternshipCase, error) {
-	return nil, ErrObsoleteWorkflow
-}
-
 func universityCaseStatuses() []model.InternshipCaseStatus {
 	return []model.InternshipCaseStatus{
 		model.InternshipCaseStatusPendingUniversityReview,

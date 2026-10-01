@@ -53,4 +53,4 @@ export class UniversityApplicationsComponent {
   statusLabel(): string { return internshipStatusLabels[this.selectedStatus()]; }
 }
 
-type ReviewListStatus = 'PENDING_UNIVERSITY_REVIEW' | 'PENDING_FINAL_APPROVAL' | 'READY_TO_START';
+type ReviewListStatus = 'PENDING_UNIVERSITY_REVIEW' | 'PENDING_FINAL_APPROVAL' | 'READY_TO_START' | 'ACTIVE';

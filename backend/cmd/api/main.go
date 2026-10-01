@@ -101,6 +101,7 @@ func main() {
 	university.GET("/internship-cases/:id", internshipHandler.GetUniversityCase)
 	university.POST("/internship-cases/:id/approve-placement", internshipHandler.ApproveUniversityPlacement)
 	university.POST("/internship-cases/:id/final-approve", internshipHandler.ApprovePlacementDetails)
+	university.POST("/internship-cases/:id/activate", internshipHandler.ActivateUniversityCase)
 	university.POST("/internship-cases/:id/request-placement-correction", internshipHandler.RequestPlacementCorrection)
 	university.POST("/internship-cases/:id/cancel", internshipHandler.CancelUniversityReview)
 	university.GET("/students", managementHandler.ListStudents)

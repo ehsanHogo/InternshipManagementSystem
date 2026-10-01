@@ -274,7 +274,8 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		errors.Is(err, service.ErrObsoleteWorkflow), errors.Is(err, service.ErrCaseNotPendingUniversityReview),
 		errors.Is(err, service.ErrCompanySupervisorResolution), errors.Is(err, service.ErrInvalidCompanyPlacement),
 		errors.Is(err, service.ErrCaseNotPendingCompanyDetails), errors.Is(err, service.ErrCaseNotPendingFinalApproval),
-		errors.Is(err, service.ErrPlacementDetailsIncomplete), errors.Is(err, service.ErrPlacementRelationshipInvalid):
+		errors.Is(err, service.ErrPlacementDetailsIncomplete), errors.Is(err, service.ErrPlacementRelationshipInvalid),
+		errors.Is(err, service.ErrCaseNotReadyToStart), errors.Is(err, service.ErrCaseActivationIntegrityFailed):
 		status = http.StatusConflict
 	case errors.Is(err, service.ErrCaseAccessDenied), errors.Is(err, service.ErrCaseNotAssignedToCompany):
 		status = http.StatusForbidden
@@ -296,6 +297,10 @@ func currentUserID(ctx *gin.Context) (uint, bool) {
 
 func internshipErrorCode(err error) string {
 	switch {
+	case errors.Is(err, service.ErrCaseNotReadyToStart):
+		return "INTERNSHIP_CASE_NOT_READY_TO_START"
+	case errors.Is(err, service.ErrCaseActivationIntegrityFailed):
+		return "INTERNSHIP_CASE_ACTIVATION_INTEGRITY_FAILED"
 	case errors.Is(err, service.ErrCaseNotPendingFinalApproval):
 		return "INTERNSHIP_CASE_NOT_PENDING_FINAL_APPROVAL"
 	case errors.Is(err, service.ErrPlacementDetailsIncomplete):
@@ -363,6 +368,10 @@ func internshipErrorCode(err error) string {
 
 func publicInternshipError(err error) string {
 	switch {
+	case errors.Is(err, service.ErrCaseNotReadyToStart):
+		return "فعال‌سازی فقط برای پرونده آماده شروع کارآموزی امکان‌پذیر است."
+	case errors.Is(err, service.ErrCaseActivationIntegrityFailed):
+		return "اطلاعات تأییدشده پرونده برای فعال‌سازی کامل یا معتبر نیست."
 	case errors.Is(err, service.ErrCaseNotPendingFinalApproval):
 		return "این پرونده در انتظار تأیید نهایی آموزش نیست."
 	case errors.Is(err, service.ErrPlacementDetailsIncomplete):

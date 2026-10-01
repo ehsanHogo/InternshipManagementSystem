@@ -160,6 +160,40 @@ export class UniversityCaseComponent {
     });
   }
 
+  confirmActivation(): void {
+    if (!this.canActivate()) return;
+    this.confirmation.confirm({
+      header: 'فعال‌سازی کارآموزی',
+      message: 'آیا از فعال‌سازی این پرونده کارآموزی مطمئن هستید؟ پس از فعال‌سازی، پرونده وارد مرحله انجام کارآموزی خواهد شد.',
+      icon: 'pi pi-check-circle',
+      acceptLabel: 'بله، فعال شود',
+      rejectLabel: 'انصراف',
+      accept: () => this.activateCase()
+    });
+  }
+
+  private canActivate(): boolean {
+    return !this.saving() && this.internshipCase()?.status === 'READY_TO_START';
+  }
+
+  private activateCase(): void {
+    if (!this.canActivate()) return;
+    this.saving.set(true);
+    this.internshipService.activateUniversityCase(this.caseID)
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (item) => {
+          this.internshipCase.set(item);
+          this.syncReviewForm(item);
+          this.messages.add({ severity: 'success', summary: 'کارآموزی فعال شد', detail: 'پرونده وارد مرحله انجام کارآموزی شد.' });
+        },
+        error: (error: HttpErrorResponse) => {
+          this.showError(error);
+          if (error.status === 409) this.loadCase();
+        }
+      });
+  }
+
   openCorrection(): void {
     if (!this.canReviewPlacement()) return;
     this.correctionForm.reset({ comment: '' });
