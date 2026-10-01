@@ -67,7 +67,7 @@ export interface InternshipCase {
   cancelledAt?: string;
   companyDetailsRevisionComment?: string;
   activatedAt?: string;
-  finalReport?: FileMetadata;
+  finalReport?: FinalReport;
   weeklyReportCount: number;
   approvedReportCount: number;
   companyApprovedReportCount: number;
@@ -83,6 +83,27 @@ export interface FileMetadata {
   id: number;
   originalName: string;
   uploadedAt: string;
+}
+
+export type FinalReportStatus = 'SUBMITTED' | 'REVISION_REQUESTED' | 'APPROVED';
+
+export const finalReportStatusLabels: Record<FinalReportStatus, string> = {
+  SUBMITTED: 'در انتظار بررسی استاد',
+  REVISION_REQUESTED: 'نیازمند اصلاح',
+  APPROVED: 'تأیید شده'
+};
+
+export interface FinalReport {
+  id: number;
+  internshipCaseId: number;
+  currentFileId: number;
+  currentFile: FileMetadata;
+  status: FinalReportStatus;
+  reviewComment: string | null;
+  submittedAt: string;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type CompanyPlacement = Omit<InternshipPreference, 'priority'>;
@@ -208,7 +229,7 @@ export interface ProfessorCaseDetail {
   internship: ProfessorInternshipInformation;
   weeklyReports: WeeklyReport[];
   companyEvaluation?: ProfessorCompanyEvaluation;
-  finalReport?: FileMetadata;
+  finalReport?: FinalReport;
   weeklyReportCount: number;
   approvedWeeklyReportCount: number;
   hasCompanyEvaluation: boolean;

@@ -394,7 +394,7 @@ func (service *InternshipService) caseQuery(db *gorm.DB) *gorm.DB {
 		Preload("Preferences", func(query *gorm.DB) *gorm.DB { return query.Order("priority ASC") }).
 		Preload("Preferences.OpportunityApplication.Opportunity.Company").
 		Preload("SelectedPreference.OpportunityApplication.Opportunity.Company").Preload("CompanySupervisor").
-		Preload("FinalReportFile").Preload("CompanyEvaluation").
+		Preload("FinalReport.CurrentFile").Preload("CompanyEvaluation").
 		Preload("WeeklyReports", func(query *gorm.DB) *gorm.DB { return query.Order("week_number ASC") })
 }
 

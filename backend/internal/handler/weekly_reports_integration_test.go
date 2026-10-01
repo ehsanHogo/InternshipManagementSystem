@@ -27,7 +27,7 @@ func TestWeeklyReportsV2API(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.AutoMigrate(&model.Company{}, &model.User{}, &model.InternshipOpportunity{}, &model.ProfessorAssignment{}, &model.File{}, &model.OpportunityApplication{}, &model.InternshipCase{}, &model.InternshipPreference{}, &model.WeeklyReport{}, &model.CompanyEvaluation{}); err != nil {
+	if err := db.AutoMigrate(&model.Company{}, &model.User{}, &model.InternshipOpportunity{}, &model.ProfessorAssignment{}, &model.File{}, &model.OpportunityApplication{}, &model.InternshipCase{}, &model.FinalReport{}, &model.InternshipPreference{}, &model.WeeklyReport{}, &model.CompanyEvaluation{}); err != nil {
 		t.Fatal(err)
 	}
 	tx := db.Begin()
@@ -436,13 +436,14 @@ func TestWeeklyReportsV2API(t *testing.T) {
 				request(t, "POST", completePath, token(t, professorA), completion, 409)
 			}
 		}
-		// The legacy final PDF requirement remains unchanged.
+		// Final completion requires a professor-approved final report.
 		request(t, "POST", completePath, token(t, professorA), completion, 409)
 		file := model.File{OriginalName: "final.pdf", StoredName: fmt.Sprintf("wr-final-%d.pdf", suffix), Path: "/tmp/final.pdf", MimeType: "application/pdf", SizeBytes: 100, UploadedBy: student.ID, UploadedAt: time.Now()}
 		if err := tx.Create(&file).Error; err != nil {
 			t.Fatal(err)
 		}
-		if err := tx.Model(&item).Update("final_report_file_id", file.ID).Error; err != nil {
+		finalReport := model.FinalReport{InternshipCaseID: item.ID, CurrentFileID: file.ID, Status: model.FinalReportApproved, SubmittedAt: time.Now()}
+		if err := tx.Create(&finalReport).Error; err != nil {
 			t.Fatal(err)
 		}
 		// Also ensure a missing company approval blocks final completion.

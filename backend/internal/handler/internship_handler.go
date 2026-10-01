@@ -58,7 +58,7 @@ type internshipCaseResponse struct {
 	CancelledAt                   *time.Time                     `json:"cancelledAt,omitempty"`
 	CompanyDetailsRevisionComment *string                        `json:"companyDetailsRevisionComment,omitempty"`
 	ActivatedAt                   *time.Time                     `json:"activatedAt"`
-	FinalReport                   *fileMetadataResponse          `json:"finalReport,omitempty"`
+	FinalReport                   *model.FinalReport             `json:"finalReport,omitempty"`
 	WeeklyReportCount             int                            `json:"weeklyReportCount"`
 	ApprovedReportCount           int                            `json:"approvedReportCount"`
 	CompanyApprovedReportCount    int                            `json:"companyApprovedReportCount"`
@@ -68,12 +68,6 @@ type internshipCaseResponse struct {
 	FinalResult                   *model.ProfessorFinalResult    `json:"finalResult,omitempty"`
 	ProfessorComment              *string                        `json:"professorComment,omitempty"`
 	CompletedAt                   *time.Time                     `json:"completedAt,omitempty"`
-}
-
-type fileMetadataResponse struct {
-	ID           uint      `json:"id"`
-	OriginalName string    `json:"originalName"`
-	UploadedAt   time.Time `json:"uploadedAt"`
 }
 
 type internshipPreferenceResponse struct {
@@ -263,11 +257,11 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		errors.Is(err, service.ErrInternshipSubjectRequired), errors.Is(err, service.ErrStartDateRequired),
 		errors.Is(err, service.ErrWorkplaceAddressRequired), errors.Is(err, service.ErrWorkplacePhoneRequired),
 		errors.Is(err, service.ErrInvalidStartDate), errors.Is(err, service.ErrPlacementDetailsTooLong),
-		errors.Is(err, service.ErrCompanyDetailsRevisionCommentRequired):
+		errors.Is(err, service.ErrCompanyDetailsRevisionCommentRequired), errors.Is(err, service.ErrFinalReportCommentRequired), errors.Is(err, service.ErrInvalidFinalReportFile):
 		status = http.StatusBadRequest
 	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit),
 		errors.Is(err, service.ErrDuplicatePriority), errors.Is(err, service.ErrPreferenceAlreadyExists),
-		errors.Is(err, service.ErrDuplicateWeeklyReport), errors.Is(err, service.ErrWeeklyReportState),
+		errors.Is(err, service.ErrDuplicateWeeklyReport), errors.Is(err, service.ErrWeeklyReportState), errors.Is(err, service.ErrFinalReportState),
 		errors.Is(err, service.ErrDuplicateEvaluation), errors.Is(err, service.ErrWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrProfessorCaseNotActive), errors.Is(err, service.ErrProfessorWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrProfessorCompanyEvaluationRequired), errors.Is(err, service.ErrProfessorFinalReportRequired),
@@ -278,6 +272,8 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		errors.Is(err, service.ErrPlacementDetailsIncomplete), errors.Is(err, service.ErrPlacementRelationshipInvalid),
 		errors.Is(err, service.ErrCaseNotReadyToStart), errors.Is(err, service.ErrCaseActivationIntegrityFailed):
 		status = http.StatusConflict
+	case errors.Is(err, service.ErrFinalReportTooLarge):
+		status = http.StatusRequestEntityTooLarge
 	case errors.Is(err, service.ErrCaseAccessDenied), errors.Is(err, service.ErrCaseNotAssignedToCompany):
 		status = http.StatusForbidden
 	default:
@@ -298,6 +294,16 @@ func currentUserID(ctx *gin.Context) (uint, bool) {
 
 func internshipErrorCode(err error) string {
 	switch {
+	case errors.Is(err, service.ErrFinalReportState):
+		return "FINAL_REPORT_STATE_INVALID"
+	case errors.Is(err, service.ErrFinalReportCommentRequired):
+		return "FINAL_REPORT_COMMENT_REQUIRED"
+	case errors.Is(err, service.ErrInvalidFinalReportFile):
+		return "INVALID_FINAL_REPORT_FILE"
+	case errors.Is(err, service.ErrFinalReportTooLarge):
+		return "FINAL_REPORT_TOO_LARGE"
+	case errors.Is(err, service.ErrProfessorFinalReportRequired):
+		return "APPROVED_FINAL_REPORT_REQUIRED"
 	case errors.Is(err, service.ErrCaseNotReadyToStart):
 		return "INTERNSHIP_CASE_NOT_READY_TO_START"
 	case errors.Is(err, service.ErrCaseActivationIntegrityFailed):
@@ -369,6 +375,14 @@ func internshipErrorCode(err error) string {
 
 func publicInternshipError(err error) string {
 	switch {
+	case errors.Is(err, service.ErrFinalReportState):
+		return "ارسال مجدد فقط پس از درخواست اصلاح استاد و بررسی فقط برای گزارش در انتظار بررسی مجاز است."
+	case errors.Is(err, service.ErrFinalReportCommentRequired):
+		return "توضیحات اصلاحات مورد نیاز نباید خالی باشد."
+	case errors.Is(err, service.ErrInvalidFinalReportFile):
+		return "فایل گزارش نهایی باید یک فایل پی‌دی‌اف معتبر باشد."
+	case errors.Is(err, service.ErrFinalReportTooLarge):
+		return "حجم فایل گزارش نهایی نباید بیشتر از ۱۰ مگابایت باشد."
 	case errors.Is(err, service.ErrCaseNotReadyToStart):
 		return "فعال‌سازی فقط برای پرونده آماده شروع کارآموزی امکان‌پذیر است."
 	case errors.Is(err, service.ErrCaseActivationIntegrityFailed):
@@ -472,7 +486,7 @@ func publicInternshipError(err error) string {
 	case errors.Is(err, service.ErrProfessorCompanyEvaluationRequired):
 		return "ثبت ارزیابی شرکت الزامی است."
 	case errors.Is(err, service.ErrProfessorFinalReportRequired):
-		return "بارگذاری گزارش نهایی کارآموزی الزامی است."
+		return "تأیید گزارش نهایی کارآموزی توسط استاد الزامی است."
 	default:
 		return "انجام عملیات امکان‌پذیر نیست."
 	}
@@ -530,12 +544,7 @@ func caseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 			response.CompanyApprovedReportCount++
 		}
 	}
-	if internshipCase.FinalReportFile != nil {
-		response.FinalReport = &fileMetadataResponse{
-			ID: internshipCase.FinalReportFile.ID, OriginalName: internshipCase.FinalReportFile.OriginalName,
-			UploadedAt: internshipCase.FinalReportFile.UploadedAt,
-		}
-	}
+	response.FinalReport = internshipCase.FinalReport
 	response.CanSubmitCompanyEvaluation = internshipCase.Status == model.InternshipCaseStatusActive &&
 		response.WeeklyReportCount == 8 && response.CompanyApprovedReportCount == 8 && internshipCase.CompanyEvaluation == nil
 	return response

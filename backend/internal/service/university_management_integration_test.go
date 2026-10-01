@@ -24,7 +24,7 @@ func TestUniversityManagement(t *testing.T) {
 	if err != nil {
 		t.Fatalf("connect to integration database: %v", err)
 	}
-	if err := db.AutoMigrate(&model.Company{}, &model.User{}, &model.ProfessorAssignment{}, &model.InternshipCase{}); err != nil {
+	if err := db.AutoMigrate(&model.Company{}, &model.User{}, &model.ProfessorAssignment{}, &model.InternshipCase{}, &model.FinalReport{}); err != nil {
 		t.Fatalf("migrate integration database: %v", err)
 	}
 	tx := db.Begin()

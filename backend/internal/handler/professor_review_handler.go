@@ -68,7 +68,7 @@ type professorCaseDetailResponse struct {
 	Internship                professorInternshipResponse         `json:"internship"`
 	WeeklyReports             []model.WeeklyReport                `json:"weeklyReports"`
 	CompanyEvaluation         *professorCompanyEvaluationResponse `json:"companyEvaluation,omitempty"`
-	FinalReport               *fileMetadataResponse               `json:"finalReport,omitempty"`
+	FinalReport               *model.FinalReport                  `json:"finalReport,omitempty"`
 	WeeklyReportCount         int                                 `json:"weeklyReportCount"`
 	ApprovedWeeklyReportCount int                                 `json:"approvedWeeklyReportCount"`
 	HasCompanyEvaluation      bool                                `json:"hasCompanyEvaluation"`
@@ -198,12 +198,7 @@ func professorDetailResponse(internshipCase *model.InternshipCase) professorCase
 			CompanySupervisor: response.Internship.CompanySupervisor,
 		}
 	}
-	if internshipCase.FinalReportFile != nil {
-		response.FinalReport = &fileMetadataResponse{
-			ID: internshipCase.FinalReportFile.ID, OriginalName: internshipCase.FinalReportFile.OriginalName,
-			UploadedAt: internshipCase.FinalReportFile.UploadedAt,
-		}
-	}
+	response.FinalReport = internshipCase.FinalReport
 	return response
 }
 
@@ -216,8 +211,8 @@ func professorReadiness(internshipCase *model.InternshipCase) (int, int, bool, b
 		}
 	}
 	hasEvaluation := internshipCase.CompanyEvaluation != nil
-	hasFinalReport := internshipCase.FinalReportFile != nil
-	canComplete := internshipCase.Status == model.InternshipCaseStatusActive && reportCount == 8 && approvedCount == 8 && hasEvaluation && hasFinalReport
+	hasFinalReport := internshipCase.FinalReport != nil
+	canComplete := internshipCase.Status == model.InternshipCaseStatusActive && reportCount == 8 && approvedCount == 8 && hasEvaluation && hasFinalReport && internshipCase.FinalReport.Status == model.FinalReportApproved
 	return reportCount, approvedCount, hasEvaluation, hasFinalReport, canComplete
 }
 

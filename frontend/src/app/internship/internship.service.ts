@@ -15,7 +15,7 @@ import {
   PreferencePayload,
   UniversityPlacementApprovalPayload,
   UniversityReviewCancellationPayload,
-  FileMetadata,
+  FinalReport,
   ProfessorCaseDetail,
   ProfessorCaseListItem,
   ProfessorCompletionPayload,
@@ -132,10 +132,22 @@ export class InternshipService {
     return this.http.put<WeeklyReport>(`/api/student/internship-case/weekly-reports/${id}`, payload);
   }
 
-  uploadFinalReport(file: File): Observable<FileMetadata> {
+  uploadFinalReport(file: File): Observable<FinalReport> {
     const form = new FormData();
     form.append('file', file);
-    return this.http.post<FileMetadata>('/api/student/internship-case/final-report', form);
+    return this.http.post<FinalReport>('/api/student/internship-case/final-report', form);
+  }
+
+  getStudentFinalReport(): Observable<FinalReport | null> {
+    return this.http.get<FinalReport | null>('/api/student/internship-case/final-report');
+  }
+
+  getProfessorFinalReport(caseId: number): Observable<FinalReport | null> {
+    return this.http.get<FinalReport | null>(`/api/professor/internship-cases/${caseId}/final-report`);
+  }
+
+  reviewFinalReport(caseId: number, action: 'approve' | 'request-revision', comment?: string): Observable<FinalReport> {
+    return this.http.post<FinalReport>(`/api/professor/internship-cases/${caseId}/final-report/${action}`, { comment });
   }
 
   downloadFile(id: number): Observable<Blob> {

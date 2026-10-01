@@ -4,8 +4,9 @@ import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 
-import { InternshipCase } from '../../internship/internship.models';
+import { InternshipCase, finalReportStatusLabels } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
+import { userErrorMessage } from '../../shared/http-error-message';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 
 @Component({
@@ -19,6 +20,7 @@ export class StudentFinalReportComponent {
   private readonly messages = inject(MessageService);
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
+  readonly finalReportStatusLabels = finalReportStatusLabels;
   readonly internshipCase = signal<InternshipCase | null>(null);
   readonly selectedFile = signal<File | null>(null);
   readonly loading = signal(true);
@@ -30,6 +32,11 @@ export class StudentFinalReportComponent {
       next: (internshipCase) => { this.internshipCase.set(internshipCase); this.loading.set(false); },
       error: () => this.loading.set(false)
     });
+  }
+
+  canUpload(): boolean {
+    const item = this.internshipCase();
+    return item?.status === 'ACTIVE' && (!item.finalReport || item.finalReport.status === 'REVISION_REQUESTED');
   }
 
   chooseFile(): void {
@@ -48,6 +55,7 @@ export class StudentFinalReportComponent {
   }
 
   upload(): void {
+    if (!this.canUpload() || this.uploading()) return;
     const file = this.selectedFile();
     if (!file) {
       this.messages.add({ severity: 'warn', summary: 'انتخاب فایل', detail: 'ابتدا فایل پی‌دی‌اف گزارش را انتخاب کنید.' });
@@ -65,7 +73,7 @@ export class StudentFinalReportComponent {
       },
       error: (error: HttpErrorResponse) => {
         this.uploading.set(false);
-        const detail = error.status === 400 ? 'فایل باید پی‌دی‌اف و حداکثر ۱۰ مگابایت باشد.' : 'بارگذاری گزارش نهایی ناموفق بود.';
+        const detail = userErrorMessage(error, 'بارگذاری گزارش نهایی ناموفق بود.');
         this.messages.add({ severity: 'error', summary: 'خطا', detail });
       }
     });
@@ -75,12 +83,12 @@ export class StudentFinalReportComponent {
     const report = this.internshipCase()?.finalReport;
     if (!report) return;
     this.downloading.set(true);
-    this.internshipService.downloadFile(report.id).subscribe({
+    this.internshipService.downloadFile(report.currentFileId).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
         anchor.href = url;
-        anchor.download = report.originalName;
+        anchor.download = report.currentFile.originalName;
         anchor.click();
         URL.revokeObjectURL(url);
         this.downloading.set(false);

@@ -90,15 +90,13 @@ type InternshipCase struct {
 	SelectedPreferenceID *uint
 	// CompanySupervisorID is a temporary cached reference. V2 must populate it from
 	// the selected opportunity, never through arbitrary university selection.
-	CompanySupervisorID *uint
-	LetterNumber        *string `gorm:"size:100"`
-	LetterDate          *time.Time
-	InternshipSubject   *string `gorm:"size:500"`
-	StartDate           *time.Time
-	WorkplaceAddress    *string `gorm:"size:1000"`
-	WorkplacePhone      *string `gorm:"size:50"`
-	// FinalReportFileID remains temporarily until the dedicated FinalReport milestone.
-	FinalReportFileID             *uint
+	CompanySupervisorID           *uint
+	LetterNumber                  *string `gorm:"size:100"`
+	LetterDate                    *time.Time
+	InternshipSubject             *string `gorm:"size:500"`
+	StartDate                     *time.Time
+	WorkplaceAddress              *string               `gorm:"size:1000"`
+	WorkplacePhone                *string               `gorm:"size:50"`
 	FinalResult                   *ProfessorFinalResult `gorm:"type:varchar(16);check:final_result IS NULL OR final_result IN ('EXCELLENT','GOOD','FAILED')"`
 	ProfessorComment              *string               `gorm:"size:2000"`
 	CancellationComment           *string               `gorm:"type:text"`
@@ -109,7 +107,7 @@ type InternshipCase struct {
 	Preferences        []InternshipPreference `gorm:"foreignKey:InternshipCaseID"`
 	SelectedPreference *InternshipPreference  `gorm:"foreignKey:SelectedPreferenceID;-:migration"`
 	CompanySupervisor  *User                  `gorm:"foreignKey:CompanySupervisorID"`
-	FinalReportFile    *File                  `gorm:"foreignKey:FinalReportFileID"`
+	FinalReport        *FinalReport           `gorm:"foreignKey:InternshipCaseID"`
 	WeeklyReports      []WeeklyReport         `gorm:"foreignKey:InternshipCaseID"`
 	CompanyEvaluation  *CompanyEvaluation     `gorm:"foreignKey:InternshipCaseID"`
 

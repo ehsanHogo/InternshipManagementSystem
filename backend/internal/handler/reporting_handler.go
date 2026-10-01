@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -307,22 +306,39 @@ func (handler *InternshipHandler) UploadFinalReport(ctx *gin.Context) {
 	if !ok {
 		return
 	}
-	if err := handler.service.EnsureStudentActiveCase(studentID); err != nil {
+	if err := handler.service.EnsureCanUploadFinalReport(studentID); err != nil {
 		handler.writeError(ctx, err)
 		return
 	}
 
+	if ctx.Request.ContentLength > maxFinalReportSize+(1<<20) {
+		handler.writeError(ctx, service.ErrFinalReportTooLarge)
+		return
+	}
 	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, maxFinalReportSize+(1<<20))
 	header, err := ctx.FormFile("file")
+	if ctx.Request.MultipartForm != nil {
+		defer ctx.Request.MultipartForm.RemoveAll()
+	}
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "انتخاب فایل گزارش نهایی با قالب پی‌دی‌اف الزامی است."})
+		var sizeErr *http.MaxBytesError
+		if errors.As(err, &sizeErr) {
+			handler.writeError(ctx, service.ErrFinalReportTooLarge)
+		} else {
+			handler.writeError(ctx, service.ErrInvalidFinalReportFile)
+		}
 		return
 	}
-	contentType := strings.ToLower(strings.TrimSpace(strings.Split(header.Header.Get("Content-Type"), ";")[0]))
-	if !strings.EqualFold(filepath.Ext(header.Filename), ".pdf") || contentType != "application/pdf" || header.Size <= 0 || header.Size > maxFinalReportSize {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "فایل گزارش نهایی باید با قالب پی‌دی‌اف و حداکثر حجم ۱۰ مگابایت باشد."})
+	if header.Size > maxFinalReportSize {
+		handler.writeError(ctx, service.ErrFinalReportTooLarge)
 		return
 	}
+	source, err := openValidatedPDF(header)
+	if err != nil {
+		handler.writeError(ctx, service.ErrInvalidFinalReportFile)
+		return
+	}
+	defer source.Close()
 	if err := os.MkdirAll(handler.uploadDir, 0o750); err != nil {
 		handler.writeError(ctx, fmt.Errorf("create upload directory: %w", err))
 		return
@@ -333,12 +349,6 @@ func (handler *InternshipHandler) UploadFinalReport(ctx *gin.Context) {
 		return
 	}
 	path := filepath.Join(handler.uploadDir, storedName)
-	source, err := header.Open()
-	if err != nil {
-		handler.writeError(ctx, fmt.Errorf("open upload: %w", err))
-		return
-	}
-	defer source.Close()
 	destination, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o640)
 	if err != nil {
 		handler.writeError(ctx, fmt.Errorf("create uploaded file: %w", err))
@@ -347,8 +357,12 @@ func (handler *InternshipHandler) UploadFinalReport(ctx *gin.Context) {
 	written, copyErr := io.Copy(destination, io.LimitReader(source, maxFinalReportSize+1))
 	closeErr := destination.Close()
 	if copyErr != nil || closeErr != nil || written <= 0 || written > maxFinalReportSize {
-		_ = os.Remove(path)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "فایل بارگذاری‌شده معتبر نیست."})
+		removeUploadedFile(path)
+		if written > maxFinalReportSize {
+			handler.writeError(ctx, service.ErrFinalReportTooLarge)
+		} else {
+			handler.writeError(ctx, service.ErrInvalidFinalReportFile)
+		}
 		return
 	}
 
@@ -358,15 +372,14 @@ func (handler *InternshipHandler) UploadFinalReport(ctx *gin.Context) {
 	}
 	saved, previous, err := handler.service.AttachFinalReport(studentID, file)
 	if err != nil {
-		_ = os.Remove(path)
+		removeUploadedFile(path)
 		handler.writeError(ctx, err)
 		return
 	}
 	if previous != nil {
-		_ = os.Remove(previous.Path)
-		_ = handler.service.DeleteFileMetadata(previous.ID)
+		removeUploadedFile(previous.Path)
 	}
-	ctx.JSON(http.StatusCreated, fileMetadataResponse{ID: saved.ID, OriginalName: saved.OriginalName, UploadedAt: saved.UploadedAt})
+	ctx.JSON(http.StatusCreated, saved)
 }
 
 func (handler *InternshipHandler) DownloadFile(ctx *gin.Context) {

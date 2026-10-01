@@ -14,6 +14,7 @@ import { TextareaModule } from 'primeng/textarea';
 
 import {
   WeeklyReport,
+  finalReportStatusLabels,
   EvaluationRating,
   ProfessorCaseDetail,
   ProfessorCompanyEvaluation,
@@ -51,6 +52,10 @@ export class ProfessorCaseComponent {
   private readonly confirmation = inject(ConfirmationService);
   private readonly caseID = Number(this.route.snapshot.paramMap.get('id'));
 
+  readonly finalReportStatusLabels = finalReportStatusLabels;
+  readonly finalReviewAction = signal<'approve' | 'request-revision' | null>(null);
+  readonly finalReviewForm = this.formBuilder.group({ comment: this.formBuilder.nonNullable.control('') });
+  readonly finalReviewing = signal(false);
   readonly internshipCase = signal<ProfessorCaseDetail | null>(null);
   readonly loading = signal(true);
   readonly submitting = signal(false);
@@ -124,6 +129,37 @@ export class ProfessorCaseComponent {
     });
   }
 
+  canReviewFinalReport(): boolean {
+    const item = this.internshipCase();
+    return item?.internship.status === 'ACTIVE' && item.finalReport?.status === 'SUBMITTED';
+  }
+
+  openFinalReview(action: 'approve' | 'request-revision'): void {
+    if (!this.canReviewFinalReport()) return;
+    this.finalReviewForm.reset({ comment: '' });
+    this.finalReviewAction.set(action);
+  }
+
+  submitFinalReview(): void {
+    const action = this.finalReviewAction();
+    if (!action || !this.canReviewFinalReport() || this.finalReviewing()) return;
+    const comment = this.finalReviewForm.getRawValue().comment.trim();
+    if (action === 'request-revision' && !comment) {
+      this.messages.add({ severity: 'warn', summary: 'نظر الزامی', detail: 'توضیحات اصلاحات مورد نیاز نباید خالی باشد.' });
+      return;
+    }
+    this.finalReviewing.set(true);
+    this.internshipService.reviewFinalReport(this.caseID, action, comment || undefined).subscribe({
+      next: () => {
+        this.finalReviewing.set(false);
+        this.finalReviewAction.set(null);
+        this.loadCase();
+        this.messages.add({ severity: 'success', summary: 'ثبت شد', detail: 'بررسی گزارش نهایی ثبت شد.' });
+      },
+      error: (error: HttpErrorResponse) => { this.finalReviewing.set(false); this.showError(error); }
+    });
+  }
+
   confirmCompletion(): void {
     const item = this.internshipCase();
     if (!item?.canProfessorComplete || this.evaluationForm.invalid) {
@@ -145,7 +181,7 @@ export class ProfessorCaseComponent {
   }
 
   downloadFinalReport(): void {
-    const file = this.internshipCase()?.finalReport;
+    const file = this.internshipCase()?.finalReport?.currentFile;
     if (!file) return;
     this.internshipService.downloadFile(file.id).subscribe({
       next: (blob) => {
@@ -201,7 +237,7 @@ export class ProfessorCaseComponent {
     let detail = 'انجام عملیات ناموفق بود.';
     if (error.status === 0) detail = 'ارتباط با سرور برقرار نشد.';
     if (error.status === 403) detail = 'این پرونده به شما اختصاص نیافته است.';
-    if (error.status === 409) detail = userErrorMessage(error, 'مدارک پرونده کامل نیست یا پرونده قبلاً تکمیل شده است.');
+    if (error.status === 400 || error.status === 409) detail = userErrorMessage(error, 'مدارک پرونده کامل نیست یا پرونده قبلاً تکمیل شده است.');
     this.messages.add({ severity: 'error', summary: 'خطا', detail });
   }
 }

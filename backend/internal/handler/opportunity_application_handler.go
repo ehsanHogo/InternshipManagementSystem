@@ -106,26 +106,12 @@ func (handler *OpportunityApplicationHandler) Apply(ctx *gin.Context) {
 		handler.writeError(ctx, service.ErrResumeTooLarge)
 		return
 	}
-	contentType := strings.ToLower(strings.TrimSpace(strings.Split(header.Header.Get("Content-Type"), ";")[0]))
-	if header.Size <= 0 || !strings.EqualFold(filepath.Ext(header.Filename), ".pdf") || contentType != "application/pdf" {
-		handler.writeError(ctx, service.ErrInvalidResumeFile)
-		return
-	}
-	source, err := header.Open()
+	source, err := openValidatedPDF(header)
 	if err != nil {
 		handler.writeError(ctx, service.ErrInvalidResumeFile)
 		return
 	}
 	defer source.Close()
-	signature := make([]byte, 5)
-	if _, err := io.ReadFull(source, signature); err != nil || string(signature) != "%PDF-" {
-		handler.writeError(ctx, service.ErrInvalidResumeFile)
-		return
-	}
-	if _, err := source.Seek(0, io.SeekStart); err != nil {
-		handler.writeError(ctx, service.ErrInvalidResumeFile)
-		return
-	}
 	if err := os.MkdirAll(handler.uploadDir, 0o750); err != nil {
 		handler.writeError(ctx, fmt.Errorf("create resume upload directory: %w", err))
 		return
@@ -144,7 +130,7 @@ func (handler *OpportunityApplicationHandler) Apply(ctx *gin.Context) {
 	written, copyErr := io.Copy(destination, io.LimitReader(source, maxResumeSize+1))
 	closeErr := destination.Close()
 	if copyErr != nil || closeErr != nil || written <= 0 || written > maxResumeSize {
-		_ = os.Remove(path)
+		removeUploadedFile(path)
 		if written > maxResumeSize {
 			handler.writeError(ctx, service.ErrResumeTooLarge)
 		} else {
@@ -158,7 +144,7 @@ func (handler *OpportunityApplicationHandler) Apply(ctx *gin.Context) {
 	}
 	application, err := handler.service.Apply(studentID, opportunityID, file)
 	if err != nil {
-		_ = os.Remove(path)
+		removeUploadedFile(path)
 		handler.writeError(ctx, err)
 		return
 	}

@@ -16,7 +16,7 @@ var (
 	ErrProfessorCaseNotActive             = errors.New("internship case is not active")
 	ErrProfessorWeeklyReportsIncomplete   = errors.New("all 8 weekly reports must be approved by both reviewers")
 	ErrProfessorCompanyEvaluationRequired = errors.New("company evaluation is required")
-	ErrProfessorFinalReportRequired       = errors.New("final internship report is required")
+	ErrProfessorFinalReportRequired       = errors.New("approved final internship report is required")
 )
 
 type ProfessorCompletionInput struct {
@@ -94,14 +94,13 @@ func (service *InternshipService) CompleteProfessorCase(professorID, caseID uint
 			return ErrProfessorCompanyEvaluationRequired
 		}
 
-		if internshipCase.FinalReportFileID == nil {
-			return ErrProfessorFinalReportRequired
+		var approvedFinalReportCount int64
+		if err := tx.Model(&model.FinalReport{}).
+			Where("internship_case_id = ? AND status = ?", caseID, model.FinalReportApproved).
+			Count(&approvedFinalReportCount).Error; err != nil {
+			return fmt.Errorf("check professor approved final report: %w", err)
 		}
-		var fileCount int64
-		if err := tx.Model(&model.File{}).Where("id = ?", *internshipCase.FinalReportFileID).Count(&fileCount).Error; err != nil {
-			return fmt.Errorf("check professor final report: %w", err)
-		}
-		if fileCount != 1 {
+		if approvedFinalReportCount != 1 {
 			return ErrProfessorFinalReportRequired
 		}
 

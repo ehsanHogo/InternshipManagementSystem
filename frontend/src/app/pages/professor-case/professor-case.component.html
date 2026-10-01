@@ -166,14 +166,21 @@
   </p-card>
 
   <p-card header="گزارش نهایی کارآموزی">
-    @if (item.finalReport; as file) {
+    @if (item.finalReport; as report) {
+      <div class="notice" [class.neutral]="report.status !== 'REVISION_REQUESTED'">
+        وضعیت: {{ finalReportStatusLabels[report.status] }}
+      </div>
+      @if (report.reviewComment) {
+        <div class="notice" style="white-space: pre-wrap"><strong>آخرین نظر استاد</strong><p>{{ report.reviewComment }}</p></div>
+      }
+      @if (report.reviewedAt) { <p>تاریخ بررسی: {{ report.reviewedAt | jalaliDate }}</p> }
       <div class="detail-grid">
         <div class="detail">
-          <span>نام فایل</span><strong>{{ file.originalName }}</strong>
+          <span>نام فایل</span><strong>{{ report.currentFile.originalName }}</strong>
         </div>
         <div class="detail">
-          <span>تاریخ بارگذاری</span
-          ><strong>{{ file.uploadedAt | jalaliDate }}</strong>
+          <span>تاریخ ارسال</span
+          ><strong>{{ report.submittedAt | jalaliDate }}</strong>
         </div>
       </div>
       <div class="card-actions">
@@ -182,6 +189,10 @@
           icon="pi pi-download"
           (onClick)="downloadFinalReport()"
         />
+        @if (canReviewFinalReport()) {
+          <p-button label="تأیید گزارش نهایی" icon="pi pi-check" [disabled]="finalReviewing()" (onClick)="openFinalReview('approve')" />
+          <p-button label="درخواست اصلاح" severity="warn" [disabled]="finalReviewing()" (onClick)="openFinalReview('request-revision')" />
+        }
       </div>
     } @else {
       <p class="muted">گزارش نهایی هنوز توسط دانشجو بارگذاری نشده است.</p>
@@ -206,7 +217,7 @@
       </div>
       <div class="detail">
         <span>گزارش نهایی</span
-        ><strong>{{ item.hasFinalReport ? "ثبت شده" : "ثبت نشده" }}</strong>
+        ><strong>{{ item.finalReport ? finalReportStatusLabels[item.finalReport.status] : "ثبت نشده" }}</strong>
       </div>
     </div>
     @if (!item.canProfessorComplete && item.internship.status !== "COMPLETED") {
@@ -261,7 +272,7 @@
     } @else {
       <div class="notice">
         ثبت ارزیابی نهایی پس از ثبت و تأیید هر ۸ گزارش، ثبت ارزیابی شرکت و
-        بارگذاری گزارش نهایی فعال می‌شود.
+        تأیید گزارش نهایی توسط استاد فعال می‌شود.
       </div>
     }
   </p-card>
@@ -275,5 +286,19 @@
     <p-button label="انصراف" severity="secondary" [text]="true" (onClick)="selectedReport.set(null)" />
     <p-button label="تأیید گزارش" [loading]="reviewing()" (onClick)="reviewReport('approve')" />
     <p-button label="درخواست اصلاح" severity="warn" [loading]="reviewing()" (onClick)="reviewReport('request-revision')" />
+  </ng-template>
+</p-dialog>
+
+<p-dialog [header]="finalReviewAction() === 'request-revision' ? 'درخواست اصلاح گزارش نهایی' : 'تأیید گزارش نهایی'" [visible]="finalReviewAction() !== null" (visibleChange)="!$event && finalReviewAction.set(null)" [closable]="!finalReviewing()" [closeOnEscape]="!finalReviewing()" [modal]="true" appendTo="body" [style]="{ width: 'min(92vw, 34rem)' }">
+  @if (finalReviewAction() === 'approve') { <p>آیا از تأیید گزارش نهایی دانشجو مطمئن هستید؟</p> }
+  <form [formGroup]="finalReviewForm">
+    <label class="field">
+      <span>{{ finalReviewAction() === 'request-revision' ? 'توضیحات اصلاحات مورد نیاز:' : 'نظر استاد (اختیاری)' }}</span>
+      <textarea pTextarea formControlName="comment" rows="4" [required]="finalReviewAction() === 'request-revision'"></textarea>
+    </label>
+  </form>
+  <ng-template #footer>
+    <p-button label="انصراف" severity="secondary" [text]="true" [disabled]="finalReviewing()" (onClick)="finalReviewAction.set(null)" />
+    <p-button [label]="finalReviewAction() === 'request-revision' ? 'درخواست اصلاح' : 'تأیید گزارش نهایی'" [loading]="finalReviewing()" [disabled]="finalReviewing() || (finalReviewAction() === 'request-revision' && !finalReviewForm.controls.comment.value.trim())" (onClick)="submitFinalReview()" />
   </ng-template>
 </p-dialog>

@@ -12,28 +12,37 @@
   <div class="empty-state"><div><i class="pi pi-lock"></i><p>این بخش پس از فعال شدن کارآموزی در دسترس خواهد بود.</p></div></div>
 } @else {
   @if (internshipCase()?.finalReport; as report) {
-    <p-card header="گزارش بارگذاری‌شده">
+    <p-card header="گزارش نهایی">
+      <div class="notice" [class.neutral]="report.status !== 'REVISION_REQUESTED'">
+        وضعیت: {{ finalReportStatusLabels[report.status] }}
+      </div>
+      @if (report.reviewComment) {
+        <div class="notice" style="white-space: pre-wrap"><strong>آخرین نظر استاد</strong><p>{{ report.reviewComment }}</p></div>
+      }
+      @if (report.reviewedAt) {
+        <p>تاریخ بررسی: {{ report.reviewedAt | jalaliDate }}</p>
+      }
       <div class="file-row">
         <span class="pdf-icon"><i class="pi pi-file-pdf"></i></span>
-        <div><span>نام فایل</span><strong>{{ report.originalName }}</strong></div>
-        <div><span>تاریخ بارگذاری</span><strong>{{ report.uploadedAt | jalaliDate }}</strong></div>
+        <div><span>نام فایل</span><strong>{{ report.currentFile.originalName }}</strong></div>
+        <div><span>تاریخ ارسال</span><strong>{{ report.submittedAt | jalaliDate }}</strong></div>
         <p-button label="دانلود" icon="pi pi-download" severity="secondary" [outlined]="true" [loading]="downloading()" (onClick)="download()" />
       </div>
     </p-card>
   } @else {
-    <div class="notice neutral">هنوز گزارش نهایی بارگذاری نشده است.</div>
+    <div class="notice neutral">گزارش نهایی هنوز ارسال نشده است.</div>
   }
 
-  @if (internshipCase()?.status === 'ACTIVE') {
-    <p-card [header]="internshipCase()?.finalReport ? 'جایگزینی گزارش نهایی' : 'بارگذاری گزارش نهایی'">
+  @if (canUpload()) {
+    <p-card [header]="internshipCase()?.finalReport ? 'ارسال مجدد گزارش' : 'ارسال گزارش نهایی'">
       <div class="upload-box">
         <i class="pi pi-cloud-upload"></i>
         <strong>{{ selectedFile()?.name ?? 'یک فایل پی‌دی‌اف انتخاب کنید' }}</strong>
         <span>حداکثر حجم مجاز: ۱۰ مگابایت</span>
         <input #fileInput type="file" accept="application/pdf,.pdf" (change)="fileChanged($event)" hidden />
         <div class="upload-actions">
-          <p-button label="انتخاب فایل" icon="pi pi-folder-open" severity="secondary" [outlined]="true" (onClick)="chooseFile()" />
-          <p-button label="بارگذاری گزارش نهایی" icon="pi pi-upload" [disabled]="!selectedFile()" [loading]="uploading()" (onClick)="upload()" />
+          <p-button [label]="internshipCase()?.finalReport ? 'انتخاب فایل اصلاح‌شده' : 'انتخاب فایل'" [disabled]="uploading()" icon="pi pi-folder-open" severity="secondary" [outlined]="true" (onClick)="chooseFile()" />
+          <p-button [label]="internshipCase()?.finalReport ? 'ارسال مجدد گزارش' : 'ارسال گزارش نهایی'" icon="pi pi-upload" [disabled]="!selectedFile()" [loading]="uploading()" (onClick)="upload()" />
         </div>
       </div>
     </p-card>

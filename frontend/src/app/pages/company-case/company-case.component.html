@@ -303,7 +303,7 @@
     </p-card>
 
     <p-card header="گزارش نهایی کارآموزی">
-      @if (item.finalReport; as report) {
+      @if (item.finalReport?.currentFile; as report) {
         <div class="detail-grid">
           <div class="detail">
             <span>نام فایل</span><strong>{{ report.originalName }}</strong>

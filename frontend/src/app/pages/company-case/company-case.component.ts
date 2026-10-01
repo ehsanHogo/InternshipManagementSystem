@@ -128,7 +128,7 @@ export class CompanyCaseComponent {
   }
 
   downloadFinalReport(): void {
-    const report = this.internshipCase()?.finalReport;
+    const report = this.internshipCase()?.finalReport?.currentFile;
     if (!report) return;
     this.downloading.set(true);
     this.internshipService.downloadFile(report.id).subscribe({

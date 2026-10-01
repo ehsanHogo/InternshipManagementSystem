@@ -345,47 +345,6 @@ func (service *InternshipService) CreateCompanyEvaluation(supervisorID, caseID u
 	return &evaluation, nil
 }
 
-func (service *InternshipService) EnsureStudentActiveCase(studentID uint) error {
-	_, err := service.findStudentActiveCase(service.db, studentID, false)
-	return err
-}
-
-func (service *InternshipService) AttachFinalReport(studentID uint, file *model.File) (*model.File, *model.File, error) {
-	var oldFile *model.File
-	err := service.db.Transaction(func(tx *gorm.DB) error {
-		internshipCase, err := service.findStudentActiveCase(tx, studentID, true)
-		if err != nil {
-			return err
-		}
-		if err := tx.Create(file).Error; err != nil {
-			return fmt.Errorf("save final report metadata: %w", err)
-		}
-		if internshipCase.FinalReportFileID != nil {
-			var previous model.File
-			if err := tx.First(&previous, *internshipCase.FinalReportFileID).Error; err == nil {
-				oldFile = &previous
-			} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-				return fmt.Errorf("get previous final report: %w", err)
-			}
-		}
-		if err := tx.Model(internshipCase).Update("final_report_file_id", file.ID).Error; err != nil {
-			return fmt.Errorf("attach final report: %w", err)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-	return file, oldFile, nil
-}
-
-func (service *InternshipService) DeleteFileMetadata(fileID uint) error {
-	if fileID == 0 {
-		return nil
-	}
-	return service.db.Delete(&model.File{}, fileID).Error
-}
-
 func (service *InternshipService) GetAccessibleFile(userID uint, role model.Role, fileID uint) (*model.File, error) {
 	var file model.File
 	if err := service.db.First(&file, fileID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
@@ -394,13 +353,16 @@ func (service *InternshipService) GetAccessibleFile(userID uint, role model.Role
 		return nil, fmt.Errorf("get file: %w", err)
 	}
 
-	finalReportQuery := service.db.Model(&model.InternshipCase{}).Where("final_report_file_id = ?", fileID)
+	finalReportQuery := service.db.Model(&model.FinalReport{}).
+		Joins("JOIN internship_cases ON internship_cases.id = final_reports.internship_case_id").
+		Where("final_reports.current_file_id = ?", fileID)
 	switch role {
 	case model.RoleStudent:
 		finalReportQuery = finalReportQuery.Where("student_id = ?", userID)
 	case model.RoleProfessor:
 		finalReportQuery = finalReportQuery.Where("professor_id = ?", userID)
 	case model.RoleCompanySupervisor:
+		// The existing company case page grants its assigned supervisor read-only downloads.
 		finalReportQuery = finalReportQuery.Where("company_supervisor_id = ?", userID)
 	case model.RoleUniversitySupervisor:
 		// University supervisors retain their existing system-wide final-report access.

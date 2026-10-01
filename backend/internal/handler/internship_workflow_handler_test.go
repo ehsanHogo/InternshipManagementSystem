@@ -72,7 +72,7 @@ func TestProfessorReadinessRequiresEveryPrerequisite(t *testing.T) {
 	}
 	internshipCase := &model.InternshipCase{
 		Status: model.InternshipCaseStatusActive, WeeklyReports: reports,
-		CompanyEvaluation: &model.CompanyEvaluation{}, FinalReportFile: &model.File{},
+		CompanyEvaluation: &model.CompanyEvaluation{}, FinalReport: &model.FinalReport{Status: model.FinalReportApproved},
 	}
 
 	reportCount, approvedCount, hasEvaluation, hasFinalReport, canComplete := professorReadiness(internshipCase)

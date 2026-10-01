@@ -44,7 +44,7 @@ func TestWorkflow(t *testing.T) {
 	}
 	if err := db.AutoMigrate(
 		&model.Company{}, &model.User{}, &model.InternshipOpportunity{}, &model.ProfessorAssignment{},
-		&model.File{}, &model.OpportunityApplication{}, &model.InternshipCase{}, &model.InternshipPreference{},
+		&model.File{}, &model.OpportunityApplication{}, &model.InternshipCase{}, &model.FinalReport{}, &model.InternshipPreference{},
 		&model.WeeklyReport{}, &model.CompanyEvaluation{},
 	); err != nil {
 		t.Fatalf("migrate integration database: %v", err)
@@ -396,10 +396,10 @@ func TestWorkflow(t *testing.T) {
 				completed.CompletedAt == nil {
 				t.Fatalf("completion did not persist expected fields: %+v", completed)
 			}
-			if len(completed.WeeklyReports) != 8 || completed.CompanyEvaluation == nil || completed.FinalReportFile == nil {
+			if len(completed.WeeklyReports) != 8 || completed.CompanyEvaluation == nil || completed.FinalReport == nil {
 				t.Fatalf("completed professor detail is missing review data: %+v", completed)
 			}
-			if _, err := workflow.GetAccessibleFile(professor.ID, model.RoleProfessor, completed.FinalReportFile.ID); err != nil {
+			if _, err := workflow.GetAccessibleFile(professor.ID, model.RoleProfessor, completed.FinalReport.CurrentFileID); err != nil {
 				t.Fatalf("professor final report access: %v", err)
 			}
 			studentView, err := workflow.GetCurrentCase(readyCase.StudentID)
@@ -464,7 +464,7 @@ func TestWorkflow(t *testing.T) {
 				universityCase, err := workflow.GetUniversityCase(readyCase.ID)
 				if err != nil || universityCase.Status != model.InternshipCaseStatusCompleted ||
 					len(universityCase.WeeklyReports) != 8 || universityCase.CompanyEvaluation == nil ||
-					universityCase.FinalReportFile == nil || universityCase.FinalResult == nil {
+					universityCase.FinalReport == nil || universityCase.FinalResult == nil {
 					t.Fatalf("university completed case detail: case=%+v err=%v", universityCase, err)
 				}
 				if _, err := workflow.ApproveUniversityCase(readyCase.ID); !errors.Is(err, service.ErrObsoleteWorkflow) {
@@ -538,10 +538,11 @@ func createProfessorReviewCase(
 		if err := db.Create(&file).Error; err != nil {
 			t.Fatalf("create professor review file: %v", err)
 		}
-		if err := db.Model(&internshipCase).Update("final_report_file_id", file.ID).Error; err != nil {
-			t.Fatalf("attach professor review file: %v", err)
+		report := model.FinalReport{InternshipCaseID: internshipCase.ID, CurrentFileID: file.ID, Status: model.FinalReportApproved, SubmittedAt: time.Now()}
+		if err := db.Create(&report).Error; err != nil {
+			t.Fatal(err)
 		}
-		internshipCase.FinalReportFileID = &file.ID
+		internshipCase.FinalReport = &report
 	}
 	return internshipCase
 }
