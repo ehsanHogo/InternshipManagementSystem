@@ -27,6 +27,7 @@ import {
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
+import { userErrorMessage } from '../../shared/http-error-message';
 import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 @Component({
@@ -76,11 +77,11 @@ export class CompanyCaseComponent {
     { key: 'projectPerformanceRating', label: 'عملکرد در پروژه یا فعالیت محوله' }
   ];
 
-  readonly confirmationForm = this.formBuilder.group({
-    internshipSubject: this.formBuilder.nonNullable.control('', Validators.required),
-    startDate: this.formBuilder.nonNullable.control('', Validators.required),
-    workplaceAddress: this.formBuilder.nonNullable.control('', Validators.required),
-    workplacePhone: this.formBuilder.nonNullable.control('', Validators.required)
+  readonly placementForm = this.formBuilder.group({
+    internshipSubject: this.formBuilder.nonNullable.control('', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(500)]),
+    startDate: this.formBuilder.nonNullable.control('', [Validators.required, Validators.pattern(/\S/)]),
+    workplaceAddress: this.formBuilder.nonNullable.control('', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(1000)]),
+    workplacePhone: this.formBuilder.nonNullable.control('', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(50)])
   });
 
   readonly reportConfirmationForm = this.formBuilder.group({
@@ -106,6 +107,7 @@ export class CompanyCaseComponent {
     this.internshipService.getCompanyCase(this.caseID).subscribe({
       next: (internshipCase) => {
         this.internshipCase.set(internshipCase);
+        this.syncPlacementForm(internshipCase);
         this.loading.set(false);
         if (internshipCase.status === 'ACTIVE' || internshipCase.status === 'COMPLETED') this.loadReportingData();
       },
@@ -230,24 +232,26 @@ export class CompanyCaseComponent {
   }
 
   confirmSubmission(): void {
-    if (this.confirmationForm.invalid) {
-      this.confirmationForm.markAllAsTouched();
+    if (this.saving() || this.internshipCase()?.status !== 'PENDING_COMPANY_DETAILS') return;
+    if (this.placementForm.invalid) {
+      this.placementForm.markAllAsTouched();
       this.messages.add({ severity: 'warn', summary: 'اطلاعات ناقص', detail: 'تمام اطلاعات محل کارآموزی را وارد کنید.' });
       return;
     }
     this.confirmation.confirm({
-      header: 'تأیید پذیرش دانشجو',
-      message: 'با تأیید این فرم، پذیرش دانشجو برای دوره کارآموزی تأیید می‌شود. آیا ادامه می‌دهید؟',
-      acceptLabel: 'بله، تأیید شود',
+      header: 'ثبت اطلاعات شروع کارآموزی',
+      message: 'آیا از ثبت اطلاعات شروع کارآموزی و ارسال آن برای تأیید نهایی آموزش مطمئن هستید؟',
+      acceptLabel: 'بله، ثبت و ارسال شود',
       rejectLabel: 'انصراف',
       accept: () => this.submit()
     });
   }
 
   private submit(): void {
-    const value = this.confirmationForm.getRawValue();
+    if (this.saving() || this.placementForm.invalid || this.internshipCase()?.status !== 'PENDING_COMPANY_DETAILS') return;
+    const value = this.placementForm.getRawValue();
     this.saving.set(true);
-    this.internshipService.confirmCompanyCase(this.caseID, {
+    this.internshipService.submitPlacementDetails(this.caseID, {
       internshipSubject: value.internshipSubject.trim(),
       startDate: value.startDate,
       workplaceAddress: value.workplaceAddress.trim(),
@@ -255,9 +259,9 @@ export class CompanyCaseComponent {
     }).subscribe({
       next: (internshipCase) => {
         this.internshipCase.set(internshipCase);
-        this.confirmationForm.disable();
+        this.syncPlacementForm(internshipCase);
         this.saving.set(false);
-        this.messages.add({ severity: 'success', summary: 'تأیید شد', detail: 'پذیرش دانشجو با موفقیت تأیید شد.' });
+        this.messages.add({ severity: 'success', summary: 'ثبت شد', detail: 'اطلاعات شروع کارآموزی برای تأیید نهایی آموزش ارسال شد.' });
       },
       error: (error: HttpErrorResponse) => {
         this.saving.set(false);
@@ -266,12 +270,19 @@ export class CompanyCaseComponent {
     });
   }
 
+  private syncPlacementForm(item: InternshipCase): void {
+    this.placementForm.reset({
+      internshipSubject: item.internshipSubject ?? '',
+      startDate: item.startDate?.slice(0, 10) ?? '',
+      workplaceAddress: item.workplaceAddress ?? '',
+      workplacePhone: item.workplacePhone ?? ''
+    });
+    if (item.status === 'PENDING_COMPANY_DETAILS') this.placementForm.enable({ emitEvent: false });
+    else this.placementForm.disable({ emitEvent: false });
+  }
+
   private showError(error: HttpErrorResponse): void {
-    let detail = 'انجام عملیات ناموفق بود.';
-    if (error.status === 0) detail = 'ارتباط با سرور برقرار نشد.';
-    if (error.status === 403) detail = 'این پرونده به حساب شما اختصاص نیافته است.';
-    if (error.status === 409) detail = 'این پرونده در وضعیت قابل تأیید نیست.';
-    this.messages.add({ severity: 'error', summary: 'خطا', detail });
+    this.messages.add({ severity: 'error', summary: 'خطا', detail: userErrorMessage(error, 'انجام عملیات ناموفق بود.') });
   }
 }
 

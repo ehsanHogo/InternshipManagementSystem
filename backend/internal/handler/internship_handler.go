@@ -258,7 +258,10 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		errors.Is(err, service.ErrCompanySupervisor), errors.Is(err, service.ErrInvalidWeeklyReport),
 		errors.Is(err, service.ErrInvalidEvaluation), errors.Is(err, service.ErrInvalidProfessorResult),
 		errors.Is(err, service.ErrPreferenceNotInCase), errors.Is(err, service.ErrIntroductionLetterNumberRequired),
-		errors.Is(err, service.ErrIntroductionLetterDateRequired), errors.Is(err, service.ErrCancellationCommentRequired):
+		errors.Is(err, service.ErrIntroductionLetterDateRequired), errors.Is(err, service.ErrCancellationCommentRequired),
+		errors.Is(err, service.ErrInternshipSubjectRequired), errors.Is(err, service.ErrStartDateRequired),
+		errors.Is(err, service.ErrWorkplaceAddressRequired), errors.Is(err, service.ErrWorkplacePhoneRequired),
+		errors.Is(err, service.ErrInvalidStartDate), errors.Is(err, service.ErrPlacementDetailsTooLong):
 		status = http.StatusBadRequest
 	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit),
 		errors.Is(err, service.ErrDuplicatePriority), errors.Is(err, service.ErrPreferenceAlreadyExists),
@@ -268,9 +271,10 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		errors.Is(err, service.ErrProfessorCompanyEvaluationRequired), errors.Is(err, service.ErrProfessorFinalReportRequired),
 		errors.Is(err, service.ErrInvalidTransition), errors.Is(err, service.ErrInternshipCompleted),
 		errors.Is(err, service.ErrObsoleteWorkflow), errors.Is(err, service.ErrCaseNotPendingUniversityReview),
-		errors.Is(err, service.ErrCompanySupervisorResolution):
+		errors.Is(err, service.ErrCompanySupervisorResolution), errors.Is(err, service.ErrInvalidCompanyPlacement),
+		errors.Is(err, service.ErrCaseNotPendingCompanyDetails):
 		status = http.StatusConflict
-	case errors.Is(err, service.ErrCaseAccessDenied):
+	case errors.Is(err, service.ErrCaseAccessDenied), errors.Is(err, service.ErrCaseNotAssignedToCompany):
 		status = http.StatusForbidden
 	default:
 		log.Printf("internship request failed: %v", err)
@@ -290,6 +294,24 @@ func currentUserID(ctx *gin.Context) (uint, bool) {
 
 func internshipErrorCode(err error) string {
 	switch {
+	case errors.Is(err, service.ErrCaseNotAssignedToCompany):
+		return "INTERNSHIP_CASE_NOT_ASSIGNED_TO_COMPANY"
+	case errors.Is(err, service.ErrCaseNotPendingCompanyDetails):
+		return "INTERNSHIP_CASE_NOT_PENDING_COMPANY_DETAILS"
+	case errors.Is(err, service.ErrInvalidCompanyPlacement):
+		return "INVALID_COMPANY_PLACEMENT"
+	case errors.Is(err, service.ErrInternshipSubjectRequired):
+		return "INTERNSHIP_SUBJECT_REQUIRED"
+	case errors.Is(err, service.ErrStartDateRequired):
+		return "START_DATE_REQUIRED"
+	case errors.Is(err, service.ErrWorkplaceAddressRequired):
+		return "WORKPLACE_ADDRESS_REQUIRED"
+	case errors.Is(err, service.ErrWorkplacePhoneRequired):
+		return "WORKPLACE_PHONE_REQUIRED"
+	case errors.Is(err, service.ErrInvalidStartDate):
+		return "INVALID_START_DATE"
+	case errors.Is(err, service.ErrPlacementDetailsTooLong):
+		return "PLACEMENT_DETAILS_TOO_LONG"
 	case errors.Is(err, service.ErrCaseNotEditable):
 		return "INTERNSHIP_CASE_NOT_EDITABLE"
 	case errors.Is(err, service.ErrPreferenceLimit):
@@ -331,6 +353,24 @@ func internshipErrorCode(err error) string {
 
 func publicInternshipError(err error) string {
 	switch {
+	case errors.Is(err, service.ErrCaseNotAssignedToCompany):
+		return "این پرونده به شرکت و سرپرست شما اختصاص نیافته است."
+	case errors.Is(err, service.ErrCaseNotPendingCompanyDetails):
+		return "این پرونده در انتظار ثبت اطلاعات شروع شرکت نیست."
+	case errors.Is(err, service.ErrInvalidCompanyPlacement):
+		return "ارتباط محل انتخاب‌شده یا اطلاعات معرفی‌نامه معتبر نیست."
+	case errors.Is(err, service.ErrInternshipSubjectRequired):
+		return "موضوع کارآموزی الزامی است."
+	case errors.Is(err, service.ErrStartDateRequired):
+		return "تاریخ شروع کارآموزی الزامی است."
+	case errors.Is(err, service.ErrWorkplaceAddressRequired):
+		return "آدرس محل کارآموزی الزامی است."
+	case errors.Is(err, service.ErrWorkplacePhoneRequired):
+		return "شماره تماس محل کارآموزی الزامی است."
+	case errors.Is(err, service.ErrInvalidStartDate):
+		return "تاریخ شروع کارآموزی معتبر نیست."
+	case errors.Is(err, service.ErrPlacementDetailsTooLong):
+		return "طول اطلاعات شروع کارآموزی بیش از حد مجاز است."
 	case errors.Is(err, service.ErrCaseNotFound):
 		return "پرونده کارآموزی یافت نشد."
 	case errors.Is(err, service.ErrAssignmentNotFound):

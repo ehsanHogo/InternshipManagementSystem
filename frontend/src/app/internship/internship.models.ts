@@ -213,7 +213,7 @@ export interface UniversityReviewCancellationPayload {
   comment: string;
 }
 
-export interface CompanyConfirmationPayload {
+export interface PlacementDetailsPayload {
   internshipSubject: string;
   startDate: string;
   workplaceAddress: string;

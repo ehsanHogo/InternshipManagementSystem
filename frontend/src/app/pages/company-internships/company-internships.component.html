@@ -2,20 +2,26 @@
   <div>
     <span class="eyebrow">سرپرست شرکت</span>
     <h1>پرونده‌های کارآموزی</h1>
-    <p>پرونده‌هایی که از سوی دانشگاه به شما اختصاص یافته‌اند.</p>
+    <p>محل انتخاب‌شده و معرفی‌نامه را بررسی و اطلاعات شروع کارآموزی را برای آموزش ارسال کنید.</p>
+  </div>
+  <div class="heading-actions">
+    <p-button label="در انتظار اطلاعات شروع" [outlined]="!pendingOnly()" (onClick)="pendingOnly.set(true)" />
+    <p-button label="همه پرونده‌های اختصاص‌یافته" [outlined]="pendingOnly()" (onClick)="pendingOnly.set(false)" />
   </div>
 </section>
 
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده‌ها...</span></div>
+} @else if (visibleCases().length === 0) {
+  <div class="state-card"><span>{{ pendingOnly() ? 'در حال حاضر پرونده‌ای برای ثبت اطلاعات شروع کارآموزی وجود ندارد.' : 'پرونده‌ای به شما اختصاص نیافته است.' }}</span></div>
 } @else {
-  <p-table [value]="cases()" [rowHover]="true" responsiveLayout="scroll">
+  <p-table [value]="visibleCases()" [rowHover]="true" responsiveLayout="scroll">
     <ng-template #header>
       <tr>
         <th>دانشجو</th>
         <th>شماره دانشجویی</th>
-        <th>رشته</th>
-        <th>شرکت / محل پیشنهادی</th>
+        <th>فرصت انتخاب‌شده</th>
+        <th>شرکت انتخاب‌شده</th>
         <th>شماره نامه</th>
         <th>تاریخ نامه</th>
         <th>وضعیت</th>
@@ -26,12 +32,12 @@
       <tr>
         <td>{{ item.student.fullName }}</td>
         <td>{{ item.student.studentNumber ?? '—' }}</td>
-        <td>{{ item.student.major ?? '—' }}</td>
+        <td>{{ item.selectedPreference?.application.opportunity.title ?? '—' }}</td>
         <td>{{ placementName(item) }}</td>
         <td>{{ item.letterNumber ?? '—' }}</td>
         <td>{{ item.letterDate | jalaliDate }}</td>
         <td><p-tag [value]="statusLabel(item.status)" severity="info" /></td>
-        <td><p-button label="مشاهده" icon="pi pi-eye" [text]="true" [routerLink]="['/company/internships', item.id]" /></td>
+        <td><p-button [label]="item.status === 'PENDING_COMPANY_DETAILS' ? 'مشاهده و تکمیل اطلاعات' : 'مشاهده'" icon="pi pi-eye" [text]="true" [routerLink]="['/company/internships', item.id]" /></td>
       </tr>
     </ng-template>
     <ng-template #emptymessage>

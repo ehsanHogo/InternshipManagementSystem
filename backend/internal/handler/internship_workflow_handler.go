@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -21,7 +23,7 @@ type cancelUniversityReviewRequest struct {
 	Comment string `json:"comment"`
 }
 
-type companyConfirmationRequest struct {
+type placementDetailsRequest struct {
 	InternshipSubject string `json:"internshipSubject"`
 	StartDate         string `json:"startDate"`
 	WorkplaceAddress  string `json:"workplaceAddress"`
@@ -144,7 +146,7 @@ func (handler *InternshipHandler) ListCompanyCases(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, caseResponses(cases))
+	ctx.JSON(http.StatusOK, companyCaseResponses(cases))
 }
 
 func (handler *InternshipHandler) GetCompanyCase(ctx *gin.Context) {
@@ -161,10 +163,23 @@ func (handler *InternshipHandler) GetCompanyCase(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
+	ctx.JSON(http.StatusOK, companyCaseResponse(internshipCase))
 }
 
-func (handler *InternshipHandler) ConfirmCompanyCase(ctx *gin.Context) {
+func (handler *InternshipHandler) ListPendingCompanyDetailsCases(ctx *gin.Context) {
+	supervisorID, ok := currentUserID(ctx)
+	if !ok {
+		return
+	}
+	cases, err := handler.service.ListPendingCompanyDetailsCases(supervisorID)
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, companyCaseResponses(cases))
+}
+
+func (handler *InternshipHandler) SubmitPlacementDetails(ctx *gin.Context) {
 	supervisorID, ok := currentUserID(ctx)
 	if !ok {
 		return
@@ -173,17 +188,27 @@ func (handler *InternshipHandler) ConfirmCompanyCase(ctx *gin.Context) {
 	if !ok {
 		return
 	}
-	var request companyConfirmationRequest
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اطلاعات درخواست معتبر نیست."})
+	var request placementDetailsRequest
+	decoder := json.NewDecoder(ctx.Request.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_PLACEMENT_DETAILS", "error": "فقط اطلاعات شروع کارآموزی را ارسال کنید."})
+		return
+	}
+	if err := decoder.Decode(new(any)); err != io.EOF {
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_PLACEMENT_DETAILS", "error": "اطلاعات شروع کارآموزی معتبر نیست."})
+		return
+	}
+	if strings.TrimSpace(request.StartDate) == "" {
+		handler.writeError(ctx, service.ErrStartDateRequired)
 		return
 	}
 	startDate, err := parseDate(request.StartDate)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "تاریخ شروع معتبر نیست."})
+	if err != nil || startDate.Year() < 1 {
+		handler.writeError(ctx, service.ErrInvalidStartDate)
 		return
 	}
-	internshipCase, err := handler.service.ConfirmCompanyCase(supervisorID, caseID, service.CompanyConfirmationInput{
+	internshipCase, err := handler.service.SubmitPlacementDetails(supervisorID, caseID, service.PlacementDetailsInput{
 		InternshipSubject: request.InternshipSubject, StartDate: startDate,
 		WorkplaceAddress: request.WorkplaceAddress, WorkplacePhone: request.WorkplacePhone,
 	})
@@ -191,7 +216,27 @@ func (handler *InternshipHandler) ConfirmCompanyCase(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
+	ctx.JSON(http.StatusOK, companyCaseResponse(internshipCase))
+}
+
+// A company sees only its selected placement, not other recruitment preferences
+// or the student's passed-credit information.
+func companyCaseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
+	response := caseResponse(internshipCase)
+	response.PassedCredits = nil
+	response.Preferences = []internshipPreferenceResponse{}
+	if response.SelectedPreference != nil {
+		response.Preferences = append(response.Preferences, *response.SelectedPreference)
+	}
+	return response
+}
+
+func companyCaseResponses(cases []model.InternshipCase) []internshipCaseResponse {
+	response := make([]internshipCaseResponse, 0, len(cases))
+	for i := range cases {
+		response = append(response, companyCaseResponse(&cases[i]))
+	}
+	return response
 }
 
 func caseResponses(cases []model.InternshipCase) []internshipCaseResponse {

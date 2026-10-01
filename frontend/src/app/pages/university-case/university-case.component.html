@@ -176,15 +176,26 @@
     </p-card>
   }
 
-  @if (item.status === "PENDING_COMPANY_DETAILS" && item.selectedPreference) {
+  @if (item.selectedPreference) {
     <p-card header="نتیجه بررسی آموزش">
       <div class="detail-grid">
-        <div class="detail"><span>وضعیت</span><strong>در انتظار ثبت اطلاعات شروع توسط شرکت</strong></div>
+        <div class="detail"><span>وضعیت</span><strong>{{ statusLabel(item.status) }}</strong></div>
         <div class="detail"><span>اولویت انتخاب‌شده</span><strong>اولویت {{ item.selectedPreference.priority | persianDigits }}</strong></div>
         <div class="detail"><span>شرکت</span><strong>{{ item.selectedPreference.application.opportunity.company.name }}</strong></div>
         <div class="detail"><span>فرصت</span><strong>{{ item.selectedPreference.application.opportunity.title }}</strong></div>
         <div class="detail"><span>شماره معرفی‌نامه</span><strong>{{ item.letterNumber }}</strong></div>
         <div class="detail"><span>تاریخ معرفی‌نامه</span><strong>{{ item.letterDate | jalaliDate }}</strong></div>
+      </div>
+    </p-card>
+  }
+
+  @if (item.internshipSubject || item.startDate || item.workplaceAddress || item.workplacePhone) {
+    <p-card header="اطلاعات شروع کارآموزی ثبت‌شده توسط شرکت">
+      <div class="detail-grid">
+        <div class="detail"><span>موضوع کارآموزی</span><strong>{{ item.internshipSubject ?? "—" }}</strong></div>
+        <div class="detail"><span>تاریخ شروع</span><strong>{{ item.startDate | jalaliDate }}</strong></div>
+        <div class="detail full-width"><span>آدرس محل کارآموزی</span><strong>{{ item.workplaceAddress ?? "—" }}</strong></div>
+        <div class="detail"><span>شماره تماس محل کارآموزی</span><strong>{{ item.workplacePhone ?? "—" }}</strong></div>
       </div>
     </p-card>
   }

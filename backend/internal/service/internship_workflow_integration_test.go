@@ -222,6 +222,7 @@ func TestWorkflow(t *testing.T) {
 		if err := tx.Create(&activeCase).Error; err != nil {
 			t.Fatalf("create active case: %v", err)
 		}
+		attachSelectedWorkflowPlacement(t, tx, suffix, &activeCase, supervisor.ID)
 		evaluationInput := service.CompanyEvaluationInput{
 			AttendanceRating: model.EvaluationRatingExcellent, ParticipationRating: model.EvaluationRatingGood,
 			LearningRating: model.EvaluationRatingExcellent, InterestRating: model.EvaluationRatingGood,
@@ -495,6 +496,7 @@ func createProfessorReviewCase(
 	if err := db.Create(&internshipCase).Error; err != nil {
 		t.Fatalf("create professor review case: %v", err)
 	}
+	attachSelectedWorkflowPlacement(t, db, suffix, &internshipCase, supervisorID)
 	for week := 1; week <= reportCount; week++ {
 		report := model.WeeklyReport{
 			InternshipCaseID: internshipCase.ID, WeekNumber: week,
@@ -640,4 +642,33 @@ func createWorkflowOpportunityApplication(t *testing.T, db *gorm.DB, suffix int6
 		t.Fatalf("create workflow application %s: %v", label, err)
 	}
 	return application
+}
+
+// Reporting fixtures also satisfy V2 selected-placement company ownership.
+func attachSelectedWorkflowPlacement(t *testing.T, db *gorm.DB, suffix int64, internshipCase *model.InternshipCase, supervisorID uint) {
+	t.Helper()
+	var supervisor model.User
+	if err := db.First(&supervisor, supervisorID).Error; err != nil {
+		t.Fatal(err)
+	}
+	application := createWorkflowOpportunityApplication(t, db, suffix, internshipCase.StudentID, supervisorID, fmt.Sprintf("selected-%d", internshipCase.ID), model.ApplicationStatusAccepted, model.OpportunityStatusOpen)
+	var opportunity model.InternshipOpportunity
+	if err := db.First(&opportunity, application.OpportunityID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if supervisor.CompanyID == nil {
+		if err := db.Model(&model.User{}).Where("id = ?", supervisorID).Update("company_id", opportunity.CompanyID).Error; err != nil {
+			t.Fatal(err)
+		}
+	} else if err := db.Model(&opportunity).Update("company_id", *supervisor.CompanyID).Error; err != nil {
+		t.Fatal(err)
+	}
+	preference := model.InternshipPreference{InternshipCaseID: internshipCase.ID, OpportunityApplicationID: application.ID, Priority: 1}
+	if err := db.Create(&preference).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Model(&model.InternshipCase{}).Where("id = ?", internshipCase.ID).Update("selected_preference_id", preference.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	internshipCase.SelectedPreferenceID = &preference.ID
 }

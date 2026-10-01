@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -21,6 +21,9 @@ export class CompanyInternshipsComponent {
 
   readonly cases = signal<InternshipCase[]>([]);
   readonly loading = signal(true);
+  readonly pendingOnly = signal(true);
+  readonly visibleCases = computed(() => this.pendingOnly()
+    ? this.cases().filter((item) => item.status === 'PENDING_COMPANY_DETAILS') : this.cases());
 
   constructor() {
     this.internshipService.listCompanyCases().subscribe({

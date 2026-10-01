@@ -7,7 +7,7 @@ import {
   Company,
   CompanyEvaluation,
   CompanyEvaluationPayload,
-  CompanyConfirmationPayload,
+  PlacementDetailsPayload,
   InternshipCase,
   InternshipCaseStatus,
   InternshipPreference,
@@ -91,12 +91,16 @@ export class InternshipService {
     return this.http.get<InternshipCase[]>('/api/company/internship-cases');
   }
 
+  listPendingCompanyDetailsCases(): Observable<InternshipCase[]> {
+    return this.http.get<InternshipCase[]>('/api/company/internship-cases/pending-details');
+  }
+
   getCompanyCase(id: number): Observable<InternshipCase> {
     return this.http.get<InternshipCase>(`/api/company/internship-cases/${id}`);
   }
 
-  confirmCompanyCase(id: number, payload: CompanyConfirmationPayload): Observable<InternshipCase> {
-    return this.http.post<InternshipCase>(`/api/company/internship-cases/${id}/confirm`, payload);
+  submitPlacementDetails(id: number, payload: PlacementDetailsPayload): Observable<InternshipCase> {
+    return this.http.post<InternshipCase>(`/api/company/internship-cases/${id}/placement-details`, payload);
   }
 
   listStudentWeeklyReports(): Observable<WeeklyReport[]> {

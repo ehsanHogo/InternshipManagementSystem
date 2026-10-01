@@ -38,6 +38,7 @@
       <div class="detail">
         <span>رشته</span><strong>{{ item.student.major ?? "—" }}</strong>
       </div>
+      <div class="detail"><span>ایمیل دانشجو</span><strong>{{ item.student.email }}</strong></div>
       <div class="detail">
         <span>استاد</span><strong>{{ item.professor.fullName }}</strong>
       </div>
@@ -48,17 +49,24 @@
   </p-card>
 
   <p-card header="شرکت و نامه معرفی">
+    @if (item.selectedPreference; as selected) {
+      <div class="detail-grid">
+        <div class="detail"><span>اولویت انتخاب‌شده</span><strong>{{ selected.priority | persianDigits }}</strong></div>
+        <div class="detail"><span>عنوان فرصت</span><strong>{{ selected.application.opportunity.title }}</strong></div>
+        <div class="detail full-width"><span>شرح فرصت</span><strong>{{ selected.application.opportunity.description }}</strong></div>
+      </div>
+    }
     <div class="detail-grid">
       <div class="detail">
-        <span>شرکت / محل پیشنهادی</span
+        <span>شرکت انتخاب‌شده</span
         ><strong>{{ preferenceName(item.selectedPreference) }}</strong>
       </div>
       <div class="detail">
         <span>نوع شرکت</span
         ><strong>{{
           item.selectedPreference?.application?.opportunity?.company?.isApproved
-            ? "مورد تأیید دانشگاه"
-            : "پیشنهادی دانشجو"
+            ? "مورد تأیید دانشکده"
+            : "شرکت جدید"
         }}</strong>
       </div>
       <div class="detail">
@@ -80,37 +88,63 @@
     </div>
   </p-card>
 
+  @if (item.companySupervisor; as supervisor) {
+    <p-card header="سرپرست شرکت">
+      <div class="detail-grid">
+        <div class="detail"><span>نام و نام خانوادگی</span><strong>{{ supervisor.fullName }}</strong></div>
+        <div class="detail"><span>شماره تماس</span><strong>{{ supervisor.phone ?? "—" }}</strong></div>
+        <div class="detail"><span>سمت</span><strong>{{ supervisor.jobTitle ?? "—" }}</strong></div>
+      </div>
+    </p-card>
+  }
+
   @if (item.status === "PENDING_COMPANY_DETAILS") {
-    <p-card header="تأیید پذیرش دانشجو">
-      <form class="form-grid" [formGroup]="confirmationForm">
+    @if (item.companyDetailsRevisionComment) {
+      <p-card header="اصلاحات درخواستی آموزش"><p>{{ item.companyDetailsRevisionComment }}</p></p-card>
+    }
+    <p-card header="ثبت اطلاعات شروع کارآموزی">
+      <form class="form-grid" [formGroup]="placementForm">
         <label class="field full-width">
           <span>موضوع کارآموزی <b>*</b></span>
-          <input pInputText formControlName="internshipSubject" />
+          <input pInputText formControlName="internshipSubject" maxlength="500" />
+          @if (placementForm.controls.internshipSubject.touched && placementForm.controls.internshipSubject.invalid) {
+            <small>موضوع کارآموزی الزامی است.</small>
+          }
         </label>
         <label class="field">
           <span>تاریخ شروع <b>*</b></span>
           <app-jalali-date-picker formControlName="startDate" />
+          @if (placementForm.controls.startDate.touched && placementForm.controls.startDate.invalid) {
+            <small>تاریخ شروع کارآموزی الزامی است.</small>
+          }
         </label>
         <label class="field">
           <span>تلفن محل کارآموزی <b>*</b></span>
-          <input pInputText formControlName="workplacePhone" dir="ltr" />
+          <input pInputText formControlName="workplacePhone" dir="ltr" maxlength="50" />
+          @if (placementForm.controls.workplacePhone.touched && placementForm.controls.workplacePhone.invalid) {
+            <small>شماره تماس محل کارآموزی الزامی است.</small>
+          }
         </label>
         <label class="field full-width">
           <span>آدرس محل کارآموزی <b>*</b></span>
-          <input pInputText formControlName="workplaceAddress" />
+          <input pInputText formControlName="workplaceAddress" maxlength="1000" />
+          @if (placementForm.controls.workplaceAddress.touched && placementForm.controls.workplaceAddress.invalid) {
+            <small>آدرس محل کارآموزی الزامی است.</small>
+          }
         </label>
       </form>
       <div class="card-actions">
         <p-button
-          label="تأیید پذیرش دانشجو"
+          label="ثبت اطلاعات شروع کارآموزی"
           icon="pi pi-check"
           [loading]="saving()"
+          [disabled]="saving() || placementForm.invalid"
           (onClick)="confirmSubmission()"
         />
       </div>
     </p-card>
   } @else {
-    <p-card header="اطلاعات تأییدشده محل کارآموزی">
+    <p-card header="اطلاعات ثبت‌شده محل کارآموزی">
       <div class="detail-grid">
         <div class="detail">
           <span>موضوع کارآموزی</span

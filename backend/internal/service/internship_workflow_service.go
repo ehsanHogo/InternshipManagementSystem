@@ -171,32 +171,8 @@ func (service *InternshipService) CancelUniversityReview(caseID uint, comment st
 	return service.getCaseByID(caseID)
 }
 
-func (service *InternshipService) ListCompanyCases(supervisorID uint) ([]model.InternshipCase, error) {
-	var cases []model.InternshipCase
-	if err := service.caseQuery(service.db).
-		Where("company_supervisor_id = ? AND status IN ?", supervisorID, companyVisibleStatuses()).
-		Order("updated_at DESC").Find(&cases).Error; err != nil {
-		return nil, fmt.Errorf("list company internship cases: %w", err)
-	}
-	return cases, nil
-}
-
-func (service *InternshipService) GetCompanyCase(supervisorID, caseID uint) (*model.InternshipCase, error) {
-	var internshipCase model.InternshipCase
-	err := service.caseQuery(service.db).
-		Where("company_supervisor_id = ? AND status IN ?", supervisorID, companyVisibleStatuses()).
-		First(&internshipCase, caseID).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrCaseAccessDenied
-	}
-	if err != nil {
-		return nil, fmt.Errorf("get company internship case: %w", err)
-	}
-	return &internshipCase, nil
-}
-
-// Deprecated: company placement details will be submitted by the supervisor
-// resolved from the selected opportunity in a later milestone.
+// Deprecated: the old company acceptance action remains disabled. Use
+// SubmitPlacementDetails for the supervisor resolved from the selected opportunity.
 func (service *InternshipService) ConfirmCompanyCase(supervisorID, caseID uint, input CompanyConfirmationInput) (*model.InternshipCase, error) {
 	return nil, ErrObsoleteWorkflow
 }
