@@ -11,17 +11,17 @@ import (
 )
 
 type professorCaseListResponse struct {
-	CaseID                     uint                        `json:"caseId"`
-	Student                    model.PublicUser            `json:"student"`
-	Company                    string                      `json:"company"`
-	InternshipSubject          *string                     `json:"internshipSubject"`
-	Status                     model.InternshipCaseStatus  `json:"status"`
-	WeeklyReportCount          int                         `json:"weeklyReportCount"`
-	ConfirmedWeeklyReportCount int                         `json:"confirmedWeeklyReportCount"`
-	HasCompanyEvaluation       bool                        `json:"hasCompanyEvaluation"`
-	HasFinalReport             bool                        `json:"hasFinalReport"`
-	CanProfessorComplete       bool                        `json:"canProfessorComplete"`
-	FinalResult                *model.ProfessorFinalResult `json:"finalResult,omitempty"`
+	CaseID                    uint                        `json:"caseId"`
+	Student                   model.PublicUser            `json:"student"`
+	Company                   string                      `json:"company"`
+	InternshipSubject         *string                     `json:"internshipSubject"`
+	Status                    model.InternshipCaseStatus  `json:"status"`
+	WeeklyReportCount         int                         `json:"weeklyReportCount"`
+	ApprovedWeeklyReportCount int                         `json:"approvedWeeklyReportCount"`
+	HasCompanyEvaluation      bool                        `json:"hasCompanyEvaluation"`
+	HasFinalReport            bool                        `json:"hasFinalReport"`
+	CanProfessorComplete      bool                        `json:"canProfessorComplete"`
+	FinalResult               *model.ProfessorFinalResult `json:"finalResult,omitempty"`
 }
 
 type professorStudentResponse struct {
@@ -63,20 +63,20 @@ type professorCompanyEvaluationResponse struct {
 }
 
 type professorCaseDetailResponse struct {
-	CaseID                     uint                                `json:"caseId"`
-	Student                    professorStudentResponse            `json:"student"`
-	Internship                 professorInternshipResponse         `json:"internship"`
-	WeeklyReports              []model.WeeklyReport                `json:"weeklyReports"`
-	CompanyEvaluation          *professorCompanyEvaluationResponse `json:"companyEvaluation,omitempty"`
-	FinalReport                *fileMetadataResponse               `json:"finalReport,omitempty"`
-	WeeklyReportCount          int                                 `json:"weeklyReportCount"`
-	ConfirmedWeeklyReportCount int                                 `json:"confirmedWeeklyReportCount"`
-	HasCompanyEvaluation       bool                                `json:"hasCompanyEvaluation"`
-	HasFinalReport             bool                                `json:"hasFinalReport"`
-	CanProfessorComplete       bool                                `json:"canProfessorComplete"`
-	FinalResult                *model.ProfessorFinalResult         `json:"finalResult,omitempty"`
-	ProfessorComment           *string                             `json:"professorComment,omitempty"`
-	CompletedAt                *time.Time                          `json:"completedAt,omitempty"`
+	CaseID                    uint                                `json:"caseId"`
+	Student                   professorStudentResponse            `json:"student"`
+	Internship                professorInternshipResponse         `json:"internship"`
+	WeeklyReports             []model.WeeklyReport                `json:"weeklyReports"`
+	CompanyEvaluation         *professorCompanyEvaluationResponse `json:"companyEvaluation,omitempty"`
+	FinalReport               *fileMetadataResponse               `json:"finalReport,omitempty"`
+	WeeklyReportCount         int                                 `json:"weeklyReportCount"`
+	ApprovedWeeklyReportCount int                                 `json:"approvedWeeklyReportCount"`
+	HasCompanyEvaluation      bool                                `json:"hasCompanyEvaluation"`
+	HasFinalReport            bool                                `json:"hasFinalReport"`
+	CanProfessorComplete      bool                                `json:"canProfessorComplete"`
+	FinalResult               *model.ProfessorFinalResult         `json:"finalResult,omitempty"`
+	ProfessorComment          *string                             `json:"professorComment,omitempty"`
+	CompletedAt               *time.Time                          `json:"completedAt,omitempty"`
 }
 
 type completeProfessorCaseRequest struct {
@@ -148,18 +148,18 @@ func professorCaseRequest(ctx *gin.Context) (uint, uint, bool) {
 }
 
 func professorListResponse(internshipCase *model.InternshipCase) professorCaseListResponse {
-	reportCount, confirmedCount, hasEvaluation, hasFinalReport, canComplete := professorReadiness(internshipCase)
+	reportCount, approvedCount, hasEvaluation, hasFinalReport, canComplete := professorReadiness(internshipCase)
 	return professorCaseListResponse{
 		CaseID: internshipCase.ID, Student: internshipCase.Student.Public(), Company: professorCompanyName(internshipCase),
 		InternshipSubject: internshipCase.InternshipSubject, Status: internshipCase.Status,
-		WeeklyReportCount: reportCount, ConfirmedWeeklyReportCount: confirmedCount,
+		WeeklyReportCount: reportCount, ApprovedWeeklyReportCount: approvedCount,
 		HasCompanyEvaluation: hasEvaluation, HasFinalReport: hasFinalReport,
 		CanProfessorComplete: canComplete, FinalResult: internshipCase.FinalResult,
 	}
 }
 
 func professorDetailResponse(internshipCase *model.InternshipCase) professorCaseDetailResponse {
-	reportCount, confirmedCount, hasEvaluation, hasFinalReport, canComplete := professorReadiness(internshipCase)
+	reportCount, approvedCount, hasEvaluation, hasFinalReport, canComplete := professorReadiness(internshipCase)
 	response := professorCaseDetailResponse{
 		CaseID: internshipCase.ID,
 		Student: professorStudentResponse{
@@ -171,8 +171,8 @@ func professorDetailResponse(internshipCase *model.InternshipCase) professorCase
 			StartDate: internshipCase.StartDate, WorkplaceAddress: internshipCase.WorkplaceAddress,
 			WorkplacePhone: internshipCase.WorkplacePhone, Status: internshipCase.Status,
 		},
-		WeeklyReports:     internshipCase.WeeklyReports,
-		WeeklyReportCount: reportCount, ConfirmedWeeklyReportCount: confirmedCount,
+		WeeklyReports:     submittedWeeklyReports(internshipCase.WeeklyReports),
+		WeeklyReportCount: reportCount, ApprovedWeeklyReportCount: approvedCount,
 		HasCompanyEvaluation: hasEvaluation, HasFinalReport: hasFinalReport, CanProfessorComplete: canComplete,
 		FinalResult: internshipCase.FinalResult, ProfessorComment: internshipCase.ProfessorComment,
 		CompletedAt: internshipCase.CompletedAt,
@@ -209,16 +209,16 @@ func professorDetailResponse(internshipCase *model.InternshipCase) professorCase
 
 func professorReadiness(internshipCase *model.InternshipCase) (int, int, bool, bool, bool) {
 	reportCount := len(internshipCase.WeeklyReports)
-	confirmedCount := 0
+	approvedCount := 0
 	for _, report := range internshipCase.WeeklyReports {
-		if report.IsConfirmed {
-			confirmedCount++
+		if report.Status() == model.WeeklyReportApproved {
+			approvedCount++
 		}
 	}
 	hasEvaluation := internshipCase.CompanyEvaluation != nil
 	hasFinalReport := internshipCase.FinalReportFile != nil
-	canComplete := internshipCase.Status == model.InternshipCaseStatusActive && reportCount == 8 && confirmedCount == 8 && hasEvaluation && hasFinalReport
-	return reportCount, confirmedCount, hasEvaluation, hasFinalReport, canComplete
+	canComplete := internshipCase.Status == model.InternshipCaseStatusActive && reportCount == 8 && approvedCount == 8 && hasEvaluation && hasFinalReport
+	return reportCount, approvedCount, hasEvaluation, hasFinalReport, canComplete
 }
 
 // Company resolution is deferred until opportunity/application relations are added.

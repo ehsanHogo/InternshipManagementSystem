@@ -14,7 +14,7 @@ import (
 var (
 	ErrInvalidProfessorResult             = errors.New("invalid professor final result")
 	ErrProfessorCaseNotActive             = errors.New("internship case is not active")
-	ErrProfessorWeeklyReportsIncomplete   = errors.New("all 8 weekly reports must be submitted and confirmed")
+	ErrProfessorWeeklyReportsIncomplete   = errors.New("all 8 weekly reports must be approved by both reviewers")
 	ErrProfessorCompanyEvaluationRequired = errors.New("company evaluation is required")
 	ErrProfessorFinalReportRequired       = errors.New("final internship report is required")
 )
@@ -71,17 +71,17 @@ func (service *InternshipService) CompleteProfessorCase(professorID, caseID uint
 			return ErrProfessorCaseNotActive
 		}
 
-		var reportCount, confirmedReportCount int64
+		var reportCount, companyApprovedReportCount int64
 		if err := tx.Model(&model.WeeklyReport{}).
 			Where("internship_case_id = ?", caseID).Count(&reportCount).Error; err != nil {
 			return fmt.Errorf("count professor weekly reports: %w", err)
 		}
 		if err := tx.Model(&model.WeeklyReport{}).
-			Where("internship_case_id = ? AND is_confirmed = ?", caseID, true).
-			Count(&confirmedReportCount).Error; err != nil {
-			return fmt.Errorf("count professor confirmed weekly reports: %w", err)
+			Where("internship_case_id = ? AND company_review_status = ? AND professor_review_status = ? AND submitted_at IS NOT NULL", caseID, model.WeeklyReviewApproved, model.WeeklyReviewApproved).
+			Count(&companyApprovedReportCount).Error; err != nil {
+			return fmt.Errorf("count professor approved weekly reports: %w", err)
 		}
-		if reportCount != 8 || confirmedReportCount != 8 {
+		if reportCount != 8 || companyApprovedReportCount != 8 {
 			return ErrProfessorWeeklyReportsIncomplete
 		}
 

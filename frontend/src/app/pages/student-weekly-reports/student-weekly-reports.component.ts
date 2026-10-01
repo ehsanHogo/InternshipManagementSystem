@@ -1,14 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 
+import { WeeklyReportReviewComponent } from '../../shared/weekly-report-review.component';
+import { userErrorMessage } from '../../shared/http-error-message';
 import { InternshipCase, WeeklyReport } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
@@ -17,7 +19,8 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 @Component({
   selector: 'app-student-weekly-reports',
-  imports: [ReactiveFormsModule, JalaliDatePickerComponent, JalaliDatePipe, PersianDigitsPipe, ButtonModule, CardModule, DialogModule, InputNumberModule, TagModule, TextareaModule],
+  providers: [ConfirmationService],
+  imports: [WeeklyReportReviewComponent, ConfirmDialogModule, ReactiveFormsModule, JalaliDatePickerComponent, JalaliDatePipe, PersianDigitsPipe, ButtonModule, CardModule, DialogModule, InputNumberModule, TextareaModule],
   templateUrl: './student-weekly-reports.component.html',
   styleUrls: ['../workflow-page.scss', './student-weekly-reports.component.scss']
 })
@@ -26,6 +29,8 @@ export class StudentWeeklyReportsComponent {
   private readonly internshipService = inject(InternshipService);
   private readonly messages = inject(MessageService);
 
+  private readonly confirmation = inject(ConfirmationService);
+
   readonly internshipCase = signal<InternshipCase | null>(null);
   readonly reports = signal<WeeklyReport[]>([]);
   readonly loading = signal(true);
@@ -33,26 +38,35 @@ export class StudentWeeklyReportsComponent {
   readonly dialogVisible = signal(false);
   readonly editingReport = signal<WeeklyReport | null>(null);
 
+  readonly weeks = [1, 2, 3, 4, 5, 6, 7, 8];
+
   readonly reportForm = this.formBuilder.group({
     weekNumber: this.formBuilder.nonNullable.control(1, [Validators.required, Validators.min(1), Validators.max(8)]),
     startDate: this.formBuilder.nonNullable.control('', Validators.required),
     endDate: this.formBuilder.nonNullable.control('', Validators.required),
-    activityDescription: this.formBuilder.nonNullable.control('', Validators.required)
+    activityDescription: this.formBuilder.nonNullable.control('', [Validators.required, Validators.pattern(/\S/)])
   });
 
   constructor() {
     this.load();
   }
 
-  openCreate(): void {
+  openCreate(week = this.nextWeek()): void {
+    if (this.internshipCase()?.status !== 'ACTIVE') return;
     this.editingReport.set(null);
-    this.reportForm.reset({ weekNumber: this.nextWeek(), startDate: '', endDate: '', activityDescription: '' });
+    this.reportForm.reset({ weekNumber: week, startDate: '', endDate: '', activityDescription: '' });
+    this.reportForm.controls.weekNumber.enable();
     this.dialogVisible.set(true);
   }
 
+  reportForWeek(week: number): WeeklyReport | undefined {
+    return this.reports().find((report) => report.weekNumber === week);
+  }
+
   openEdit(report: WeeklyReport): void {
-    if (report.isConfirmed) return;
+    if (!this.canEdit(report)) return;
     this.editingReport.set(report);
+    this.reportForm.controls.weekNumber.disable();
     this.reportForm.reset({
       weekNumber: report.weekNumber,
       startDate: report.startDate.slice(0, 10),
@@ -63,6 +77,7 @@ export class StudentWeeklyReportsComponent {
   }
 
   save(): void {
+    if (this.saving() || this.internshipCase()?.status !== 'ACTIVE') return;
     if (this.reportForm.invalid) {
       this.reportForm.markAllAsTouched();
       this.messages.add({ severity: 'warn', summary: 'اطلاعات ناقص', detail: 'تمام فیلدهای گزارش را تکمیل کنید.' });
@@ -75,6 +90,10 @@ export class StudentWeeklyReportsComponent {
     }
     const payload = { ...value, activityDescription: value.activityDescription.trim() };
     const editing = this.editingReport();
+    if (!editing && this.reportForWeek(value.weekNumber)) {
+      this.messages.add({ severity: 'warn', summary: 'هفته تکراری', detail: 'برای این هفته قبلاً گزارش ثبت شده است.' });
+      return;
+    }
     this.saving.set(true);
     const request = editing
       ? this.internshipService.updateWeeklyReport(editing.id, payload)
@@ -90,6 +109,30 @@ export class StudentWeeklyReportsComponent {
       error: (error: HttpErrorResponse) => {
         this.saving.set(false);
         this.showError(error);
+      }
+    });
+  }
+
+  canEdit(report: WeeklyReport): boolean {
+    return this.internshipCase()?.status === 'ACTIVE' && (report.status === 'DRAFT' || report.status === 'REVISION_REQUESTED');
+  }
+
+  confirmSubmit(report: WeeklyReport): void {
+    if (!this.canEdit(report) || this.saving()) return;
+    this.confirmation.confirm({
+      header: report.status === 'DRAFT' ? 'ارسال گزارش' : 'ارسال مجدد گزارش',
+      message: report.status === 'DRAFT' ? 'آیا از ارسال این گزارش برای بررسی مطمئن هستید؟' : 'آیا از ارسال مجدد گزارش اصلاح‌شده مطمئن هستید؟',
+      acceptLabel: 'ارسال', rejectLabel: 'انصراف',
+      accept: () => {
+        this.saving.set(true);
+        this.internshipService.submitWeeklyReport(report.id).subscribe({
+          next: (updated) => {
+            this.reports.update((items) => items.map((item) => item.id === updated.id ? updated : item));
+            this.saving.set(false);
+            this.messages.add({ severity: 'success', summary: 'ارسال شد', detail: 'گزارش برای بررسی سرپرست شرکت و استاد ارسال شد.' });
+          },
+          error: (error: HttpErrorResponse) => { this.saving.set(false); this.showError(error); }
+        });
       }
     });
   }
@@ -118,9 +161,6 @@ export class StudentWeeklyReportsComponent {
   }
 
   private showError(error: HttpErrorResponse): void {
-    let detail = 'انجام عملیات ناموفق بود.';
-    if (error.status === 409) detail = 'برای این هفته گزارش ثبت شده یا گزارش تأیید شده و قابل ویرایش نیست.';
-    if (error.status === 400) detail = 'اطلاعات گزارش معتبر نیست.';
-    this.messages.add({ severity: 'error', summary: 'خطا', detail });
+    this.messages.add({ severity: 'error', summary: 'خطا', detail: userErrorMessage(error, 'انجام عملیات ناموفق بود.') });
   }
 }

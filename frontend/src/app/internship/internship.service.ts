@@ -146,11 +146,16 @@ export class InternshipService {
     return this.http.get<WeeklyReport[]>(`/api/company/internship-cases/${caseId}/weekly-reports`);
   }
 
-  confirmWeeklyReport(caseId: number, reportId: number, comment?: string): Observable<WeeklyReport> {
-    return this.http.post<WeeklyReport>(
-      `/api/company/internship-cases/${caseId}/weekly-reports/${reportId}/confirm`,
-      { comment: comment?.trim() || null }
-    );
+  reviewCompanyWeeklyReport(caseId: number, reportId: number, action: 'approve' | 'request-revision', comment?: string): Observable<WeeklyReport> {
+    return this.http.post<WeeklyReport>(`/api/company/internship-cases/${caseId}/weekly-reports/${reportId}/${action}`, { comment });
+  }
+
+  reviewProfessorWeeklyReport(caseId: number, reportId: number, action: 'approve' | 'request-revision', comment?: string): Observable<WeeklyReport> {
+    return this.http.post<WeeklyReport>(`/api/professor/internship-cases/${caseId}/weekly-reports/${reportId}/${action}`, { comment });
+  }
+
+  submitWeeklyReport(reportId: number): Observable<WeeklyReport> {
+    return this.http.post<WeeklyReport>(`/api/student/internship-case/weekly-reports/${reportId}/submit`, {});
   }
 
   getCompanyEvaluation(caseId: number): Observable<CompanyEvaluation> {

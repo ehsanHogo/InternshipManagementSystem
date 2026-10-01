@@ -48,14 +48,14 @@ func TestIncompleteWeeklyReportsUseConflictResponse(t *testing.T) {
 func TestCaseResponseDerivesCompanyEvaluationReadiness(t *testing.T) {
 	reports := make([]model.WeeklyReport, 8)
 	for index := range reports {
-		reports[index] = model.WeeklyReport{WeekNumber: index + 1, IsConfirmed: true}
+		reports[index] = model.WeeklyReport{WeekNumber: index + 1, CompanyReviewStatus: model.WeeklyReviewApproved, ProfessorReviewStatus: model.WeeklyReviewPending, SubmittedAt: timePointerForTest()}
 	}
 	internshipCase := &model.InternshipCase{
 		Status: model.InternshipCaseStatusActive, WeeklyReports: reports,
 	}
 
 	response := caseResponse(internshipCase)
-	if response.WeeklyReportCount != 8 || response.ConfirmedReportCount != 8 || !response.CanSubmitCompanyEvaluation {
+	if response.WeeklyReportCount != 8 || response.CompanyApprovedReportCount != 8 || response.ApprovedReportCount != 0 || !response.CanSubmitCompanyEvaluation {
 		t.Fatalf("unexpected ready response: %+v", response)
 	}
 
@@ -68,23 +68,23 @@ func TestCaseResponseDerivesCompanyEvaluationReadiness(t *testing.T) {
 func TestProfessorReadinessRequiresEveryPrerequisite(t *testing.T) {
 	reports := make([]model.WeeklyReport, 8)
 	for index := range reports {
-		reports[index] = model.WeeklyReport{WeekNumber: index + 1, IsConfirmed: true}
+		reports[index] = model.WeeklyReport{WeekNumber: index + 1, CompanyReviewStatus: model.WeeklyReviewApproved, ProfessorReviewStatus: model.WeeklyReviewApproved, SubmittedAt: timePointerForTest()}
 	}
 	internshipCase := &model.InternshipCase{
 		Status: model.InternshipCaseStatusActive, WeeklyReports: reports,
 		CompanyEvaluation: &model.CompanyEvaluation{}, FinalReportFile: &model.File{},
 	}
 
-	reportCount, confirmedCount, hasEvaluation, hasFinalReport, canComplete := professorReadiness(internshipCase)
-	if reportCount != 8 || confirmedCount != 8 || !hasEvaluation || !hasFinalReport || !canComplete {
-		t.Fatalf("unexpected ready response: %d %d %v %v %v", reportCount, confirmedCount, hasEvaluation, hasFinalReport, canComplete)
+	reportCount, approvedCount, hasEvaluation, hasFinalReport, canComplete := professorReadiness(internshipCase)
+	if reportCount != 8 || approvedCount != 8 || !hasEvaluation || !hasFinalReport || !canComplete {
+		t.Fatalf("unexpected ready response: %d %d %v %v %v", reportCount, approvedCount, hasEvaluation, hasFinalReport, canComplete)
 	}
 
-	internshipCase.WeeklyReports[0].IsConfirmed = false
+	internshipCase.WeeklyReports[0].ProfessorReviewStatus = model.WeeklyReviewPending
 	if _, _, _, _, ready := professorReadiness(internshipCase); ready {
 		t.Fatal("case with an unconfirmed report was reported as ready")
 	}
-	internshipCase.WeeklyReports[0].IsConfirmed = true
+	internshipCase.WeeklyReports[0].ProfessorReviewStatus = model.WeeklyReviewApproved
 	internshipCase.Status = model.InternshipCaseStatusCompleted
 	if _, _, _, _, ready := professorReadiness(internshipCase); ready {
 		t.Fatal("completed case was reported as completable")
@@ -122,3 +122,5 @@ func TestProfessorCompletionRejectsNumericJSONResult(t *testing.T) {
 		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusBadRequest)
 	}
 }
+
+func timePointerForTest() *time.Time { now := time.Now(); return &now }

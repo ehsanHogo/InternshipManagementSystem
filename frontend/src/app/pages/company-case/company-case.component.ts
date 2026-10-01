@@ -24,6 +24,7 @@ import {
   internshipStatusLabels,
   professorFinalResultLabels
 } from '../../internship/internship.models';
+import { WeeklyReportReviewComponent } from '../../shared/weekly-report-review.component';
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
@@ -32,7 +33,7 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 @Component({
   selector: 'app-company-case',
-  imports: [JalaliDatePipe, PersianDigitsPipe, JalaliDatePickerComponent, ReactiveFormsModule, RouterLink, ButtonModule, CardModule, ConfirmDialogModule, DialogModule, InputNumberModule, InputTextModule, SelectModule, TagModule, TextareaModule],
+  imports: [WeeklyReportReviewComponent, JalaliDatePipe, PersianDigitsPipe, JalaliDatePickerComponent, ReactiveFormsModule, RouterLink, ButtonModule, CardModule, ConfirmDialogModule, DialogModule, InputNumberModule, InputTextModule, SelectModule, TagModule, TextareaModule],
   providers: [ConfirmationService],
   templateUrl: './company-case.component.html',
   styleUrl: '../workflow-page.scss'
@@ -57,10 +58,10 @@ export class CompanyCaseComponent {
   readonly downloading = signal(false);
   readonly reportDialogVisible = signal(false);
   readonly selectedReport = signal<WeeklyReport | null>(null);
-  readonly confirmedReportCount = computed(() => this.reports().filter((report) => report.isConfirmed).length);
+  readonly companyApprovedReportCount = computed(() => this.reports().filter((report) => report.companyReviewStatus === 'APPROVED').length);
   readonly canSubmitEvaluation = computed(() =>
     this.internshipCase()?.status === 'ACTIVE' &&
-    this.reports().length === 8 && this.confirmedReportCount() === 8 && this.evaluation() === null
+    this.reports().length === 8 && this.companyApprovedReportCount() === 8 && this.evaluation() === null
   );
 
   readonly ratingOptions = (Object.entries(evaluationRatingLabels) as [EvaluationRating, string][])
@@ -147,22 +148,32 @@ export class CompanyCaseComponent {
     });
   }
 
-  openReportConfirmation(report: WeeklyReport): void {
+  canReviewReport(report: WeeklyReport): boolean {
+    return this.internshipCase()?.status === 'ACTIVE' && report.status === 'SUBMITTED' && report.companyReviewStatus === 'PENDING';
+  }
+
+  openReportReview(report: WeeklyReport): void {
+    if (!this.canReviewReport(report)) return;
     this.selectedReport.set(report);
     this.reportConfirmationForm.reset({ comment: '' });
     this.reportDialogVisible.set(true);
   }
 
-  confirmWeeklyReport(): void {
+  reviewWeeklyReport(action: 'approve' | 'request-revision'): void {
     const report = this.selectedReport();
-    if (!report) return;
+    if (!report || !this.canReviewReport(report) || this.confirmingReport()) return;
+    const comment = this.reportConfirmationForm.getRawValue().comment.trim();
+    if (action === 'request-revision' && !comment) {
+      this.messages.add({ severity: 'warn', summary: 'نظر الزامی', detail: 'برای درخواست اصلاح، توضیح غیرخالی وارد کنید.' });
+      return;
+    }
     this.confirmingReport.set(true);
-    this.internshipService.confirmWeeklyReport(this.caseID, report.id, this.reportConfirmationForm.getRawValue().comment).subscribe({
+    this.internshipService.reviewCompanyWeeklyReport(this.caseID, report.id, action, comment || undefined).subscribe({
       next: (confirmed) => {
         this.reports.update((reports) => reports.map((item) => item.id === confirmed.id ? confirmed : item));
         this.confirmingReport.set(false);
         this.reportDialogVisible.set(false);
-        this.messages.add({ severity: 'success', summary: 'تأیید شد', detail: 'گزارش با موفقیت تأیید شد.' });
+        this.messages.add({ severity: 'success', summary: 'ثبت شد', detail: 'نظر شما درباره گزارش ثبت شد.' });
       },
       error: (error: HttpErrorResponse) => { this.confirmingReport.set(false); this.showError(error); }
     });
@@ -170,7 +181,7 @@ export class CompanyCaseComponent {
 
   confirmEvaluationSubmission(): void {
     if (!this.canSubmitEvaluation()) {
-      this.messages.add({ severity: 'warn', summary: 'ارزیابی غیرفعال است', detail: 'ابتدا هر ۸ گزارش هفتگی باید ثبت و تأیید شوند.' });
+      this.messages.add({ severity: 'warn', summary: 'ارزیابی غیرفعال است', detail: 'ابتدا هر ۸ گزارش هفتگی باید توسط شرکت تأیید شوند.' });
       return;
     }
     if (this.evaluationForm.invalid) {

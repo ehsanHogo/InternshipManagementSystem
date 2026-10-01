@@ -60,7 +60,8 @@ type internshipCaseResponse struct {
 	ActivatedAt                   *time.Time                     `json:"activatedAt"`
 	FinalReport                   *fileMetadataResponse          `json:"finalReport,omitempty"`
 	WeeklyReportCount             int                            `json:"weeklyReportCount"`
-	ConfirmedReportCount          int                            `json:"confirmedReportCount"`
+	ApprovedReportCount           int                            `json:"approvedReportCount"`
+	CompanyApprovedReportCount    int                            `json:"companyApprovedReportCount"`
 	CanSubmitCompanyEvaluation    bool                           `json:"canSubmitCompanyEvaluation"`
 	WeeklyReports                 []model.WeeklyReport           `json:"weeklyReports"`
 	CompanyEvaluation             *model.CompanyEvaluation       `json:"companyEvaluation,omitempty"`
@@ -255,7 +256,7 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 	case errors.Is(err, service.ErrAssignmentNotFound), errors.Is(err, service.ErrInvalidApplication),
 		errors.Is(err, service.ErrInvalidPreference), errors.Is(err, service.ErrPreferenceNotOwned),
 		errors.Is(err, service.ErrPreferenceNotAccepted), errors.Is(err, service.ErrInvalidCaseStatus),
-		errors.Is(err, service.ErrCompanySupervisor), errors.Is(err, service.ErrInvalidWeeklyReport),
+		errors.Is(err, service.ErrCompanySupervisor), errors.Is(err, service.ErrInvalidWeeklyReport), errors.Is(err, service.ErrWeeklyReviewCommentRequired),
 		errors.Is(err, service.ErrInvalidEvaluation), errors.Is(err, service.ErrInvalidProfessorResult),
 		errors.Is(err, service.ErrPreferenceNotInCase), errors.Is(err, service.ErrIntroductionLetterNumberRequired),
 		errors.Is(err, service.ErrIntroductionLetterDateRequired), errors.Is(err, service.ErrCancellationCommentRequired),
@@ -266,7 +267,7 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		status = http.StatusBadRequest
 	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit),
 		errors.Is(err, service.ErrDuplicatePriority), errors.Is(err, service.ErrPreferenceAlreadyExists),
-		errors.Is(err, service.ErrDuplicateWeeklyReport), errors.Is(err, service.ErrWeeklyReportConfirmed),
+		errors.Is(err, service.ErrDuplicateWeeklyReport), errors.Is(err, service.ErrWeeklyReportState),
 		errors.Is(err, service.ErrDuplicateEvaluation), errors.Is(err, service.ErrWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrProfessorCaseNotActive), errors.Is(err, service.ErrProfessorWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrProfessorCompanyEvaluationRequired), errors.Is(err, service.ErrProfessorFinalReportRequired),
@@ -450,8 +451,10 @@ func publicInternshipError(err error) string {
 		return "اطلاعات گزارش هفتگی معتبر نیست."
 	case errors.Is(err, service.ErrDuplicateWeeklyReport):
 		return "گزارش این هفته قبلاً ثبت شده است."
-	case errors.Is(err, service.ErrWeeklyReportConfirmed):
-		return "گزارش هفتگی تأییدشده قابل تغییر نیست."
+	case errors.Is(err, service.ErrWeeklyReportState):
+		return "این عملیات در وضعیت فعلی گزارش مجاز نیست."
+	case errors.Is(err, service.ErrWeeklyReviewCommentRequired):
+		return "برای درخواست اصلاح، نظر غیرخالی وارد کنید."
 	case errors.Is(err, service.ErrEvaluationNotFound):
 		return "ارزیابی شرکت یافت نشد."
 	case errors.Is(err, service.ErrInvalidEvaluation):
@@ -520,8 +523,11 @@ func caseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 	}
 	response.CompanyEvaluation = internshipCase.CompanyEvaluation
 	for _, report := range internshipCase.WeeklyReports {
-		if report.IsConfirmed {
-			response.ConfirmedReportCount++
+		if report.Status() == model.WeeklyReportApproved {
+			response.ApprovedReportCount++
+		}
+		if report.CompanyReviewStatus == model.WeeklyReviewApproved {
+			response.CompanyApprovedReportCount++
 		}
 	}
 	if internshipCase.FinalReportFile != nil {
@@ -531,7 +537,7 @@ func caseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 		}
 	}
 	response.CanSubmitCompanyEvaluation = internshipCase.Status == model.InternshipCaseStatusActive &&
-		response.WeeklyReportCount == 8 && response.ConfirmedReportCount == 8 && internshipCase.CompanyEvaluation == nil
+		response.WeeklyReportCount == 8 && response.CompanyApprovedReportCount == 8 && internshipCase.CompanyEvaluation == nil
 	return response
 }
 

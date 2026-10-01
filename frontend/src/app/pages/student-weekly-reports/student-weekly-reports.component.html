@@ -9,6 +9,15 @@
   }
 </section>
 
+@if (!loading() && internshipCase()?.status === 'ACTIVE') {
+  <div class="week-slots">
+    @for (week of weeks; track week) {
+      <p-button [label]="'هفته ' + (week | persianDigits)" [outlined]="true" [disabled]="!!reportForWeek(week)" (onClick)="openCreate(week)" />
+    }
+  </div>
+  <p class="muted">هفته‌های ثبت‌نشده را در هر ترتیبی می‌توانید انتخاب کنید.</p>
+}
+
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت گزارش‌ها...</span></div>
 } @else if (internshipCase()?.status !== 'ACTIVE' && internshipCase()?.status !== 'COMPLETED') {
@@ -22,19 +31,18 @@
         <ng-template #header>
           <div class="report-header">
             <strong>هفته {{ report.weekNumber | persianDigits }}</strong>
-            <p-tag [value]="report.isConfirmed ? 'تأیید شده' : 'در انتظار تأیید'" [severity]="report.isConfirmed ? 'success' : 'warn'" />
+
           </div>
         </ng-template>
         <div class="detail-grid">
           <div class="detail"><span>تاریخ شروع</span><strong>{{ report.startDate | jalaliDate }}</strong></div>
           <div class="detail"><span>تاریخ پایان</span><strong>{{ report.endDate | jalaliDate }}</strong></div>
           <div class="detail full-width"><span>شرح فعالیت‌ها</span><strong class="description">{{ report.activityDescription }}</strong></div>
-          @if (report.supervisorComment) {
-            <div class="detail full-width"><span>نظر سرپرست</span><strong>{{ report.supervisorComment }}</strong></div>
-          }
         </div>
-        @if (internshipCase()?.status === 'ACTIVE' && !report.isConfirmed) {
-          <div class="card-actions"><p-button label="ویرایش گزارش" icon="pi pi-pencil" severity="secondary" [outlined]="true" (onClick)="openEdit(report)" /></div>
+        <app-weekly-report-review [report]="report" />
+        @if (canEdit(report)) {
+          <div class="card-actions"><p-button label="ویرایش گزارش" icon="pi pi-pencil" severity="secondary" [outlined]="true" (onClick)="openEdit(report)" />
+            <p-button [label]="report.status === 'DRAFT' ? 'ارسال گزارش' : 'ارسال مجدد گزارش'" icon="pi pi-send" [loading]="saving()" (onClick)="confirmSubmit(report)" /></div>
         }
       </p-card>
     }
@@ -65,6 +73,8 @@
   </form>
   <ng-template #footer>
     <p-button label="انصراف" severity="secondary" [text]="true" (onClick)="dialogVisible.set(false)" />
-    <p-button label="ذخیره گزارش" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+    <p-button [label]="editingReport() ? 'ذخیره تغییرات' : 'ذخیره پیش‌نویس'" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
   </ng-template>
 </p-dialog>
+
+<p-confirmdialog appendTo="body" />

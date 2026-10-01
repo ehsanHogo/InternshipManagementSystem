@@ -6,12 +6,14 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 
 import {
+  WeeklyReport,
   EvaluationRating,
   ProfessorCaseDetail,
   ProfessorCompanyEvaluation,
@@ -20,6 +22,7 @@ import {
   internshipStatusLabels,
   professorFinalResultLabels
 } from '../../internship/internship.models';
+import { WeeklyReportReviewComponent } from '../../shared/weekly-report-review.component';
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 import { userErrorMessage } from '../../shared/http-error-message';
@@ -33,7 +36,7 @@ type EvaluationField =
 @Component({
   selector: 'app-professor-case',
   imports: [
-    JalaliDatePipe, PersianDigitsPipe, ReactiveFormsModule, RouterLink, ButtonModule, CardModule,
+    WeeklyReportReviewComponent, DialogModule, JalaliDatePipe, PersianDigitsPipe, ReactiveFormsModule, RouterLink, ButtonModule, CardModule,
     ConfirmDialogModule, SelectModule, TableModule, TagModule, TextareaModule
   ],
   providers: [ConfirmationService],
@@ -51,6 +54,9 @@ export class ProfessorCaseComponent {
   readonly internshipCase = signal<ProfessorCaseDetail | null>(null);
   readonly loading = signal(true);
   readonly submitting = signal(false);
+  readonly selectedReport = signal<WeeklyReport | null>(null);
+  readonly reviewing = signal(false);
+  readonly reviewForm = this.formBuilder.group({ comment: this.formBuilder.nonNullable.control('') });
   readonly resultOptions: { label: string; value: ProfessorFinalResult }[] = [
     { label: 'عالی', value: 'EXCELLENT' },
     { label: 'خوب', value: 'GOOD' },
@@ -86,6 +92,36 @@ export class ProfessorCaseComponent {
 
   ratingLabel(evaluation: ProfessorCompanyEvaluation, key: EvaluationField): string {
     return evaluationRatingLabels[evaluation[key] as EvaluationRating];
+  }
+
+  canReviewReport(report: WeeklyReport): boolean {
+    return this.internshipCase()?.internship.status === 'ACTIVE' && report.status === 'SUBMITTED' && report.professorReviewStatus === 'PENDING';
+  }
+
+  openReportReview(report: WeeklyReport): void {
+    if (!this.canReviewReport(report)) return;
+    this.reviewForm.reset({ comment: '' });
+    this.selectedReport.set(report);
+  }
+
+  reviewReport(action: 'approve' | 'request-revision'): void {
+    const report = this.selectedReport();
+    if (!report || !this.canReviewReport(report) || this.reviewing()) return;
+    const comment = this.reviewForm.getRawValue().comment.trim();
+    if (action === 'request-revision' && !comment) {
+      this.messages.add({ severity: 'warn', summary: 'نظر الزامی', detail: 'برای درخواست اصلاح، توضیح غیرخالی وارد کنید.' });
+      return;
+    }
+    this.reviewing.set(true);
+    this.internshipService.reviewProfessorWeeklyReport(this.caseID, report.id, action, comment || undefined).subscribe({
+      next: () => {
+        this.reviewing.set(false);
+        this.selectedReport.set(null);
+        this.loadCase();
+        this.messages.add({ severity: 'success', summary: 'ثبت شد', detail: 'نظر شما درباره گزارش ثبت شد.' });
+      },
+      error: (error: HttpErrorResponse) => { this.reviewing.set(false); this.showError(error); }
+    });
   }
 
   confirmCompletion(): void {

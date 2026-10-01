@@ -183,10 +183,6 @@
             <div class="detail">
               <div class="status-line">
                 <strong>هفته {{ report.weekNumber | persianDigits }}</strong>
-                <p-tag
-                  [value]="report.isConfirmed ? 'تأیید شده' : 'در انتظار تأیید'"
-                  [severity]="report.isConfirmed ? 'success' : 'warn'"
-                />
               </div>
               <span
                 >{{ report.startDate | jalaliDate }} تا
@@ -195,15 +191,13 @@
               <p style="white-space: pre-wrap; line-height: 1.9">
                 {{ report.activityDescription }}
               </p>
-              @if (report.supervisorComment) {
-                <span>نظر سرپرست: {{ report.supervisorComment }}</span>
-              }
-              @if (item.status === "ACTIVE" && !report.isConfirmed) {
+              <app-weekly-report-review [report]="report" />
+              @if (canReviewReport(report)) {
                 <div class="card-actions">
                   <p-button
-                    label="تأیید گزارش"
+                    label="بررسی گزارش"
                     icon="pi pi-check"
-                    (onClick)="openReportConfirmation(report)"
+                    (onClick)="openReportReview(report)"
                   />
                 </div>
               }
@@ -246,13 +240,13 @@
             ><strong>{{ reports().length | persianDigits }} از ۸</strong>
           </div>
           <div class="detail">
-            <span>گزارش‌های تأییدشده</span
-            ><strong>{{ confirmedReportCount() | persianDigits }} از ۸</strong>
+            <span>گزارش‌های تأییدشده توسط شرکت</span
+            ><strong>{{ companyApprovedReportCount() | persianDigits }} از ۸</strong>
           </div>
         </div>
         @if (item.status === "ACTIVE" && !canSubmitEvaluation()) {
           <div class="notice">
-            ارزیابی نهایی پس از ثبت و تأیید هر ۸ گزارش هفتگی فعال خواهد شد.
+            ارزیابی نهایی پس از تأیید هر ۸ گزارش توسط شرکت فعال می‌شود؛ تأیید استاد برای این ارزیابی الزامی نیست.
           </div>
         } @else if (item.status === "ACTIVE") {
           <form
@@ -354,7 +348,7 @@
 }
 
 <p-dialog
-  header="تأیید گزارش هفتگی"
+  header="بررسی گزارش هفتگی"
   [visible]="reportDialogVisible()"
   (visibleChange)="reportDialogVisible.set($event)"
   [modal]="true"
@@ -364,7 +358,7 @@
 >
   <form [formGroup]="reportConfirmationForm">
     <label class="field"
-      ><span>نظر سرپرست (اختیاری)</span
+      ><span>نظر سرپرست (برای درخواست اصلاح الزامی)</span
       ><textarea pTextarea formControlName="comment" rows="4"></textarea>
     </label>
   </form>
@@ -379,7 +373,8 @@
       label="تأیید گزارش"
       icon="pi pi-check"
       [loading]="confirmingReport()"
-      (onClick)="confirmWeeklyReport()"
+      (onClick)="reviewWeeklyReport('approve')"
     />
+    <p-button label="درخواست اصلاح" severity="warn" [loading]="confirmingReport()" (onClick)="reviewWeeklyReport('request-revision')" />
   </ng-template>
 </p-dialog>

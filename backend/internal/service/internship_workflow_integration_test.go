@@ -238,7 +238,7 @@ func TestWorkflow(t *testing.T) {
 			ActivityDescription: "توسعه API",
 		}
 		report, err := workflow.CreateWeeklyReport(student.ID, input)
-		if err != nil || report.IsConfirmed || report.SubmittedAt.IsZero() {
+		if err != nil || report.Status() != model.WeeklyReportDraft || report.SubmittedAt != nil {
 			t.Fatalf("create weekly report: report=%+v err=%v", report, err)
 		}
 		if _, err := workflow.CreateWeeklyReport(student.ID, input); !errors.Is(err, service.ErrDuplicateWeeklyReport) {
@@ -256,11 +256,14 @@ func TestWorkflow(t *testing.T) {
 		if _, err := workflow.ListCompanyWeeklyReports(otherSupervisor.ID, activeCase.ID); !errors.Is(err, service.ErrCaseAccessDenied) {
 			t.Fatalf("unassigned report access error = %v", err)
 		}
-		confirmed, err := workflow.ConfirmWeeklyReport(supervisor.ID, activeCase.ID, report.ID, nil)
-		if err != nil || !confirmed.IsConfirmed || confirmed.ConfirmedAt == nil {
+		if _, err := workflow.SubmitWeeklyReport(student.ID, report.ID); err != nil {
+			t.Fatal(err)
+		}
+		confirmed, err := workflow.ReviewWeeklyReportByCompany(supervisor.ID, activeCase.ID, report.ID, model.WeeklyReviewApproved, nil)
+		if err != nil || confirmed.CompanyReviewStatus != model.WeeklyReviewApproved || confirmed.CompanyReviewedAt == nil {
 			t.Fatalf("confirm weekly report: report=%+v err=%v", confirmed, err)
 		}
-		if _, err := workflow.UpdateWeeklyReport(student.ID, report.ID, input); !errors.Is(err, service.ErrWeeklyReportConfirmed) {
+		if _, err := workflow.UpdateWeeklyReport(student.ID, report.ID, input); !errors.Is(err, service.ErrWeeklyReportState) {
 			t.Fatalf("confirmed report update error = %v", err)
 		}
 
@@ -277,11 +280,14 @@ func TestWorkflow(t *testing.T) {
 			if err != nil {
 				t.Fatalf("create report for week %d: %v", week, err)
 			}
+			if _, err := workflow.SubmitWeeklyReport(student.ID, weeklyReport.ID); err != nil {
+				t.Fatal(err)
+			}
 			if week == 8 {
 				eighthReport = weeklyReport
 				continue
 			}
-			if _, err := workflow.ConfirmWeeklyReport(supervisor.ID, activeCase.ID, weeklyReport.ID, nil); err != nil {
+			if _, err := workflow.ReviewWeeklyReportByCompany(supervisor.ID, activeCase.ID, weeklyReport.ID, model.WeeklyReviewApproved, nil); err != nil {
 				t.Fatalf("confirm report for week %d: %v", week, err)
 			}
 		}
@@ -291,7 +297,7 @@ func TestWorkflow(t *testing.T) {
 		if eighthReport == nil {
 			t.Fatal("week 8 report was not created")
 		}
-		if _, err := workflow.ConfirmWeeklyReport(supervisor.ID, activeCase.ID, eighthReport.ID, nil); err != nil {
+		if _, err := workflow.ReviewWeeklyReportByCompany(supervisor.ID, activeCase.ID, eighthReport.ID, model.WeeklyReviewApproved, nil); err != nil {
 			t.Fatalf("confirm report for week 8: %v", err)
 		}
 		if _, err := workflow.CreateCompanyEvaluation(supervisor.ID, activeCase.ID, evaluationInput); err != nil {
@@ -416,7 +422,7 @@ func TestWorkflow(t *testing.T) {
 				}); !errors.Is(err, service.ErrInvalidCaseStatus) {
 					t.Fatalf("student mutation after completion error = %v", err)
 				}
-				if _, err := workflow.ConfirmWeeklyReport(supervisor.ID, readyCase.ID, reports[0].ID, nil); !errors.Is(err, service.ErrInvalidCaseStatus) {
+				if _, err := workflow.ReviewWeeklyReportByCompany(supervisor.ID, readyCase.ID, reports[0].ID, model.WeeklyReviewApproved, nil); !errors.Is(err, service.ErrInvalidCaseStatus) {
 					t.Fatalf("company report mutation after completion error = %v", err)
 				}
 				replacement := &model.File{
@@ -483,7 +489,7 @@ func createProfessorReviewCase(
 	db *gorm.DB,
 	suffix int64,
 	professorID, supervisorID uint,
-	reportCount, confirmedCount int,
+	reportCount, approvedCount int,
 	withEvaluation, withFinalReport bool,
 ) model.InternshipCase {
 	t.Helper()
@@ -500,12 +506,12 @@ func createProfessorReviewCase(
 		report := model.WeeklyReport{
 			InternshipCaseID: internshipCase.ID, WeekNumber: week,
 			StartDate: testDate(t, "2026-07-01"), EndDate: testDate(t, "2026-07-07"),
-			ActivityDescription: fmt.Sprintf("week %d", week), SubmittedAt: time.Now(), IsConfirmed: week <= confirmedCount,
+			ActivityDescription: fmt.Sprintf("week %d", week), SubmittedAt: weeklyTestTime(),
 		}
-		if report.IsConfirmed {
-			now := time.Now()
-			report.ConfirmedAt = &now
+		if week <= approvedCount {
+			report.CompanyReviewStatus, report.ProfessorReviewStatus = model.WeeklyReviewApproved, model.WeeklyReviewApproved
 		}
+
 		if err := db.Create(&report).Error; err != nil {
 			t.Fatalf("create professor review report %d: %v", week, err)
 		}
@@ -671,3 +677,5 @@ func attachSelectedWorkflowPlacement(t *testing.T, db *gorm.DB, suffix int64, in
 	}
 	internshipCase.SelectedPreferenceID = &preference.ID
 }
+
+func weeklyTestTime() *time.Time { now := time.Now(); return &now }

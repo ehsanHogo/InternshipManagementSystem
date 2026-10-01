@@ -269,6 +269,7 @@ func (handler *InternshipHandler) SubmitPlacementDetails(ctx *gin.Context) {
 // or other recruitment preferences or passed-credit information.
 func companyCaseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 	response := caseResponse(internshipCase)
+	response.WeeklyReports = submittedWeeklyReports(response.WeeklyReports)
 	response.PassedCredits = nil
 	response.Preferences = []internshipPreferenceResponse{}
 	if response.SelectedPreference != nil {

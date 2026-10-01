@@ -69,7 +69,8 @@ export interface InternshipCase {
   activatedAt?: string;
   finalReport?: FileMetadata;
   weeklyReportCount: number;
-  confirmedReportCount: number;
+  approvedReportCount: number;
+  companyApprovedReportCount: number;
   canSubmitCompanyEvaluation: boolean;
   weeklyReports: WeeklyReport[];
   companyEvaluation?: CompanyEvaluation;
@@ -91,6 +92,15 @@ export interface CompanyInternshipCase extends Omit<InternshipCase, 'preferences
   selectedPreference?: CompanyPlacement;
 }
 
+export type WeeklyReviewStatus = 'PENDING' | 'APPROVED' | 'REVISION_REQUESTED';
+export type WeeklyReportStatus = 'DRAFT' | 'SUBMITTED' | 'REVISION_REQUESTED' | 'APPROVED';
+export const weeklyReportStatusLabels: Record<WeeklyReportStatus, string> = {
+  DRAFT: 'پیش‌نویس', SUBMITTED: 'در انتظار بررسی', REVISION_REQUESTED: 'نیازمند اصلاح', APPROVED: 'تأیید شده'
+};
+export const weeklyReviewStatusLabels: Record<WeeklyReviewStatus, string> = {
+  PENDING: 'در انتظار بررسی', APPROVED: 'تأیید شده', REVISION_REQUESTED: 'نیازمند اصلاح'
+};
+
 export interface WeeklyReport {
   id: number;
   internshipCaseId: number;
@@ -98,10 +108,14 @@ export interface WeeklyReport {
   startDate: string;
   endDate: string;
   activityDescription: string;
-  submittedAt: string;
-  isConfirmed: boolean;
-  supervisorComment?: string;
-  confirmedAt?: string;
+  submittedAt: string | null;
+  status: WeeklyReportStatus;
+  companyReviewStatus: WeeklyReviewStatus;
+  companyReviewComment: string | null;
+  companyReviewedAt: string | null;
+  professorReviewStatus: WeeklyReviewStatus;
+  professorReviewComment: string | null;
+  professorReviewedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -159,7 +173,7 @@ export interface ProfessorCaseListItem {
   internshipSubject?: string;
   status: InternshipCaseStatus;
   weeklyReportCount: number;
-  confirmedWeeklyReportCount: number;
+  approvedWeeklyReportCount: number;
   hasCompanyEvaluation: boolean;
   hasFinalReport: boolean;
   canProfessorComplete: boolean;
@@ -196,7 +210,7 @@ export interface ProfessorCaseDetail {
   companyEvaluation?: ProfessorCompanyEvaluation;
   finalReport?: FileMetadata;
   weeklyReportCount: number;
-  confirmedWeeklyReportCount: number;
+  approvedWeeklyReportCount: number;
   hasCompanyEvaluation: boolean;
   hasFinalReport: boolean;
   canProfessorComplete: boolean;

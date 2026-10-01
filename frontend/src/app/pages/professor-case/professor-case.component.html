@@ -102,8 +102,8 @@
             <th>هفته</th>
             <th>بازه زمانی</th>
             <th>شرح فعالیت‌ها</th>
-            <th>وضعیت تأیید</th>
-            <th>نظر سرپرست شرکت</th>
+            <th>وضعیت بررسی‌ها و آخرین نظرها</th>
+            <th>بررسی استاد</th>
           </tr>
         </ng-template>
         <ng-template #body let-report>
@@ -117,12 +117,13 @@
               {{ report.activityDescription }}
             </td>
             <td>
-              <p-tag
-                [value]="report.isConfirmed ? 'تأیید شده' : 'در انتظار تأیید'"
-                [severity]="report.isConfirmed ? 'success' : 'warn'"
-              />
+              <app-weekly-report-review [report]="report" />
             </td>
-            <td>{{ report.supervisorComment || "—" }}</td>
+            <td>
+              @if (canReviewReport(report)) {
+                <p-button label="بررسی گزارش" icon="pi pi-pencil" (onClick)="openReportReview(report)" />
+              }
+            </td>
           </tr>
         </ng-template>
       </p-table>
@@ -195,7 +196,7 @@
       </div>
       <div class="detail">
         <span>گزارش‌های تأییدشده</span
-        ><strong>{{ item.confirmedWeeklyReportCount | persianDigits }} از ۸</strong>
+        ><strong>{{ item.approvedWeeklyReportCount | persianDigits }} از ۸</strong>
       </div>
       <div class="detail">
         <span>ارزیابی شرکت</span
@@ -265,3 +266,14 @@
     }
   </p-card>
 }
+
+<p-dialog header="بررسی گزارش هفتگی" [visible]="selectedReport() !== null" (visibleChange)="!$event && selectedReport.set(null)" [modal]="true" appendTo="body" [style]="{ width: 'min(92vw, 34rem)' }">
+  <form [formGroup]="reviewForm">
+    <label class="field"><span>نظر استاد (برای درخواست اصلاح الزامی)</span><textarea pTextarea formControlName="comment" rows="4"></textarea></label>
+  </form>
+  <ng-template #footer>
+    <p-button label="انصراف" severity="secondary" [text]="true" (onClick)="selectedReport.set(null)" />
+    <p-button label="تأیید گزارش" [loading]="reviewing()" (onClick)="reviewReport('approve')" />
+    <p-button label="درخواست اصلاح" severity="warn" [loading]="reviewing()" (onClick)="reviewReport('request-revision')" />
+  </ng-template>
+</p-dialog>

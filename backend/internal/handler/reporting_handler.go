@@ -29,7 +29,7 @@ type weeklyReportRequest struct {
 	ActivityDescription string `json:"activityDescription"`
 }
 
-type confirmWeeklyReportRequest struct {
+type weeklyReviewRequest struct {
 	Comment *string `json:"comment"`
 }
 
@@ -117,8 +117,60 @@ func (handler *InternshipHandler) ListCompanyWeeklyReports(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, reports)
 }
 
-func (handler *InternshipHandler) ConfirmWeeklyReport(ctx *gin.Context) {
-	supervisorID, ok := currentUserID(ctx)
+func (handler *InternshipHandler) GetStudentWeeklyReport(ctx *gin.Context) {
+	userID, ok := currentUserID(ctx)
+	if !ok {
+		return
+	}
+	reportID, err := parseID(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه گزارش معتبر نیست."})
+		return
+	}
+	report, err := handler.service.GetStudentWeeklyReport(userID, reportID)
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, report)
+}
+func (handler *InternshipHandler) SubmitWeeklyReport(ctx *gin.Context) {
+	userID, ok := currentUserID(ctx)
+	if !ok {
+		return
+	}
+	reportID, err := parseID(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه گزارش معتبر نیست."})
+		return
+	}
+	report, err := handler.service.SubmitWeeklyReport(userID, reportID)
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, report)
+}
+func (handler *InternshipHandler) ListProfessorWeeklyReports(ctx *gin.Context) {
+	userID, caseID, ok := professorCaseRequest(ctx)
+	if !ok {
+		return
+	}
+	reports, err := handler.service.ListProfessorWeeklyReports(userID, caseID)
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, reports)
+}
+func (handler *InternshipHandler) GetCompanyWeeklyReport(ctx *gin.Context) {
+	handler.getReviewerWeeklyReport(ctx, model.RoleCompanySupervisor)
+}
+func (handler *InternshipHandler) GetProfessorWeeklyReport(ctx *gin.Context) {
+	handler.getReviewerWeeklyReport(ctx, model.RoleProfessor)
+}
+func (handler *InternshipHandler) getReviewerWeeklyReport(ctx *gin.Context, role model.Role) {
+	userID, ok := currentUserID(ctx)
 	if !ok {
 		return
 	}
@@ -128,20 +180,80 @@ func (handler *InternshipHandler) ConfirmWeeklyReport(ctx *gin.Context) {
 	}
 	reportID, err := parseID(ctx.Param("reportId"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه گزارش هفتگی معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه گزارش معتبر نیست."})
 		return
 	}
-	var request confirmWeeklyReportRequest
-	if err := ctx.ShouldBindJSON(&request); err != nil && !errors.Is(err, io.EOF) {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اطلاعات درخواست معتبر نیست."})
-		return
-	}
-	report, err := handler.service.ConfirmWeeklyReport(supervisorID, caseID, reportID, request.Comment)
+	report, err := handler.service.GetReviewerWeeklyReport(userID, caseID, reportID, role)
 	if err != nil {
 		handler.writeError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, report)
+}
+func (handler *InternshipHandler) ApproveWeeklyReportByCompany(ctx *gin.Context) {
+	handler.reviewWeeklyReport(ctx, model.RoleCompanySupervisor, model.WeeklyReviewApproved)
+}
+func (handler *InternshipHandler) RequestWeeklyReportRevisionByCompany(ctx *gin.Context) {
+	handler.reviewWeeklyReport(ctx, model.RoleCompanySupervisor, model.WeeklyReviewRevisionRequested)
+}
+func (handler *InternshipHandler) ApproveWeeklyReportByProfessor(ctx *gin.Context) {
+	handler.reviewWeeklyReport(ctx, model.RoleProfessor, model.WeeklyReviewApproved)
+}
+func (handler *InternshipHandler) RequestWeeklyReportRevisionByProfessor(ctx *gin.Context) {
+	handler.reviewWeeklyReport(ctx, model.RoleProfessor, model.WeeklyReviewRevisionRequested)
+}
+func (handler *InternshipHandler) reviewWeeklyReport(ctx *gin.Context, role model.Role, decision model.WeeklyReviewStatus) {
+	userID, ok := currentUserID(ctx)
+	if !ok {
+		return
+	}
+	caseID, ok := caseIDFromContext(ctx)
+	if !ok {
+		return
+	}
+	reportID, err := parseID(ctx.Param("reportId"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه گزارش معتبر نیست."})
+		return
+	}
+	var request weeklyReviewRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil && !errors.Is(err, io.EOF) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اطلاعات درخواست معتبر نیست."})
+		return
+	}
+	var report *model.WeeklyReport
+	if role == model.RoleCompanySupervisor {
+		report, err = handler.service.ReviewWeeklyReportByCompany(userID, caseID, reportID, decision, request.Comment)
+	} else {
+		report, err = handler.service.ReviewWeeklyReportByProfessor(userID, caseID, reportID, decision, request.Comment)
+	}
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, report)
+}
+
+// Keep production and integration-test route wiring identical. Role middleware
+// is installed by the caller on each authenticated group.
+func (handler *InternshipHandler) RegisterStudentWeeklyReportRoutes(group *gin.RouterGroup) {
+	group.GET("/internship-case/weekly-reports", handler.ListStudentWeeklyReports)
+	group.GET("/internship-case/weekly-reports/:id", handler.GetStudentWeeklyReport)
+	group.POST("/internship-case/weekly-reports", handler.CreateWeeklyReport)
+	group.PUT("/internship-case/weekly-reports/:id", handler.UpdateWeeklyReport)
+	group.POST("/internship-case/weekly-reports/:id/submit", handler.SubmitWeeklyReport)
+}
+func (handler *InternshipHandler) RegisterCompanyWeeklyReportRoutes(group *gin.RouterGroup) {
+	group.GET("/internship-cases/:id/weekly-reports", handler.ListCompanyWeeklyReports)
+	group.GET("/internship-cases/:id/weekly-reports/:reportId", handler.GetCompanyWeeklyReport)
+	group.POST("/internship-cases/:id/weekly-reports/:reportId/approve", handler.ApproveWeeklyReportByCompany)
+	group.POST("/internship-cases/:id/weekly-reports/:reportId/request-revision", handler.RequestWeeklyReportRevisionByCompany)
+}
+func (handler *InternshipHandler) RegisterProfessorWeeklyReportRoutes(group *gin.RouterGroup) {
+	group.GET("/internship-cases/:id/weekly-reports", handler.ListProfessorWeeklyReports)
+	group.GET("/internship-cases/:id/weekly-reports/:reportId", handler.GetProfessorWeeklyReport)
+	group.POST("/internship-cases/:id/weekly-reports/:reportId/approve", handler.ApproveWeeklyReportByProfessor)
+	group.POST("/internship-cases/:id/weekly-reports/:reportId/request-revision", handler.RequestWeeklyReportRevisionByProfessor)
 }
 
 func (handler *InternshipHandler) GetCompanyEvaluation(ctx *gin.Context) {
@@ -319,4 +431,14 @@ func uniqueStoredName() (string, error) {
 		return "", fmt.Errorf("generate stored filename: %w", err)
 	}
 	return hex.EncodeToString(bytes) + ".pdf", nil
+}
+
+func submittedWeeklyReports(reports []model.WeeklyReport) []model.WeeklyReport {
+	visible := []model.WeeklyReport{}
+	for _, report := range reports {
+		if report.SubmittedAt != nil {
+			visible = append(visible, report)
+		}
+	}
+	return visible
 }

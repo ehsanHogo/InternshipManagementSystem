@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type EvaluationRating string
 
@@ -22,19 +25,61 @@ func (rating EvaluationRating) Valid() bool {
 	}
 }
 
+type WeeklyReviewStatus string
+
+const (
+	WeeklyReviewPending           WeeklyReviewStatus = "PENDING"
+	WeeklyReviewApproved          WeeklyReviewStatus = "APPROVED"
+	WeeklyReviewRevisionRequested WeeklyReviewStatus = "REVISION_REQUESTED"
+)
+
+type WeeklyReportStatus string
+
+const (
+	WeeklyReportDraft             WeeklyReportStatus = "DRAFT"
+	WeeklyReportSubmitted         WeeklyReportStatus = "SUBMITTED"
+	WeeklyReportRevisionRequested WeeklyReportStatus = "REVISION_REQUESTED"
+	WeeklyReportApproved          WeeklyReportStatus = "APPROVED"
+)
+
 type WeeklyReport struct {
-	ID                  uint       `gorm:"primaryKey" json:"id"`
-	InternshipCaseID    uint       `gorm:"not null;uniqueIndex:idx_weekly_report_case_week" json:"internshipCaseId"`
-	WeekNumber          int        `gorm:"not null;uniqueIndex:idx_weekly_report_case_week;check:week_number >= 1 AND week_number <= 8" json:"weekNumber"`
-	StartDate           time.Time  `gorm:"type:date;not null" json:"startDate"`
-	EndDate             time.Time  `gorm:"type:date;not null" json:"endDate"`
-	ActivityDescription string     `gorm:"type:text;not null" json:"activityDescription"`
-	SubmittedAt         time.Time  `gorm:"not null" json:"submittedAt"`
-	IsConfirmed         bool       `gorm:"not null;default:false" json:"isConfirmed"`
-	SupervisorComment   *string    `gorm:"type:text" json:"supervisorComment"`
-	ConfirmedAt         *time.Time `json:"confirmedAt"`
-	CreatedAt           time.Time  `json:"createdAt"`
-	UpdatedAt           time.Time  `json:"updatedAt"`
+	ID                     uint               `gorm:"primaryKey" json:"id"`
+	InternshipCaseID       uint               `gorm:"not null;uniqueIndex:idx_weekly_report_case_week" json:"internshipCaseId"`
+	WeekNumber             int                `gorm:"not null;uniqueIndex:idx_weekly_report_case_week;check:week_number >= 1 AND week_number <= 8" json:"weekNumber"`
+	StartDate              time.Time          `gorm:"type:date;not null" json:"startDate"`
+	EndDate                time.Time          `gorm:"type:date;not null;check:end_date >= start_date" json:"endDate"`
+	ActivityDescription    string             `gorm:"type:text;not null" json:"activityDescription"`
+	SubmittedAt            *time.Time         `json:"submittedAt"`
+	CompanyReviewStatus    WeeklyReviewStatus `gorm:"type:varchar(24);not null;default:PENDING;check:company_review_status IN ('PENDING','APPROVED','REVISION_REQUESTED')" json:"companyReviewStatus"`
+	CompanyReviewComment   *string            `gorm:"type:text" json:"companyReviewComment"`
+	CompanyReviewedAt      *time.Time         `json:"companyReviewedAt"`
+	ProfessorReviewStatus  WeeklyReviewStatus `gorm:"type:varchar(24);not null;default:PENDING;check:professor_review_status IN ('PENDING','APPROVED','REVISION_REQUESTED')" json:"professorReviewStatus"`
+	ProfessorReviewComment *string            `gorm:"type:text" json:"professorReviewComment"`
+	ProfessorReviewedAt    *time.Time         `json:"professorReviewedAt"`
+	CreatedAt              time.Time          `json:"createdAt"`
+	UpdatedAt              time.Time          `json:"updatedAt"`
+}
+
+func (report WeeklyReport) Status() WeeklyReportStatus {
+	if report.SubmittedAt == nil {
+		return WeeklyReportDraft
+	}
+	if report.CompanyReviewStatus == WeeklyReviewRevisionRequested || report.ProfessorReviewStatus == WeeklyReviewRevisionRequested {
+		return WeeklyReportRevisionRequested
+	}
+	if report.CompanyReviewStatus == WeeklyReviewApproved && report.ProfessorReviewStatus == WeeklyReviewApproved {
+		return WeeklyReportApproved
+	}
+	return WeeklyReportSubmitted
+}
+
+// Status is computed for every response, including reports nested in case responses.
+func (report WeeklyReport) MarshalJSON() ([]byte, error) {
+	type fields WeeklyReport
+	return json.Marshal(struct {
+		fields
+		Status WeeklyReportStatus `json:"status"`
+	}{fields: fields(report), Status: report.Status()})
 }
 
 type CompanyEvaluation struct {
