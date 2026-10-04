@@ -34,6 +34,7 @@ export class StudentWeeklyReportsComponent {
   readonly internshipCase = signal<InternshipCase | null>(null);
   readonly reports = signal<WeeklyReport[]>([]);
   readonly loading = signal(true);
+  readonly loadFailed = signal(false);
   readonly saving = signal(false);
   readonly dialogVisible = signal(false);
   readonly editingReport = signal<WeeklyReport | null>(null);
@@ -137,20 +138,39 @@ export class StudentWeeklyReportsComponent {
     });
   }
 
-  private load(): void {
+  load(): void {
+    this.loading.set(true);
+    this.loadFailed.set(false);
     this.internshipService.getCurrentCase().subscribe({
       next: (internshipCase) => {
         this.internshipCase.set(internshipCase);
         if (internshipCase.status !== 'ACTIVE' && internshipCase.status !== 'COMPLETED') {
+          this.reports.set([]);
           this.loading.set(false);
           return;
         }
         this.internshipService.listStudentWeeklyReports().subscribe({
-          next: (reports) => { this.reports.set(reports); this.loading.set(false); },
-          error: (error: HttpErrorResponse) => { this.loading.set(false); this.showError(error); }
+          next: (reports) => {
+            this.reports.set(reports);
+            this.loading.set(false);
+          },
+          error: (error: HttpErrorResponse) => {
+            this.loading.set(false);
+            this.loadFailed.set(true);
+            this.showError(error);
+          }
         });
       },
-      error: () => this.loading.set(false)
+      error: (error: HttpErrorResponse) => {
+        this.loading.set(false);
+        if (error.status === 404) {
+          this.internshipCase.set(null);
+          this.reports.set([]);
+          return;
+        }
+        this.loadFailed.set(true);
+        this.showError(error);
+      }
     });
   }
 

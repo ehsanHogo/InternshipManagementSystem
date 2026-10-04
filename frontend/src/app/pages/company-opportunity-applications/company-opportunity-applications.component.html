@@ -5,7 +5,10 @@
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت متقاضیان...</span></div>
 } @else if (loadFailed()) {
-  <div class="state-card"><p>این فرصت یافت نشد یا متعلق به شرکت شما نیست.</p></div>
+  <div class="state-card error-state">
+    <div><i class="pi pi-exclamation-circle"></i><p>این فرصت یافت نشد یا دریافت متقاضیان ناموفق بود.</p></div>
+    <p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="load()" />
+  </div>
 } @else if (applications().length === 0) {
   <div class="empty-state"><div><i class="pi pi-users"></i><p>هنوز درخواستی برای این فرصت ثبت نشده است.</p></div></div>
 } @else {

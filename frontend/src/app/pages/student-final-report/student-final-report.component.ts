@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { userErrorMessage } from '../../shared/http-error-message';
 import { Component, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -6,7 +7,6 @@ import { CardModule } from 'primeng/card';
 
 import { InternshipCase, finalReportStatusLabels } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
-import { userErrorMessage } from '../../shared/http-error-message';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 
 @Component({
@@ -24,13 +24,35 @@ export class StudentFinalReportComponent {
   readonly internshipCase = signal<InternshipCase | null>(null);
   readonly selectedFile = signal<File | null>(null);
   readonly loading = signal(true);
+  readonly loadFailed = signal(false);
   readonly uploading = signal(false);
   readonly downloading = signal(false);
 
   constructor() {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
+    this.loadFailed.set(false);
     this.internshipService.getCurrentCase().subscribe({
-      next: (internshipCase) => { this.internshipCase.set(internshipCase); this.loading.set(false); },
-      error: () => this.loading.set(false)
+      next: (internshipCase) => {
+        this.internshipCase.set(internshipCase);
+        this.loading.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.loading.set(false);
+        if (error.status === 404) {
+          this.internshipCase.set(null);
+          return;
+        }
+        this.loadFailed.set(true);
+        this.messages.add({
+          severity: 'error',
+          summary: 'خطا',
+          detail: userErrorMessage(error, 'دریافت اطلاعات کارآموزی ناموفق بود.')
+        });
+      }
     });
   }
 

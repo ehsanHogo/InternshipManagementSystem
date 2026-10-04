@@ -58,6 +58,7 @@ export class ProfessorCaseComponent {
   readonly finalReviewing = signal(false);
   readonly internshipCase = signal<ProfessorCaseDetail | null>(null);
   readonly loading = signal(true);
+  readonly loadFailed = signal(false);
   readonly submitting = signal(false);
   readonly selectedReport = signal<WeeklyReport | null>(null);
   readonly reviewing = signal(false);
@@ -196,8 +197,9 @@ export class ProfessorCaseComponent {
     });
   }
 
-  private loadCase(): void {
+  loadCase(): void {
     this.loading.set(true);
+    this.loadFailed.set(false);
     this.internshipService.getProfessorCase(this.caseID).subscribe({
       next: (item) => {
         this.internshipCase.set(item);
@@ -207,6 +209,8 @@ export class ProfessorCaseComponent {
       },
       error: (error: HttpErrorResponse) => {
         this.loading.set(false);
+        this.loadFailed.set(true);
+        this.internshipCase.set(null);
         this.showError(error);
       }
     });

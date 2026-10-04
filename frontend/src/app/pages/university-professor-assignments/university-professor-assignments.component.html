@@ -5,6 +5,11 @@
 
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت تخصیص‌ها...</span></div>
+} @else if (loadFailed()) {
+  <div class="state-card error-state">
+    <div><i class="pi pi-exclamation-circle"></i><p>دریافت تخصیص‌های استاد ناموفق بود.</p></div>
+    <p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="load()" />
+  </div>
 } @else {
   <p-table [value]="assignments()" [rowHover]="true" responsiveLayout="scroll">
     <ng-template #header><tr><th>دانشجو</th><th>شماره دانشجویی</th><th>استاد فعلی</th><th>عملیات</th></tr></ng-template>

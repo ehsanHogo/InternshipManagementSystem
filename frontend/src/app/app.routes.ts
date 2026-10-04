@@ -27,6 +27,11 @@ export const routes: Routes = [
     loadComponent: () => import('./layout/app-shell.component').then((module) => module.AppShellComponent),
     children: [
       {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'dashboard'
+      },
+      {
         path: 'dashboard',
         loadComponent: () =>
           import('./pages/dashboard/dashboard.component').then((module) => module.DashboardComponent)
@@ -208,9 +213,12 @@ export const routes: Routes = [
           import('./pages/company-case/company-case.component').then(
             (module) => module.CompanyCaseComponent
           )
+      },
+      {
+        path: '**',
+        redirectTo: 'dashboard'
       }
     ]
   },
-  { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: '**', redirectTo: 'login' }
 ];

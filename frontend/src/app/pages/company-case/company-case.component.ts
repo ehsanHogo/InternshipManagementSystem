@@ -48,6 +48,7 @@ export class CompanyCaseComponent {
 
   readonly internshipCase = signal<CompanyInternshipCase | null>(null);
   readonly loading = signal(true);
+  readonly loadFailed = signal(false);
   readonly saving = signal(false);
   readonly reports = signal<WeeklyReport[]>([]);
   readonly evaluation = signal<CompanyEvaluation | null>(null);
@@ -105,6 +106,12 @@ export class CompanyCaseComponent {
   });
 
   constructor() {
+    this.loadCase();
+  }
+
+  loadCase(): void {
+    this.loading.set(true);
+    this.loadFailed.set(false);
     this.internshipService.getCompanyCase(this.caseID).subscribe({
       next: (internshipCase) => {
         this.internshipCase.set(internshipCase);
@@ -114,6 +121,8 @@ export class CompanyCaseComponent {
       },
       error: (error: HttpErrorResponse) => {
         this.loading.set(false);
+        this.loadFailed.set(true);
+        this.internshipCase.set(null);
         this.showError(error);
       }
     });

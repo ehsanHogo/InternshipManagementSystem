@@ -21,6 +21,7 @@ import {
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
+import { externalHref } from '../../shared/external-url';
 import { userErrorMessage } from '../../shared/http-error-message';
 import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
@@ -54,6 +55,7 @@ export class UniversityCaseComponent {
 
   readonly internshipCase = signal<InternshipCase | null>(null);
   readonly loading = signal(true);
+  readonly loadFailed = signal(false);
   readonly saving = signal(false);
   readonly cancelDialogVisible = signal(false);
   readonly correctionDialogVisible = signal(false);
@@ -71,6 +73,8 @@ export class UniversityCaseComponent {
   readonly cancellationForm = this.formBuilder.group({
     comment: this.formBuilder.nonNullable.control('', [Validators.required, Validators.pattern(/\S/)])
   });
+
+  readonly externalHref = externalHref;
 
   constructor() {
     this.loadCase();
@@ -135,8 +139,9 @@ export class UniversityCaseComponent {
     });
   }
 
-  private loadCase(): void {
+  loadCase(): void {
     this.loading.set(true);
+    this.loadFailed.set(false);
     this.internshipService.getUniversityCase(this.caseID)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
@@ -144,7 +149,11 @@ export class UniversityCaseComponent {
           this.internshipCase.set(internshipCase);
           this.syncReviewForm(internshipCase);
         },
-        error: (error: HttpErrorResponse) => this.showError(error)
+        error: (error: HttpErrorResponse) => {
+          this.loadFailed.set(true);
+          this.internshipCase.set(null);
+          this.showError(error);
+        }
       });
   }
 

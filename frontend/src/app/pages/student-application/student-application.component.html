@@ -16,6 +16,11 @@
     <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
     <span>در حال دریافت اطلاعات درخواست...</span>
   </div>
+} @else if (loadFailed()) {
+  <div class="state-card error-state">
+    <div><i class="pi pi-exclamation-circle"></i><p>دریافت اطلاعات درخواست ناموفق بود.</p></div>
+    <p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="reloadPage()" />
+  </div>
 } @else if (!internshipCase()) {
   <p-card>
     <div class="empty-state">

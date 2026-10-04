@@ -25,6 +25,7 @@ export class UniversityProfessorAssignmentsComponent {
   readonly assignments = signal<ProfessorAssignment[]>([]);
   readonly professors = signal<User[]>([]);
   readonly loading = signal(true);
+  readonly loadFailed = signal(false);
   readonly savingStudentId = signal<number | null>(null);
   readonly selectedProfessors: Record<number, number | null> = {};
 
@@ -48,8 +49,9 @@ export class UniversityProfessorAssignmentsComponent {
       });
   }
 
-  private load(): void {
+  load(): void {
     this.loading.set(true);
+    this.loadFailed.set(false);
     forkJoin({ assignments: this.management.listProfessorAssignments(), professors: this.management.listProfessors() }).subscribe({
       next: ({ assignments, professors }) => {
         this.assignments.set(assignments);
@@ -57,7 +59,11 @@ export class UniversityProfessorAssignmentsComponent {
         for (const assignment of assignments) this.selectedProfessors[assignment.student.id] = assignment.professor?.id ?? null;
         this.loading.set(false);
       },
-      error: (error: HttpErrorResponse) => { this.loading.set(false); this.showError(error); }
+      error: (error: HttpErrorResponse) => {
+        this.loading.set(false);
+        this.loadFailed.set(true);
+        this.showError(error);
+      }
     });
   }
 

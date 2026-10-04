@@ -42,7 +42,7 @@
     </div>
     <div class="detail-grid company-details">
       <div class="detail"><span>وب‌سایت شرکت</span>
-        @if (item.company.website) { <a [href]="item.company.website" target="_blank" rel="noopener noreferrer" dir="ltr">{{ item.company.website }}</a> }
+        @if (item.company.website) { <a [href]="externalHref(item.company.website)" target="_blank" rel="noopener noreferrer" dir="ltr">{{ item.company.website }}</a> }
         @else { <strong>—</strong> }
       </div>
       <div class="detail"><span>شماره تماس شرکت</span>
@@ -63,7 +63,7 @@
         <i class="pi pi-check-circle"></i>
         <div>
           <strong>درخواست شما برای این فرصت ثبت شده است.</strong>
-          <p>وضعیت فعلی: <p-tag [value]="statusLabel(application.status)" [severity]="application.status === 'ACCEPTED' ? 'success' : application.status === 'REJECTED' ? 'danger' : 'warn'" /></p>
+          <div class="status-line">وضعیت فعلی: <p-tag [value]="statusLabel(application.status)" [severity]="application.status === 'ACCEPTED' ? 'success' : application.status === 'REJECTED' ? 'danger' : 'warn'" /></div>
         </div>
         <p-button label="مشاهده جزئیات" icon="pi pi-arrow-left" iconPos="right" [routerLink]="['/student/opportunity-applications', application.id]" />
       </div>

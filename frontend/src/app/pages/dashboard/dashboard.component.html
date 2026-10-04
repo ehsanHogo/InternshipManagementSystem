@@ -22,6 +22,9 @@
           <span>وضعیت فعلی</span>
           @if (statusLoading()) {
             <strong>در حال دریافت...</strong>
+          } @else if (statusLoadFailed()) {
+            <strong class="status-error">دریافت وضعیت ناموفق بود.</strong>
+            <p-button label="تلاش دوباره" icon="pi pi-refresh" [text]="true" (onClick)="loadStudentStatus()" />
           } @else {
             <strong>{{ statusLabel(internshipStatus()) }}</strong>
           }

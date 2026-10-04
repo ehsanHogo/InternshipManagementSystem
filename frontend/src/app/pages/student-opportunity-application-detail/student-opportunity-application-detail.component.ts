@@ -32,7 +32,13 @@ export class StudentOpportunityApplicationDetailComponent {
   constructor() { this.load(); }
 
   load(): void {
-    if (!Number.isInteger(this.applicationId) || this.applicationId <= 0) { this.loading.set(false); this.loadFailed.set(true); return; }
+    if (!Number.isInteger(this.applicationId) || this.applicationId <= 0) {
+      this.loading.set(false);
+      this.loadFailed.set(true);
+      return;
+    }
+    this.loading.set(true);
+    this.loadFailed.set(false);
     this.service.getStudentApplication(this.applicationId).subscribe({
       next: (application) => { this.application.set(application); this.loading.set(false); },
       error: (error: HttpErrorResponse) => {

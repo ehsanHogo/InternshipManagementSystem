@@ -28,6 +28,7 @@ export class UniversityCompanySupervisorsComponent {
   readonly supervisors = signal<CompanySupervisor[]>([]);
   readonly companies = signal<Company[]>([]);
   readonly loading = signal(true);
+  readonly loadFailed = signal(false);
   readonly dialogVisible = signal(false);
   readonly credentials = signal<CreatedAccount | null>(null);
   submitting = false;
@@ -63,11 +64,16 @@ export class UniversityCompanySupervisorsComponent {
     );
   }
 
-  private load(): void {
+  load(): void {
     this.loading.set(true);
+    this.loadFailed.set(false);
     forkJoin({ supervisors: this.management.listCompanySupervisors(), companies: this.management.listCompanies() }).subscribe({
       next: ({ supervisors, companies }) => { this.supervisors.set(supervisors); this.companies.set(companies); this.loading.set(false); },
-      error: (error: HttpErrorResponse) => { this.loading.set(false); this.showError(error, 'دریافت اطلاعات ناموفق بود.'); }
+      error: (error: HttpErrorResponse) => {
+        this.loading.set(false);
+        this.loadFailed.set(true);
+        this.showError(error, 'دریافت اطلاعات ناموفق بود.');
+      }
     });
   }
 

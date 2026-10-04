@@ -29,22 +29,33 @@ export class DashboardComponent {
   readonly internshipStatus = signal<InternshipCaseStatus | null>(null);
   readonly internshipCase = signal<InternshipCase | null>(null);
   readonly statusLoading = signal(false);
+  readonly statusLoadFailed = signal(false);
 
   constructor() {
     if (this.auth.getCurrentUser()?.role === 'STUDENT') {
-      this.statusLoading.set(true);
-      this.internshipService.getCurrentCase().subscribe({
-        next: (internshipCase) => {
-          this.internshipCase.set(internshipCase);
-          this.internshipStatus.set(internshipCase.status);
-          this.statusLoading.set(false);
-        },
-        error: (error: HttpErrorResponse) => {
-          if (error.status === 404) this.internshipStatus.set(null);
-          this.statusLoading.set(false);
-        }
-      });
+      this.loadStudentStatus();
     }
+  }
+
+  loadStudentStatus(): void {
+    this.statusLoading.set(true);
+    this.statusLoadFailed.set(false);
+    this.internshipService.getCurrentCase().subscribe({
+      next: (internshipCase) => {
+        this.internshipCase.set(internshipCase);
+        this.internshipStatus.set(internshipCase.status);
+        this.statusLoading.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        if (error.status === 404) {
+          this.internshipCase.set(null);
+          this.internshipStatus.set(null);
+        } else {
+          this.statusLoadFailed.set(true);
+        }
+        this.statusLoading.set(false);
+      }
+    });
   }
 
   statusLabel(status: InternshipCaseStatus | null): string {

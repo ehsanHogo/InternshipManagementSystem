@@ -12,6 +12,11 @@
 
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده‌ها...</span></div>
+} @else if (loadFailed()) {
+  <div class="state-card error-state">
+    <div><i class="pi pi-exclamation-circle"></i><p>دریافت پرونده‌های اختصاص‌یافته ناموفق بود.</p></div>
+    <p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="load()" />
+  </div>
 } @else if (visibleCases().length === 0) {
   <div class="state-card"><span>{{ pendingOnly() ? 'در حال حاضر پرونده‌ای برای ثبت اطلاعات شروع کارآموزی وجود ندارد.' : 'پرونده‌ای به شما اختصاص نیافته است.' }}</span></div>
 } @else {

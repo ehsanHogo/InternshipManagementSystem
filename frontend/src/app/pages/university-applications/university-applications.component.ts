@@ -23,6 +23,7 @@ export class UniversityApplicationsComponent {
 
   readonly cases = signal<InternshipCase[]>([]);
   readonly loading = signal(true);
+  readonly loadFailed = signal(false);
 
   readonly selectedStatus = signal<ReviewListStatus>('PENDING_UNIVERSITY_REVIEW');
 
@@ -31,6 +32,7 @@ export class UniversityApplicationsComponent {
   loadCases(status: ReviewListStatus): void {
     this.selectedStatus.set(status);
     this.loading.set(true);
+    this.loadFailed.set(false);
     const request = status === 'PENDING_FINAL_APPROVAL'
       ? this.internshipService.listPendingFinalApprovalCases()
       : this.internshipService.listUniversityCases(status);
@@ -41,6 +43,7 @@ export class UniversityApplicationsComponent {
       },
       error: (error: HttpErrorResponse) => {
         this.loading.set(false);
+        this.loadFailed.set(true);
         this.messages.add({
           severity: 'error',
           summary: 'خطا',

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
@@ -25,15 +26,23 @@ export class ProfessorInternshipsComponent {
 
   readonly cases = signal<ProfessorCaseListItem[]>([]);
   readonly loading = signal(true);
+  readonly loadFailed = signal(false);
 
   constructor() {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
+    this.loadFailed.set(false);
     this.internshipService.listProfessorCases().subscribe({
       next: (cases) => {
         this.cases.set(cases);
         this.loading.set(false);
       },
-      error: () => {
+      error: (_error: HttpErrorResponse) => {
         this.loading.set(false);
+        this.loadFailed.set(true);
         this.messages.add({ severity: 'error', summary: 'خطا', detail: 'دریافت پرونده‌های دانشجویان ناموفق بود.' });
       }
     });

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
@@ -21,18 +22,26 @@ export class CompanyInternshipsComponent {
 
   readonly cases = signal<CompanyInternshipCase[]>([]);
   readonly loading = signal(true);
+  readonly loadFailed = signal(false);
   readonly pendingOnly = signal(true);
   readonly visibleCases = computed(() => this.pendingOnly()
     ? this.cases().filter((item) => item.status === 'PENDING_COMPANY_DETAILS') : this.cases());
 
   constructor() {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
+    this.loadFailed.set(false);
     this.internshipService.listCompanyCases().subscribe({
       next: (cases) => {
         this.cases.set(cases);
         this.loading.set(false);
       },
-      error: () => {
+      error: (_error: HttpErrorResponse) => {
         this.loading.set(false);
+        this.loadFailed.set(true);
         this.messages.add({ severity: 'error', summary: 'خطا', detail: 'دریافت پرونده‌های اختصاص‌یافته ناموفق بود.' });
       }
     });

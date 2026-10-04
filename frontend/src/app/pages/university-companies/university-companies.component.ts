@@ -26,6 +26,7 @@ export class UniversityCompaniesComponent {
 
   readonly companies = signal<Company[]>([]);
   readonly loading = signal(true);
+  readonly loadFailed = signal(false);
   readonly dialogVisible = signal(false);
   submitting = false;
   readonly form = this.formBuilder.nonNullable.group({
@@ -58,11 +59,16 @@ export class UniversityCompaniesComponent {
     });
   }
 
-  private load(): void {
+  load(): void {
     this.loading.set(true);
+    this.loadFailed.set(false);
     this.management.listCompanies().subscribe({
       next: (companies) => { this.companies.set(companies); this.loading.set(false); },
-      error: (error: HttpErrorResponse) => { this.loading.set(false); this.showError(error, 'دریافت شرکت‌ها ناموفق بود.'); }
+      error: (error: HttpErrorResponse) => {
+        this.loading.set(false);
+        this.loadFailed.set(true);
+        this.showError(error, 'دریافت شرکت‌ها ناموفق بود.');
+      }
     });
   }
 

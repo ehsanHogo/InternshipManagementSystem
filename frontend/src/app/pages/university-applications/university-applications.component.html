@@ -20,6 +20,11 @@
 
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت درخواست‌ها...</span></div>
+} @else if (loadFailed()) {
+  <div class="state-card error-state">
+    <div><i class="pi pi-exclamation-circle"></i><p>دریافت پرونده‌ها ناموفق بود.</p></div>
+    <p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="loadCases(selectedStatus())" />
+  </div>
 } @else {
   <p-table [value]="cases()" [rowHover]="true" responsiveLayout="scroll">
     <ng-template #header>

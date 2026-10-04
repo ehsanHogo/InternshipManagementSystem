@@ -51,6 +51,7 @@ export class StudentApplicationComponent {
   readonly internshipCase = signal<InternshipCase | null>(null);
   readonly acceptedApplications = signal<AcceptedOpportunityApplication[]>([]);
   readonly loading = signal(true);
+  readonly loadFailed = signal(false);
   readonly creating = signal(false);
   readonly saving = signal(false);
   readonly preferenceSaving = signal(false);
@@ -61,6 +62,10 @@ export class StudentApplicationComponent {
   });
 
   constructor() {
+    this.loadPage();
+  }
+
+  reloadPage(): void {
     this.loadPage();
   }
 
@@ -190,6 +195,7 @@ export class StudentApplicationComponent {
 
   private loadPage(): void {
     this.loading.set(true);
+    this.loadFailed.set(false);
     forkJoin({
       acceptedApplications: this.internshipService.listAcceptedOpportunityApplications(),
       internshipCase: this.internshipService.getCurrentCase().pipe(
@@ -203,9 +209,16 @@ export class StudentApplicationComponent {
       .subscribe({
         next: ({ acceptedApplications, internshipCase }) => {
           this.acceptedApplications.set(acceptedApplications);
-          if (internshipCase) this.setCase(internshipCase);
+          if (internshipCase) {
+            this.setCase(internshipCase);
+          } else {
+            this.internshipCase.set(null);
+          }
         },
-        error: (error: HttpErrorResponse) => this.showError(error)
+        error: (error: HttpErrorResponse) => {
+          this.loadFailed.set(true);
+          this.showError(error);
+        }
       });
   }
 

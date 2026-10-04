@@ -39,6 +39,7 @@ export class UniversityUsersComponent {
     : ['نام و نام خانوادگی', 'ایمیل'];
   readonly users = signal<User[]>([]);
   readonly loading = signal(true);
+  readonly loadFailed = signal(false);
   readonly createDialogVisible = signal(false);
   readonly credentials = signal<CreatedAccount | null>(null);
   readonly importResult = signal<ImportResult | null>(null);
@@ -134,8 +135,9 @@ export class UniversityUsersComponent {
     return { CREATED: 'success', SKIPPED: 'warn', FAILED: 'danger' }[status] as 'success' | 'warn' | 'danger';
   }
 
-  private loadUsers(): void {
+  loadUsers(): void {
     this.loading.set(true);
+    this.loadFailed.set(false);
     const request = this.isStudent ? this.management.listStudents() : this.management.listProfessors();
     request.subscribe({
       next: (users) => {
@@ -144,6 +146,7 @@ export class UniversityUsersComponent {
       },
       error: (error: HttpErrorResponse) => {
         this.loading.set(false);
+        this.loadFailed.set(true);
         this.showError(error, 'دریافت فهرست کاربران ناموفق بود.');
       }
     });

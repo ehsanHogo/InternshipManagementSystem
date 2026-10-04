@@ -141,7 +141,7 @@
               <div class="detail">
                 <span>وب‌سایت</span>
                 @if (preference.application.opportunity.company.website; as website) {
-                  <a [href]="website" target="_blank" rel="noopener">{{ website }}</a>
+                  <a [href]="externalHref(website)" target="_blank" rel="noopener noreferrer" dir="ltr">{{ website }}</a>
                 } @else { <strong>—</strong> }
               </div>
               <div class="detail"><span>تلفن شرکت</span><strong>{{ preference.application.opportunity.company.phone ?? "—" }}</strong></div>
@@ -271,4 +271,9 @@
       </div>
     </p-card>
   }
+} @else {
+  <div class="state-card error-state">
+    <div><i class="pi pi-exclamation-circle"></i><p>دریافت پرونده ناموفق بود یا دسترسی ندارید.</p></div>
+    <p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="loadCase()" />
+  </div>
 }

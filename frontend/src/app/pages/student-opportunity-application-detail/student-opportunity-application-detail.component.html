@@ -5,7 +5,10 @@
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت جزئیات...</span></div>
 } @else if (loadFailed()) {
-  <div class="state-card"><p>درخواست یافت نشد یا اجازه مشاهده آن را ندارید.</p></div>
+  <div class="state-card error-state">
+    <div><i class="pi pi-exclamation-circle"></i><p>درخواست یافت نشد یا دریافت جزئیات ناموفق بود.</p></div>
+    <p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="load()" />
+  </div>
 } @else if (application(); as item) {
   <p-card header="فرصت و شرکت">
     <div class="detail-grid">

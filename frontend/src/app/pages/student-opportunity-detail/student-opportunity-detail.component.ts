@@ -13,6 +13,7 @@ import {
   applicationStatusLabels
 } from '../../opportunity/opportunity.models';
 import { OpportunityService } from '../../opportunity/opportunity.service';
+import { externalHref } from '../../shared/external-url';
 import { userErrorMessage } from '../../shared/http-error-message';
 
 @Component({
@@ -31,6 +32,7 @@ export class StudentOpportunityDetailComponent {
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
   readonly applying = signal(false);
+  readonly externalHref = externalHref;
   private readonly opportunityId = Number(this.route.snapshot.paramMap.get('id'));
 
   constructor() {
