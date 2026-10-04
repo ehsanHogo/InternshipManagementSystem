@@ -1,9 +1,22 @@
 <div class="shell">
   <header class="topbar">
-    <a class="brand" routerLink="/dashboard" aria-label="سامانه مدیریت کارآموزی">
-      <i class="pi pi-graduation-cap" aria-hidden="true"></i>
-      <span>سامانه مدیریت کارآموزی دانشجویان</span>
-    </a>
+    <div class="topbar-start">
+      @if (user()) {
+        <p-button
+          icon="pi pi-bars"
+          [rounded]="true"
+          [text]="true"
+          severity="secondary"
+          ariaLabel="باز کردن منو"
+          [attr.aria-expanded]="navOpen()"
+          (onClick)="openNav()"
+        />
+      }
+      <a class="brand" routerLink="/dashboard" aria-label="سامانه مدیریت کارآموزی">
+        <i class="pi pi-graduation-cap" aria-hidden="true"></i>
+        <span>سامانه مدیریت کارآموزی دانشجویان</span>
+      </a>
+    </div>
 
     @if (user(); as currentUser) {
       <div class="user-actions">
@@ -22,82 +35,97 @@
     }
   </header>
 
-  <div class="shell-body">
-    <nav class="navigation" aria-label="منوی اصلی">
-      <a routerLink="/dashboard" routerLinkActive="active">
-        <i class="pi pi-home" aria-hidden="true"></i>
-        داشبورد
-      </a>
-      @if (user()?.role === 'STUDENT') {
-        <a routerLink="/student/opportunities" routerLinkActive="active">
-          <i class="pi pi-briefcase" aria-hidden="true"></i>
-          فرصت‌های کارآموزی
+  @if (user()) {
+    <p-drawer
+      [visible]="navOpen()"
+      (visibleChange)="onNavVisibleChange($event)"
+      position="right"
+      header="منوی اصلی"
+      styleClass="app-nav-drawer"
+      [style]="{ width: 'min(20rem, 90vw)' }"
+      ariaCloseLabel="بستن منو"
+      [modal]="true"
+      [dismissible]="true"
+      [closeOnEscape]="true"
+    >
+      <nav class="navigation navigation--drawer" aria-label="منوی اصلی">
+        <a routerLink="/dashboard" routerLinkActive="active">
+          <i class="pi pi-home" aria-hidden="true"></i>
+          داشبورد
         </a>
-        <a routerLink="/student/opportunity-applications" routerLinkActive="active">
-          <i class="pi pi-send" aria-hidden="true"></i>
-          درخواست‌های من
-        </a>
-        <a routerLink="/student/application" routerLinkActive="active">
-          <i class="pi pi-file-edit" aria-hidden="true"></i>
-          درخواست کارآموزی
-        </a>
-        <a routerLink="/student/weekly-reports" routerLinkActive="active">
-          <i class="pi pi-calendar" aria-hidden="true"></i>
-          گزارش‌های هفتگی
-        </a>
-        <a routerLink="/student/final-report" routerLinkActive="active">
-          <i class="pi pi-file-pdf" aria-hidden="true"></i>
-          گزارش نهایی
-        </a>
-      }
-      @if (user()?.role === 'UNIVERSITY_SUPERVISOR') {
-        <a routerLink="/university/applications" routerLinkActive="active">
-          <i class="pi pi-file-check" aria-hidden="true"></i>
-		  درخواست‌های در انتظار بررسی
-        </a>
-        <a routerLink="/university/students" routerLinkActive="active">
-          <i class="pi pi-user" aria-hidden="true"></i>
-          دانشجویان
-        </a>
-        <a routerLink="/university/professors" routerLinkActive="active">
-          <i class="pi pi-users" aria-hidden="true"></i>
-          اساتید
-        </a>
-        <a routerLink="/university/companies" routerLinkActive="active">
-          <i class="pi pi-building" aria-hidden="true"></i>
-          شرکت‌ها
-        </a>
-        <a routerLink="/university/company-supervisors" routerLinkActive="active">
-          <i class="pi pi-id-card" aria-hidden="true"></i>
-          سرپرستان شرکت
-        </a>
-        <a routerLink="/university/professor-assignments" routerLinkActive="active">
-          <i class="pi pi-link" aria-hidden="true"></i>
-          تخصیص استاد
-        </a>
-      }
-      @if (user()?.role === 'COMPANY_SUPERVISOR') {
-        <a routerLink="/company/opportunities" routerLinkActive="active">
-          <i class="pi pi-megaphone" aria-hidden="true"></i>
-          فرصت‌های کارآموزی
-        </a>
-        <a routerLink="/company/profile" routerLinkActive="active">
-          <i class="pi pi-building" aria-hidden="true"></i>
-          پروفایل شرکت
-        </a>
-        <a routerLink="/company/internships" routerLinkActive="active">
-          <i class="pi pi-briefcase" aria-hidden="true"></i>
-          پرونده‌های کارآموزی
-        </a>
-      }
-      @if (user()?.role === 'PROFESSOR') {
-        <a routerLink="/professor/internships" routerLinkActive="active">
-          <i class="pi pi-users" aria-hidden="true"></i>
-          دانشجویان کارآموز
-        </a>
-      }
-    </nav>
+        @if (user()?.role === 'STUDENT') {
+          <a routerLink="/student/opportunities" routerLinkActive="active">
+            <i class="pi pi-briefcase" aria-hidden="true"></i>
+            فرصت‌های کارآموزی
+          </a>
+          <a routerLink="/student/opportunity-applications" routerLinkActive="active">
+            <i class="pi pi-send" aria-hidden="true"></i>
+            درخواست‌های من
+          </a>
+          <a routerLink="/student/application" routerLinkActive="active">
+            <i class="pi pi-file-edit" aria-hidden="true"></i>
+            درخواست کارآموزی
+          </a>
+          <a routerLink="/student/weekly-reports" routerLinkActive="active">
+            <i class="pi pi-calendar" aria-hidden="true"></i>
+            گزارش‌های هفتگی
+          </a>
+          <a routerLink="/student/final-report" routerLinkActive="active">
+            <i class="pi pi-file-pdf" aria-hidden="true"></i>
+            گزارش نهایی
+          </a>
+        }
+        @if (user()?.role === 'UNIVERSITY_SUPERVISOR') {
+          <a routerLink="/university/applications" routerLinkActive="active">
+            <i class="pi pi-file-check" aria-hidden="true"></i>
+            درخواست‌های در انتظار بررسی
+          </a>
+          <a routerLink="/university/students" routerLinkActive="active">
+            <i class="pi pi-user" aria-hidden="true"></i>
+            دانشجویان
+          </a>
+          <a routerLink="/university/professors" routerLinkActive="active">
+            <i class="pi pi-users" aria-hidden="true"></i>
+            اساتید
+          </a>
+          <a routerLink="/university/companies" routerLinkActive="active">
+            <i class="pi pi-building" aria-hidden="true"></i>
+            شرکت‌ها
+          </a>
+          <a routerLink="/university/company-supervisors" routerLinkActive="active">
+            <i class="pi pi-id-card" aria-hidden="true"></i>
+            سرپرستان شرکت
+          </a>
+          <a routerLink="/university/professor-assignments" routerLinkActive="active">
+            <i class="pi pi-link" aria-hidden="true"></i>
+            تخصیص استاد
+          </a>
+        }
+        @if (user()?.role === 'COMPANY_SUPERVISOR') {
+          <a routerLink="/company/opportunities" routerLinkActive="active">
+            <i class="pi pi-megaphone" aria-hidden="true"></i>
+            فرصت‌های کارآموزی
+          </a>
+          <a routerLink="/company/profile" routerLinkActive="active">
+            <i class="pi pi-building" aria-hidden="true"></i>
+            پروفایل شرکت
+          </a>
+          <a routerLink="/company/internships" routerLinkActive="active">
+            <i class="pi pi-briefcase" aria-hidden="true"></i>
+            پرونده‌های کارآموزی
+          </a>
+        }
+        @if (user()?.role === 'PROFESSOR') {
+          <a routerLink="/professor/internships" routerLinkActive="active">
+            <i class="pi pi-users" aria-hidden="true"></i>
+            دانشجویان کارآموز
+          </a>
+        }
+      </nav>
+    </p-drawer>
+  }
 
+  <div class="shell-body">
     <main class="page-content">
       <router-outlet />
     </main>
