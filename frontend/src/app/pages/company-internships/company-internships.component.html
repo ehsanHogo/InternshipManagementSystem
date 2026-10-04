@@ -4,11 +4,20 @@
     <h1>پرونده‌های کارآموزی</h1>
     <p>محل انتخاب‌شده و معرفی‌نامه را بررسی و اطلاعات شروع کارآموزی را برای آموزش ارسال کنید.</p>
   </div>
-  <div class="heading-actions">
-    <p-button label="در انتظار اطلاعات شروع" [outlined]="!pendingOnly()" (onClick)="pendingOnly.set(true)" />
-    <p-button label="همه پرونده‌های اختصاص‌یافته" [outlined]="pendingOnly()" (onClick)="pendingOnly.set(false)" />
-  </div>
 </section>
+
+<div class="filter-row">
+  <p-select
+    [options]="filterOptions"
+    optionLabel="label"
+    optionValue="value"
+    [ngModel]="listFilter()"
+    (ngModelChange)="listFilter.set($event)"
+    placeholder="نمایش پرونده‌ها"
+    appendTo="body"
+    [disabled]="loading()"
+  />
+</div>
 
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده‌ها...</span></div>
@@ -18,7 +27,7 @@
     <p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="load()" />
   </div>
 } @else if (visibleCases().length === 0) {
-  <div class="state-card"><span>{{ pendingOnly() ? 'در حال حاضر پرونده‌ای برای ثبت اطلاعات شروع کارآموزی وجود ندارد.' : 'پرونده‌ای به شما اختصاص نیافته است.' }}</span></div>
+  <div class="state-card"><span>{{ emptyListMessage() }}</span></div>
 } @else {
   <p-table [value]="visibleCases()" [rowHover]="true" responsiveLayout="scroll">
     <ng-template #header>

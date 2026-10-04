@@ -1,8 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 
@@ -11,9 +13,16 @@ import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
+const REVIEW_LIST_STATUSES = [
+  'PENDING_UNIVERSITY_REVIEW',
+  'PENDING_FINAL_APPROVAL',
+  'READY_TO_START',
+  'ACTIVE'
+] as const satisfies readonly ReviewListStatus[];
+
 @Component({
   selector: 'app-university-applications',
-  imports: [JalaliDatePipe, PersianDigitsPipe, RouterLink, ButtonModule, TableModule, TagModule],
+  imports: [FormsModule, JalaliDatePipe, PersianDigitsPipe, RouterLink, ButtonModule, SelectModule, TableModule, TagModule],
   templateUrl: './university-applications.component.html',
   styleUrl: '../workflow-page.scss'
 })
@@ -26,8 +35,21 @@ export class UniversityApplicationsComponent {
   readonly loadFailed = signal(false);
 
   readonly selectedStatus = signal<ReviewListStatus>('PENDING_UNIVERSITY_REVIEW');
+  readonly statusOptions = REVIEW_LIST_STATUSES.map((status) => ({
+    label: internshipStatusLabels[status],
+    value: status
+  }));
 
-  constructor() { this.loadCases('PENDING_UNIVERSITY_REVIEW'); }
+  constructor() {
+    this.loadCases('PENDING_UNIVERSITY_REVIEW');
+  }
+
+  filterChanged(status: ReviewListStatus): void {
+    if (status === this.selectedStatus()) {
+      return;
+    }
+    this.loadCases(status);
+  }
 
   loadCases(status: ReviewListStatus): void {
     this.selectedStatus.set(status);
@@ -53,7 +75,9 @@ export class UniversityApplicationsComponent {
     });
   }
 
-  statusLabel(): string { return internshipStatusLabels[this.selectedStatus()]; }
+  statusLabel(): string {
+    return internshipStatusLabels[this.selectedStatus()];
+  }
 }
 
 type ReviewListStatus = 'PENDING_UNIVERSITY_REVIEW' | 'PENDING_FINAL_APPROVAL' | 'READY_TO_START' | 'ACTIVE';

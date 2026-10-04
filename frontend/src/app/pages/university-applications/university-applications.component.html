@@ -10,13 +10,20 @@
           ? 'پرونده‌های تأییدشده را مشاهده و برای فعال‌سازی باز کنید.'
           : 'پرونده‌های در حال انجام کارآموزی را مشاهده کنید.' }}</p>
   </div>
-  <div class="heading-actions">
-    <p-button label="در انتظار بررسی آموزش" [outlined]="selectedStatus() !== 'PENDING_UNIVERSITY_REVIEW'" [disabled]="loading()" (onClick)="loadCases('PENDING_UNIVERSITY_REVIEW')" />
-    <p-button label="در انتظار تأیید نهایی" [outlined]="selectedStatus() !== 'PENDING_FINAL_APPROVAL'" [disabled]="loading()" (onClick)="loadCases('PENDING_FINAL_APPROVAL')" />
-    <p-button label="آماده شروع کارآموزی" [outlined]="selectedStatus() !== 'READY_TO_START'" [disabled]="loading()" (onClick)="loadCases('READY_TO_START')" />
-    <p-button label="در حال انجام کارآموزی" [outlined]="selectedStatus() !== 'ACTIVE'" [disabled]="loading()" (onClick)="loadCases('ACTIVE')" />
-  </div>
 </section>
+
+<div class="filter-row">
+  <p-select
+    [options]="statusOptions"
+    optionLabel="label"
+    optionValue="value"
+    [ngModel]="selectedStatus()"
+    (ngModelChange)="filterChanged($event)"
+    placeholder="انتخاب مرحله"
+    appendTo="body"
+    [disabled]="loading()"
+  />
+</div>
 
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت درخواست‌ها...</span></div>
