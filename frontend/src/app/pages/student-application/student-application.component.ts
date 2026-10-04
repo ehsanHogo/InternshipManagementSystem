@@ -17,6 +17,7 @@ import {
   InternshipCaseStatus,
   InternshipPreference,
   internshipStatusLabels,
+  internshipStatusSeverity,
   professorFinalResultLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
@@ -78,16 +79,10 @@ export class StudentApplicationComponent {
     return this.isDraft && this.applicationForm.valid && count >= 1 && count <= 3;
   }
 
+  readonly internshipStatusSeverity = internshipStatusSeverity;
+
   statusLabel(status: InternshipCaseStatus): string {
     return internshipStatusLabels[status];
-  }
-
-  statusSeverity(status: InternshipCaseStatus): 'secondary' | 'info' | 'success' | 'contrast' | 'danger' {
-    if (status === 'PENDING_UNIVERSITY_REVIEW' || status === 'PENDING_COMPANY_DETAILS') return 'info';
-    if (status === 'PENDING_FINAL_APPROVAL' || status === 'READY_TO_START' || status === 'ACTIVE') return 'success';
-    if (status === 'COMPLETED') return 'contrast';
-    if (status === 'CANCELLED') return 'danger';
-    return 'secondary';
   }
 
   finalResultLabel(internshipCase: InternshipCase): string {

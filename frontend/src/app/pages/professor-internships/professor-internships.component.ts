@@ -10,6 +10,7 @@ import {
   InternshipCaseStatus,
   ProfessorCaseListItem,
   internshipStatusLabels,
+  internshipStatusSeverity,
   professorFinalResultLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
@@ -47,6 +48,8 @@ export class ProfessorInternshipsComponent {
       }
     });
   }
+
+  readonly internshipStatusSeverity = internshipStatusSeverity;
 
   statusLabel(status: InternshipCaseStatus): string {
     return internshipStatusLabels[status];

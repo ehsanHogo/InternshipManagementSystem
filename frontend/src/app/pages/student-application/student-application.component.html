@@ -7,7 +7,7 @@
     <p>از میان فرصت‌هایی که شرکت پذیرفته است، حداکثر سه اولویت انتخاب کنید.</p>
   </div>
   @if (internshipCase(); as currentCase) {
-    <p-tag [value]="statusLabel(currentCase.status)" [severity]="statusSeverity(currentCase.status)" />
+    <p-tag [value]="statusLabel(currentCase.status)" [severity]="internshipStatusSeverity(currentCase.status)" />
   }
 </section>
 
@@ -41,7 +41,16 @@
   @if (!isDraft) {
     <div class="review-notice">
       <i class="pi pi-lock" aria-hidden="true"></i>
-      <span>وضعیت: {{ statusLabel(currentCase.status) }}. اطلاعات و اولویت‌های این پرونده برای دانشجو فقط خواندنی است.</span>
+      <div class="review-notice-body">
+        <div class="status-line">
+          <span class="status-label">وضعیت پرونده</span>
+          <p-tag
+            [value]="statusLabel(currentCase.status)"
+            [severity]="internshipStatusSeverity(currentCase.status)"
+          />
+        </div>
+        <p class="review-notice-text">اطلاعات و اولویت‌های این پرونده برای دانشجو فقط خواندنی است.</p>
+      </div>
     </div>
   }
 
@@ -181,8 +190,14 @@
 
   @if (currentCase.selectedPreference) {
     <p-card header="نتیجه بررسی آموزش">
+      <div class="card-status-line status-line">
+        <span class="status-label">وضعیت</span>
+        <p-tag
+          [value]="statusLabel(currentCase.status)"
+          [severity]="internshipStatusSeverity(currentCase.status)"
+        />
+      </div>
       <div class="detail-grid">
-        <div class="detail"><span>وضعیت</span><strong>{{ statusLabel(currentCase.status) }}</strong></div>
         @if (currentCase.activatedAt) {
           <div class="detail"><span>تاریخ فعال‌سازی</span><strong>{{ currentCase.activatedAt | jalaliDate }}</strong></div>
         }
@@ -208,8 +223,11 @@
 
   @if (currentCase.status === "CANCELLED") {
     <p-card header="پرونده لغو شده">
+      <div class="card-status-line status-line">
+        <span class="status-label">وضعیت</span>
+        <p-tag value="لغو شده" severity="danger" />
+      </div>
       <div class="detail-grid">
-        <div class="detail"><span>وضعیت</span><strong>لغو شده</strong></div>
         <div class="detail"><span>تاریخ لغو</span><strong>{{ currentCase.cancelledAt | jalaliDate }}</strong></div>
         <div class="detail full-width"><span>دلیل لغو</span><strong>{{ currentCase.cancellationComment ?? "—" }}</strong></div>
       </div>
@@ -242,8 +260,11 @@
 
   @if (currentCase.status === "COMPLETED") {
     <p-card header="نتیجه نهایی کارآموزی">
+      <div class="card-status-line status-line">
+        <span class="status-label">وضعیت</span>
+        <p-tag value="تکمیل شده" severity="contrast" />
+      </div>
       <div class="detail-grid">
-        <div class="detail"><span>وضعیت</span><strong>تکمیل شده</strong></div>
         <div class="detail"><span>نتیجه نهایی</span><strong>{{ finalResultLabel(currentCase) }}</strong></div>
         <div class="detail full-width"><span>نظر استاد</span><strong>{{ currentCase.professorComment || "—" }}</strong></div>
       </div>

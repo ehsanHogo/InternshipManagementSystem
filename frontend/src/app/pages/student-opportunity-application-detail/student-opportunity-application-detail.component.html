@@ -19,8 +19,11 @@
     </div>
   </p-card>
   <p-card header="وضعیت درخواست">
+    <div class="card-status-line status-line">
+      <span class="status-label">وضعیت</span>
+      <p-tag [value]="statusLabel(item.status)" [severity]="applicationStatusSeverity(item.status)" />
+    </div>
     <div class="detail-grid">
-      <div class="detail"><span>وضعیت</span><p-tag [value]="statusLabel(item.status)" [severity]="statusSeverity(item.status)" /></div>
       <div class="detail"><span>تاریخ ارسال</span><strong>{{ item.appliedAt | jalaliDate }}</strong></div>
       <div class="detail"><span>تاریخ بررسی</span><strong>{{ item.reviewedAt ? (item.reviewedAt | jalaliDate) : 'هنوز بررسی نشده' }}</strong></div>
       <div class="detail"><span>رزومه</span><strong>{{ item.resume.originalName }}</strong></div>

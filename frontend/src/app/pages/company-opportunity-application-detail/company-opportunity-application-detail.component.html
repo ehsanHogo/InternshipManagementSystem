@@ -14,11 +14,14 @@
   </div>
 } @else if (application(); as item) {
   <p-card header="اطلاعات درخواست">
+    <div class="card-status-line status-line">
+      <span class="status-label">وضعیت</span>
+      <p-tag [value]="statusLabel(item.status)" [severity]="applicationStatusSeverity(item.status)" />
+    </div>
     <div class="detail-grid">
       <div class="detail"><span>نام دانشجو</span><strong>{{ item.student?.fullName }}</strong></div>
       <div class="detail"><span>ایمیل دانشجو</span><strong dir="ltr">{{ item.student?.email }}</strong></div>
       <div class="detail"><span>عنوان فرصت</span><strong>{{ item.opportunity.title }}</strong></div>
-      <div class="detail"><span>وضعیت</span><p-tag [value]="statusLabel(item.status)" [severity]="statusSeverity(item.status)" /></div>
       <div class="detail"><span>تاریخ ارسال</span><strong>{{ item.appliedAt | jalaliDate }}</strong></div>
       <div class="detail"><span>تاریخ بررسی</span><strong>{{ item.reviewedAt ? (item.reviewedAt | jalaliDate) : 'هنوز بررسی نشده' }}</strong></div>
       <div class="detail full-width"><span>رزومه</span><strong>{{ item.resume.originalName }}</strong></div>
@@ -34,7 +37,13 @@
         <p-button label="رد درخواست" icon="pi pi-times" severity="danger" [outlined]="true" [disabled]="reviewing()" (onClick)="confirmReview('reject')" />
       </div>
     } @else {
-      <div class="decision-result"><p-tag [value]="statusLabel(item.status)" [severity]="statusSeverity(item.status)" /><p>{{ item.companyComment || 'نظری از طرف شرکت ثبت نشده است.' }}</p></div>
+      <div class="decision-result">
+        <div class="status-line">
+          <span class="status-label">نتیجه</span>
+          <p-tag [value]="statusLabel(item.status)" [severity]="applicationStatusSeverity(item.status)" />
+        </div>
+        <p>{{ item.companyComment || 'نظری از طرف شرکت ثبت نشده است.' }}</p>
+      </div>
     }
   </p-card>
 }

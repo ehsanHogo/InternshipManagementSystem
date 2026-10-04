@@ -50,7 +50,7 @@
         <td>{{ placementName(item) }}</td>
         <td>{{ item.letterNumber ?? '—' }}</td>
         <td>{{ item.letterDate | jalaliDate }}</td>
-        <td><p-tag [value]="statusLabel(item.status)" severity="info" /></td>
+        <td><p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" /></td>
         <td><p-button [label]="item.status === 'PENDING_COMPANY_DETAILS' ? 'مشاهده و تکمیل اطلاعات' : 'مشاهده'" icon="pi pi-eye" [text]="true" [routerLink]="['/company/internships', item.id]" /></td>
       </tr>
     </ng-template>

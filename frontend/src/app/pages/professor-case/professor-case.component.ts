@@ -15,7 +15,9 @@ import { TextareaModule } from 'primeng/textarea';
 import {
   WeeklyReport,
   finalReportStatusLabels,
+  finalReportStatusSeverity,
   EvaluationRating,
+  internshipStatusSeverity,
   ProfessorCaseDetail,
   ProfessorCompanyEvaluation,
   ProfessorFinalResult,
@@ -53,6 +55,8 @@ export class ProfessorCaseComponent {
   private readonly caseID = Number(this.route.snapshot.paramMap.get('id'));
 
   readonly finalReportStatusLabels = finalReportStatusLabels;
+  readonly finalReportStatusSeverity = finalReportStatusSeverity;
+  readonly internshipStatusSeverity = internshipStatusSeverity;
   readonly finalReviewAction = signal<'approve' | 'request-revision' | null>(null);
   readonly finalReviewForm = this.formBuilder.group({ comment: this.formBuilder.nonNullable.control('') });
   readonly finalReviewing = signal(false);

@@ -17,7 +17,7 @@
         <td><strong>{{ application.opportunity.title }}</strong></td>
         <td>{{ application.opportunity.company.name }}</td>
         <td>{{ application.appliedAt | jalaliDate }}</td>
-        <td><p-tag [value]="statusLabel(application.status)" [severity]="statusSeverity(application.status)" /></td>
+        <td><p-tag [value]="statusLabel(application.status)" [severity]="applicationStatusSeverity(application.status)" /></td>
         <td><p-button label="مشاهده جزئیات" icon="pi pi-eye" size="small" [text]="true" [routerLink]="['/student/opportunity-applications', application.id]" /></td>
       </tr>
     </ng-template>

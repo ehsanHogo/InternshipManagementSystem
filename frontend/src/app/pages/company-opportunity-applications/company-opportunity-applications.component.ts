@@ -7,7 +7,13 @@ import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 
-import { ApplicationStatus, CompanyOpportunity, OpportunityApplication, applicationStatusLabels } from '../../opportunity/opportunity.models';
+import {
+  ApplicationStatus,
+  CompanyOpportunity,
+  OpportunityApplication,
+  applicationStatusLabels,
+  applicationStatusSeverity
+} from '../../opportunity/opportunity.models';
 import { OpportunityService } from '../../opportunity/opportunity.service';
 import { userErrorMessage } from '../../shared/http-error-message';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
@@ -48,6 +54,7 @@ export class CompanyOpportunityApplicationsComponent {
     });
   }
 
+  readonly applicationStatusSeverity = applicationStatusSeverity;
+
   statusLabel(status: ApplicationStatus): string { return applicationStatusLabels[status]; }
-  statusSeverity(status: ApplicationStatus): 'success' | 'danger' | 'warn' { return status === 'ACCEPTED' ? 'success' : status === 'REJECTED' ? 'danger' : 'warn'; }
 }

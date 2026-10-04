@@ -39,21 +39,21 @@
   </p-card>
 
   <p-card header="وضعیت تأیید دانشکده">
-    <div class="approval-status" [class.approved]="account.company.isApproved">
-      <i [class]="account.company.isApproved ? 'pi pi-check-circle' : 'pi pi-info-circle'" aria-hidden="true"></i>
-      <div>
+    <div class="approval-status">
+      <div class="status-line">
+        <span class="status-label">وضعیت تأیید</span>
         <p-tag
           [value]="account.company.isApproved ? 'تأییدشده توسط دانشکده' : 'در انتظار تأیید دانشکده'"
           [severity]="account.company.isApproved ? 'success' : 'warn'"
         />
-        <p>
-          @if (account.company.isApproved) {
-            شرکت در فهرست شرکت‌های مورد تأیید دانشکده قرار دارد.
-          } @else {
-            هنوز در فهرست شرکت‌های مورد تأیید دانشکده قرار نگرفته است؛ حساب شما فعال است و می‌توانید از سامانه استفاده کنید.
-          }
-        </p>
       </div>
+      <p>
+        @if (account.company.isApproved) {
+          شرکت در فهرست شرکت‌های مورد تأیید دانشکده قرار دارد.
+        } @else {
+          هنوز در فهرست شرکت‌های مورد تأیید دانشکده قرار نگرفته است؛ حساب شما فعال است و می‌توانید از سامانه استفاده کنید.
+        }
+      </p>
     </div>
   </p-card>
 }

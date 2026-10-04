@@ -15,7 +15,8 @@ import {
   CompanyOpportunity,
   OpportunityPayload,
   OpportunityStatus,
-  opportunityStatusLabels
+  opportunityStatusLabels,
+  opportunityStatusSeverity
 } from '../../opportunity/opportunity.models';
 import { OpportunityService } from '../../opportunity/opportunity.service';
 import { userErrorMessage } from '../../shared/http-error-message';
@@ -155,6 +156,8 @@ export class CompanyOpportunitiesComponent {
       error: (error: HttpErrorResponse) => this.showError(error, 'بستن فرصت کارآموزی ناموفق بود.')
     });
   }
+
+  readonly opportunityStatusSeverity = opportunityStatusSeverity;
 
   statusLabel(status: OpportunityStatus): string {
     return opportunityStatusLabels[status];

@@ -4,14 +4,19 @@ import { Component, ElementRef, inject, signal, viewChild } from '@angular/core'
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
+import { TagModule } from 'primeng/tag';
 
-import { InternshipCase, finalReportStatusLabels } from '../../internship/internship.models';
+import {
+  InternshipCase,
+  finalReportStatusLabels,
+  finalReportStatusSeverity
+} from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 
 @Component({
   selector: 'app-student-final-report',
-  imports: [JalaliDatePipe, ButtonModule, CardModule],
+  imports: [JalaliDatePipe, ButtonModule, CardModule, TagModule],
   templateUrl: './student-final-report.component.html',
   styleUrls: ['../workflow-page.scss', './student-final-report.component.scss']
 })
@@ -21,6 +26,7 @@ export class StudentFinalReportComponent {
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
   readonly finalReportStatusLabels = finalReportStatusLabels;
+  readonly finalReportStatusSeverity = finalReportStatusSeverity;
   readonly internshipCase = signal<InternshipCase | null>(null);
   readonly selectedFile = signal<File | null>(null);
   readonly loading = signal(true);

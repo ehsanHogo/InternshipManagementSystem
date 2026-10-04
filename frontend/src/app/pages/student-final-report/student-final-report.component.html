@@ -18,8 +18,12 @@
 } @else {
   @if (internshipCase()?.finalReport; as report) {
     <p-card header="گزارش نهایی">
-      <div class="notice" [class.neutral]="report.status !== 'REVISION_REQUESTED'">
-        وضعیت: {{ finalReportStatusLabels[report.status] }}
+      <div class="card-status-line status-line">
+        <span class="status-label">وضعیت</span>
+        <p-tag
+          [value]="finalReportStatusLabels[report.status]"
+          [severity]="finalReportStatusSeverity(report.status)"
+        />
       </div>
       @if (report.reviewComment) {
         <div class="notice" style="white-space: pre-wrap"><strong>آخرین نظر استاد</strong><p>{{ report.reviewComment }}</p></div>

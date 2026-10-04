@@ -15,7 +15,7 @@
       </p>
     </div>
     <div class="heading-actions">
-      <p-tag [value]="statusLabel(item.status)" severity="info" />
+      <p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" />
       <p-button
         label="بازگشت"
         icon="pi pi-arrow-right"
@@ -180,28 +180,19 @@
       } @else {
         <div class="preference-list">
           @for (report of reports(); track report.id) {
-            <div class="detail">
+            <article class="report-item">
               <div class="status-line">
                 <strong>هفته {{ report.weekNumber | persianDigits }}</strong>
               </div>
-              <span
-                >{{ report.startDate | jalaliDate }} تا
-                {{ report.endDate | jalaliDate }}</span
-              >
-              <p style="white-space: pre-wrap; line-height: 1.9">
-                {{ report.activityDescription }}
-              </p>
+              <span>{{ report.startDate | jalaliDate }} تا {{ report.endDate | jalaliDate }}</span>
+              <p style="white-space: pre-wrap; line-height: 1.9">{{ report.activityDescription }}</p>
               <app-weekly-report-review [report]="report" />
               @if (canReviewReport(report)) {
                 <div class="card-actions">
-                  <p-button
-                    label="بررسی گزارش"
-                    icon="pi pi-check"
-                    (onClick)="openReportReview(report)"
-                  />
+                  <p-button label="بررسی گزارش" icon="pi pi-check" (onClick)="openReportReview(report)" />
                 </div>
               }
-            </div>
+            </article>
           }
         </div>
       }

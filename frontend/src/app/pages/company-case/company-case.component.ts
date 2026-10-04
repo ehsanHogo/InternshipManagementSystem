@@ -22,6 +22,7 @@ import {
   WeeklyReport,
   evaluationRatingLabels,
   internshipStatusLabels,
+  internshipStatusSeverity,
   professorFinalResultLabels
 } from '../../internship/internship.models';
 import { WeeklyReportReviewComponent } from '../../shared/weekly-report-review.component';
@@ -242,6 +243,8 @@ export class CompanyCaseComponent {
       error: (error: HttpErrorResponse) => { this.evaluationSaving.set(false); this.showError(error); }
     });
   }
+
+  readonly internshipStatusSeverity = internshipStatusSeverity;
 
   statusLabel(status: InternshipCaseStatus): string {
     return internshipStatusLabels[status];

@@ -10,6 +10,9 @@ export type InternshipCaseStatus =
   | 'COMPLETED'
   | 'CANCELLED';
 
+/** PrimeNG Tag severities used for status chips across the app. */
+export type StatusTagSeverity = 'secondary' | 'info' | 'success' | 'warn' | 'danger' | 'contrast';
+
 export interface Company {
   id: number;
   name: string;
@@ -93,6 +96,17 @@ export const finalReportStatusLabels: Record<FinalReportStatus, string> = {
   APPROVED: 'تأیید شده'
 };
 
+export function finalReportStatusSeverity(status: FinalReportStatus): StatusTagSeverity {
+  switch (status) {
+    case 'APPROVED':
+      return 'success';
+    case 'REVISION_REQUESTED':
+      return 'danger';
+    default:
+      return 'info';
+  }
+}
+
 export interface FinalReport {
   id: number;
   internshipCaseId: number;
@@ -121,6 +135,30 @@ export const weeklyReportStatusLabels: Record<WeeklyReportStatus, string> = {
 export const weeklyReviewStatusLabels: Record<WeeklyReviewStatus, string> = {
   PENDING: 'در انتظار بررسی', APPROVED: 'تأیید شده', REVISION_REQUESTED: 'نیازمند اصلاح'
 };
+
+export function weeklyReportStatusSeverity(status: WeeklyReportStatus): StatusTagSeverity {
+  switch (status) {
+    case 'APPROVED':
+      return 'success';
+    case 'REVISION_REQUESTED':
+      return 'danger';
+    case 'DRAFT':
+      return 'secondary';
+    default:
+      return 'info';
+  }
+}
+
+export function weeklyReviewStatusSeverity(status: WeeklyReviewStatus): StatusTagSeverity {
+  switch (status) {
+    case 'APPROVED':
+      return 'success';
+    case 'REVISION_REQUESTED':
+      return 'danger';
+    default:
+      return 'warn';
+  }
+}
 
 export interface WeeklyReport {
   id: number;
@@ -272,6 +310,24 @@ export const internshipStatusLabels: Record<InternshipCaseStatus, string> = {
   COMPLETED: 'تکمیل شده',
   CANCELLED: 'لغو شده'
 };
+
+export function internshipStatusSeverity(status: InternshipCaseStatus): StatusTagSeverity {
+  switch (status) {
+    case 'PENDING_UNIVERSITY_REVIEW':
+    case 'PENDING_COMPANY_DETAILS':
+      return 'info';
+    case 'PENDING_FINAL_APPROVAL':
+    case 'READY_TO_START':
+    case 'ACTIVE':
+      return 'success';
+    case 'COMPLETED':
+      return 'contrast';
+    case 'CANCELLED':
+      return 'danger';
+    default:
+      return 'secondary';
+  }
+}
 
 export interface PreferencePayload {
   priority: number;

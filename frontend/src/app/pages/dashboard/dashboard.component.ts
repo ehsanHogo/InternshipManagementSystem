@@ -10,6 +10,7 @@ import {
   InternshipCase,
   InternshipCaseStatus,
   internshipStatusLabels,
+  internshipStatusSeverity,
   professorFinalResultLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
@@ -57,6 +58,8 @@ export class DashboardComponent {
       }
     });
   }
+
+  readonly internshipStatusSeverity = internshipStatusSeverity;
 
   statusLabel(status: InternshipCaseStatus | null): string {
     return status ? internshipStatusLabels[status] : 'درخواستی ثبت نشده است';

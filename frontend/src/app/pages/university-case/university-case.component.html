@@ -62,7 +62,7 @@
       <p>درخواست رسمی و اولویت‌های محل کارآموزی</p>
     </div>
     <div class="heading-actions">
-      <p-tag [value]="statusLabel(item.status)" [severity]="item.status === 'CANCELLED' ? 'danger' : 'info'" />
+      <p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" />
       <p-button label="بازگشت" icon="pi pi-arrow-right" severity="secondary" [text]="true" routerLink="/university/applications" />
     </div>
   </section>
@@ -86,8 +86,11 @@
   </p-card>
 
   <p-card header="اطلاعات درخواست رسمی">
+    <div class="card-status-line status-line">
+      <span class="status-label">وضعیت پرونده</span>
+      <p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" />
+    </div>
     <div class="detail-grid">
-      <div class="detail"><span>وضعیت پرونده</span><strong>{{ statusLabel(item.status) }}</strong></div>
       <div class="detail"><span>تاریخ ارسال</span><strong>{{ item.submittedAt | jalaliDate }}</strong></div>
       @if (item.activatedAt) {
         <div class="detail"><span>تاریخ فعال‌سازی</span><strong>{{ item.activatedAt | jalaliDate }}</strong></div>
@@ -207,8 +210,11 @@
 
   @if (item.selectedPreference) {
     <p-card header="نتیجه بررسی آموزش">
+      <div class="card-status-line status-line">
+        <span class="status-label">وضعیت</span>
+        <p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" />
+      </div>
       <div class="detail-grid">
-        <div class="detail"><span>وضعیت</span><strong>{{ statusLabel(item.status) }}</strong></div>
         <div class="detail"><span>اولویت انتخاب‌شده</span><strong>اولویت {{ item.selectedPreference.priority | persianDigits }}</strong></div>
         <div class="detail"><span>شرکت</span><strong>{{ item.selectedPreference.application.opportunity.company.name }}</strong></div>
         <div class="detail"><span>فرصت</span><strong>{{ item.selectedPreference.application.opportunity.title }}</strong></div>
@@ -264,8 +270,11 @@
 
   @if (item.status === "CANCELLED") {
     <p-card header="نتیجه لغو پرونده">
+      <div class="card-status-line status-line">
+        <span class="status-label">وضعیت</span>
+        <p-tag value="لغو شده" severity="danger" />
+      </div>
       <div class="detail-grid">
-        <div class="detail"><span>وضعیت</span><strong>لغو شده</strong></div>
         <div class="detail"><span>تاریخ لغو</span><strong>{{ item.cancelledAt | jalaliDate }}</strong></div>
         <div class="detail full-width"><span>دلیل لغو</span><strong>{{ item.cancellationComment }}</strong></div>
       </div>

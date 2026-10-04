@@ -16,7 +16,7 @@
     <div class="heading-actions">
       <p-tag
         [value]="statusLabel(item)"
-        [severity]="item.internship.status === 'COMPLETED' ? 'success' : 'info'"
+        [severity]="internshipStatusSeverity(item.internship.status)"
       />
       <p-button
         label="بازگشت"
@@ -167,8 +167,12 @@
 
   <p-card header="گزارش نهایی کارآموزی">
     @if (item.finalReport; as report) {
-      <div class="notice" [class.neutral]="report.status !== 'REVISION_REQUESTED'">
-        وضعیت: {{ finalReportStatusLabels[report.status] }}
+      <div class="card-status-line status-line">
+        <span class="status-label">وضعیت گزارش نهایی</span>
+        <p-tag
+          [value]="finalReportStatusLabels[report.status]"
+          [severity]="finalReportStatusSeverity(report.status)"
+        />
       </div>
       @if (report.reviewComment) {
         <div class="notice" style="white-space: pre-wrap"><strong>آخرین نظر استاد</strong><p>{{ report.reviewComment }}</p></div>
@@ -200,24 +204,33 @@
   </p-card>
 
   <p-card header="آمادگی ارزیابی نهایی">
-    <div class="detail-grid">
-      <div class="detail">
-        <span>گزارش‌های هفتگی</span
-        ><strong>{{ item.weeklyReportCount | persianDigits }} از ۸</strong>
+    <div class="readiness-summary">
+      <div class="readiness-row">
+        <span class="status-label">گزارش‌های هفتگی</span>
+        <strong>{{ item.weeklyReportCount | persianDigits }} از ۸</strong>
       </div>
-      <div class="detail">
-        <span>گزارش‌های تأییدشده</span
-        ><strong>{{ item.approvedWeeklyReportCount | persianDigits }} از ۸</strong>
+      <div class="readiness-row">
+        <span class="status-label">گزارش‌های تأییدشده</span>
+        <strong>{{ item.approvedWeeklyReportCount | persianDigits }} از ۸</strong>
       </div>
-      <div class="detail">
-        <span>ارزیابی شرکت</span
-        ><strong>{{
-          item.hasCompanyEvaluation ? "ثبت شده" : "ثبت نشده"
-        }}</strong>
+      <div class="readiness-row">
+        <span class="status-label">ارزیابی شرکت</span>
+        @if (item.hasCompanyEvaluation) {
+          <p-tag value="ثبت شده" severity="success" />
+        } @else {
+          <p-tag value="ثبت نشده" severity="secondary" />
+        }
       </div>
-      <div class="detail">
-        <span>گزارش نهایی</span
-        ><strong>{{ item.finalReport ? finalReportStatusLabels[item.finalReport.status] : "ثبت نشده" }}</strong>
+      <div class="readiness-row">
+        <span class="status-label">گزارش نهایی</span>
+        @if (item.finalReport; as finalReport) {
+          <p-tag
+            [value]="finalReportStatusLabels[finalReport.status]"
+            [severity]="finalReportStatusSeverity(finalReport.status)"
+          />
+        } @else {
+          <p-tag value="ثبت نشده" severity="secondary" />
+        }
       </div>
     </div>
     @if (!item.canProfessorComplete && item.internship.status !== "COMPLETED") {

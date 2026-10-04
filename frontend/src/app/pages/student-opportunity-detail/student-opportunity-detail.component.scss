@@ -34,15 +34,38 @@
 }
 
 .application-state {
-  justify-content: flex-start;
-  border: 1px solid #cbd5e1;
-  i { font-size: 1.5rem; }
-  p { margin: 0.5rem 0 0; }
-  p-button { margin-right: auto; }
+  justify-content: space-between;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+
+  p-button {
+    margin-right: auto;
+  }
 }
 
-.success-state { border-color: #bbf7d0; background: #f0fdf4; i { color: #16a34a; } }
-.blocked-state { border-color: #fde68a; background: #fffbeb; i { color: #d97706; } }
+.application-state-body {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.application-state .status-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
+.application-state .status-label {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.application-state--muted {
+  color: #475569;
+  line-height: 1.8;
+}
 
 @media (max-width: 52rem) {
   .apply-panel,

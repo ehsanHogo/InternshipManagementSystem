@@ -18,15 +18,17 @@
         <span class="state-icon"
           ><i class="pi pi-file-check" aria-hidden="true"></i
         ></span>
-        <div>
-          <span>وضعیت فعلی</span>
+        <div class="internship-status">
+          <span class="status-label">وضعیت فعلی</span>
           @if (statusLoading()) {
             <strong>در حال دریافت...</strong>
           } @else if (statusLoadFailed()) {
             <strong class="status-error">دریافت وضعیت ناموفق بود.</strong>
             <p-button label="تلاش دوباره" icon="pi pi-refresh" [text]="true" (onClick)="loadStudentStatus()" />
+          } @else if (internshipStatus(); as status) {
+            <p-tag [value]="statusLabel(status)" [severity]="internshipStatusSeverity(status)" />
           } @else {
-            <strong>{{ statusLabel(internshipStatus()) }}</strong>
+            <p-tag value="درخواستی ثبت نشده است" severity="secondary" />
           }
         </div>
         <p-button
@@ -59,7 +61,10 @@
         <p-card header="نتیجه نهایی کارآموزی">
           <div class="detail-grid">
             <div class="detail">
-              <span>وضعیت</span><strong>تکمیل شده</strong>
+              <span>وضعیت</span>
+              <div class="inline-tag">
+                <p-tag value="تکمیل شده" severity="contrast" />
+              </div>
             </div>
             <div class="detail">
               <span>نتیجه نهایی</span

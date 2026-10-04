@@ -16,7 +16,8 @@ import {
   InternshipCase,
   InternshipCaseStatus,
   InternshipPreference,
-  internshipStatusLabels
+  internshipStatusLabels,
+  internshipStatusSeverity
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
@@ -79,6 +80,8 @@ export class UniversityCaseComponent {
   constructor() {
     this.loadCase();
   }
+
+  readonly internshipStatusSeverity = internshipStatusSeverity;
 
   statusLabel(status: InternshipCaseStatus): string {
     return internshipStatusLabels[status];

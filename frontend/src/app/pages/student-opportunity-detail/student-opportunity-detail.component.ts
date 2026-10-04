@@ -10,7 +10,8 @@ import { TagModule } from 'primeng/tag';
 import {
   ApplicationStatus,
   StudentOpportunity,
-  applicationStatusLabels
+  applicationStatusLabels,
+  applicationStatusSeverity
 } from '../../opportunity/opportunity.models';
 import { OpportunityService } from '../../opportunity/opportunity.service';
 import { externalHref } from '../../shared/external-url';
@@ -108,6 +109,8 @@ export class StudentOpportunityDetailComponent {
       }
     });
   }
+
+  readonly applicationStatusSeverity = applicationStatusSeverity;
 
   statusLabel(status: ApplicationStatus): string {
     return applicationStatusLabels[status];

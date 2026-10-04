@@ -30,7 +30,7 @@
         <td>{{ opportunity.workField }}</td>
         <td>{{ opportunity.location }}</td>
         <td>
-          <p-tag [value]="statusLabel(opportunity.status)" [severity]="opportunity.status === 'OPEN' ? 'success' : 'secondary'" />
+          <p-tag [value]="statusLabel(opportunity.status)" [severity]="opportunityStatusSeverity(opportunity.status)" />
         </td>
         <td>{{ opportunity.createdAt | jalaliDate }}</td>
         <td>
@@ -92,7 +92,10 @@
       <div class="detail full-width"><span>عنوان</span><strong>{{ opportunity.title }}</strong></div>
       <div class="detail"><span>زمینه کاری</span><strong>{{ opportunity.workField }}</strong></div>
       <div class="detail"><span>محل</span><strong>{{ opportunity.location }}</strong></div>
-      <div class="detail"><span>وضعیت</span><p-tag [value]="statusLabel(opportunity.status)" [severity]="opportunity.status === 'OPEN' ? 'success' : 'secondary'" /></div>
+      <div class="card-status-line status-line">
+        <span class="status-label">وضعیت</span>
+        <p-tag [value]="statusLabel(opportunity.status)" [severity]="opportunityStatusSeverity(opportunity.status)" />
+      </div>
       <div class="detail"><span>تاریخ ایجاد</span><strong>{{ opportunity.createdAt | jalaliDate }}</strong></div>
       <div class="detail full-width description"><span>توضیحات</span><p>{{ opportunity.description }}</p></div>
     </div>

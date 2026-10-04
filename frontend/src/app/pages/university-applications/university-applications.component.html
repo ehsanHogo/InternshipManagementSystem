@@ -62,7 +62,7 @@
         </td>
         <td>{{ item.submittedAt | jalaliDate }}</td>
         <td>{{ item.startDate | jalaliDate }}</td>
-        <td><p-tag [value]="statusLabel()" [severity]="selectedStatus() === 'ACTIVE' ? 'success' : 'warn'" /></td>
+        <td><p-tag [value]="caseStatusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" /></td>
         <td>
           <p-button
             [label]="item.status === 'READY_TO_START' ? 'مشاهده و فعال‌سازی کارآموزی' : 'مشاهده پرونده'"

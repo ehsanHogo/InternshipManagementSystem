@@ -100,17 +100,50 @@ p-card {
   font-size: 2rem;
 }
 
+.status-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
+.status-label {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.card-status-line {
+  margin-bottom: 1rem;
+}
+
 .review-notice,
 .limit-notice {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.7rem;
   margin-bottom: 1.25rem;
   padding: 1rem 1.15rem;
-  border: 1px solid #bfdbfe;
+  border: 1px solid #e2e8f0;
   border-radius: 0.8rem;
-  color: #1e40af;
-  background: #eff6ff;
+  color: #475569;
+  background: #fff;
+
+  > i {
+    margin-top: 0.15rem;
+    color: #64748b;
+  }
+}
+
+.review-notice-body {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.review-notice-text {
+  margin: 0;
+  line-height: 1.8;
 }
 
 .application-grid,

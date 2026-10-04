@@ -18,7 +18,7 @@
       <tr>
         <td><strong>{{ application.student?.fullName }}</strong></td>
         <td dir="ltr">{{ application.student?.email }}</td>
-        <td><p-tag [value]="statusLabel(application.status)" [severity]="statusSeverity(application.status)" /></td>
+        <td><p-tag [value]="statusLabel(application.status)" [severity]="applicationStatusSeverity(application.status)" /></td>
         <td>{{ application.appliedAt | jalaliDate }}</td>
         <td>{{ application.reviewedAt ? (application.reviewedAt | jalaliDate) : '—' }}</td>
         <td><p-button label="مشاهده" icon="pi pi-eye" size="small" [text]="true" [routerLink]="['/company/opportunity-applications', application.id]" /></td>

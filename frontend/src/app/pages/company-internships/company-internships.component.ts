@@ -8,7 +8,12 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 
-import { CompanyInternshipCase, InternshipCaseStatus, internshipStatusLabels } from '../../internship/internship.models';
+import {
+  CompanyInternshipCase,
+  InternshipCaseStatus,
+  internshipStatusLabels,
+  internshipStatusSeverity
+} from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 
@@ -63,6 +68,8 @@ export class CompanyInternshipsComponent {
       }
     });
   }
+
+  readonly internshipStatusSeverity = internshipStatusSeverity;
 
   statusLabel(status: InternshipCaseStatus): string {
     return internshipStatusLabels[status];

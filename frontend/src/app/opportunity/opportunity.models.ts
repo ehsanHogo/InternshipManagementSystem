@@ -1,3 +1,5 @@
+import type { StatusTagSeverity } from '../internship/internship.models';
+
 export type OpportunityStatus = 'OPEN' | 'CLOSED';
 export type ApplicationStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
 
@@ -78,3 +80,18 @@ export const applicationStatusLabels: Record<ApplicationStatus, string> = {
   ACCEPTED: 'پذیرفته شده',
   REJECTED: 'رد شده'
 };
+
+export function opportunityStatusSeverity(status: OpportunityStatus): StatusTagSeverity {
+  return status === 'OPEN' ? 'success' : 'secondary';
+}
+
+export function applicationStatusSeverity(status: ApplicationStatus): StatusTagSeverity {
+  switch (status) {
+    case 'ACCEPTED':
+      return 'success';
+    case 'REJECTED':
+      return 'danger';
+    default:
+      return 'warn';
+  }
+}

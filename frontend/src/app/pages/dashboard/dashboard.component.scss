@@ -68,27 +68,43 @@
 .internship-state {
   min-height: 8rem;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 1rem;
+}
 
-  div {
-    display: grid;
-    gap: 0.35rem;
-  }
+.internship-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  min-width: 0;
 
-  span {
+  .status-label {
     color: #64748b;
     font-size: 0.85rem;
+    font-weight: 600;
   }
 
   strong {
     color: #1e293b;
-    font-size: 1.15rem;
+    font-size: 1rem;
   }
 
   .status-error {
     color: #dc2626;
+  }
+
+  p-tag {
+    display: inline-block;
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  p-tag ::ng-deep .p-tag {
+    width: auto;
+    display: inline-flex;
+    white-space: normal;
   }
 }
 
@@ -140,6 +156,19 @@
 
   span { color: #64748b; font-size: 0.82rem; }
   strong { color: #1e293b; }
+
+}
+
+.inline-tag {
+  display: flex;
+  justify-content: flex-start;
+  width: fit-content;
+  max-width: 100%;
+
+  p-tag {
+    display: inline-flex;
+    width: auto;
+  }
 }
 
 .full-width { grid-column: 1 / -1; }

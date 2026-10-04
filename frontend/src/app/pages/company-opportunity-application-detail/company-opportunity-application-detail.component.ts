@@ -10,7 +10,12 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 
-import { ApplicationStatus, OpportunityApplication, applicationStatusLabels } from '../../opportunity/opportunity.models';
+import {
+  ApplicationStatus,
+  OpportunityApplication,
+  applicationStatusLabels,
+  applicationStatusSeverity
+} from '../../opportunity/opportunity.models';
 import { OpportunityService } from '../../opportunity/opportunity.service';
 import { userErrorMessage } from '../../shared/http-error-message';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
@@ -81,8 +86,9 @@ export class CompanyOpportunityApplicationDetailComponent {
     });
   }
 
+  readonly applicationStatusSeverity = applicationStatusSeverity;
+
   statusLabel(status: ApplicationStatus): string { return applicationStatusLabels[status]; }
-  statusSeverity(status: ApplicationStatus): 'success' | 'danger' | 'warn' { return status === 'ACCEPTED' ? 'success' : status === 'REJECTED' ? 'danger' : 'warn'; }
 
   private review(decision: 'accept' | 'reject'): void {
     this.reviewing.set(true);
