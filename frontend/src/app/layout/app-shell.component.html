@@ -54,6 +54,10 @@
           داشبورد
         </a>
         @if (user()?.role === 'STUDENT') {
+          <a routerLink="/student/approved-companies" routerLinkActive="active">
+            <i class="pi pi-building" aria-hidden="true"></i>
+            شرکت‌های مورد تأیید
+          </a>
           <a routerLink="/student/opportunities" routerLinkActive="active">
             <i class="pi pi-briefcase" aria-hidden="true"></i>
             فرصت‌های کارآموزی

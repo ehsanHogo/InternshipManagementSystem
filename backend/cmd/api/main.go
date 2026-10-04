@@ -51,6 +51,7 @@ func main() {
 	internshipHandler := handler.NewInternshipHandler(internshipService, cfg.UploadDir)
 	managementService := service.NewUniversityManagementService(db)
 	managementHandler := handler.NewUniversityManagementHandler(managementService)
+	approvalHandler := handler.NewCompanyApprovalHandler(service.NewCompanyApprovalService(db))
 	companyAccountService := service.NewCompanyAccountService(db)
 	companyAccountHandler := handler.NewCompanyAccountHandler(companyAccountService)
 	opportunityService := service.NewOpportunityService(db)
@@ -74,6 +75,7 @@ func main() {
 
 	student := authenticated.Group("/student")
 	student.Use(appmiddleware.RequireRole(model.RoleStudent))
+	approvalHandler.RegisterStudentRoutes(student)
 	student.GET("/internship-cases/history", internshipHandler.ListStudentHistoricalCases)
 	student.GET("/internship-case", internshipHandler.GetCurrentCase)
 	student.POST("/internship-case", internshipHandler.CreateOrGetCase)
@@ -94,6 +96,7 @@ func main() {
 
 	university := authenticated.Group("/university")
 	university.Use(appmiddleware.RequireRole(model.RoleUniversitySupervisor))
+	approvalHandler.RegisterUniversityRoutes(university)
 	university.GET("/internship-cases", internshipHandler.ListUniversityCases)
 	university.GET("/internship-cases/pending-review", internshipHandler.ListPendingUniversityReviewCases)
 	university.GET("/internship-cases/pending-final-approval", internshipHandler.ListPendingFinalApprovalCases)

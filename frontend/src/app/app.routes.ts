@@ -93,6 +93,14 @@ export const routes: Routes = [
           )
       },
       {
+        path: 'student/approved-companies',
+        canActivate: [studentGuard],
+        loadComponent: () =>
+          import('./pages/student-approved-companies/student-approved-companies.component').then(
+            (module) => module.StudentApprovedCompaniesComponent
+          )
+      },
+      {
         path: 'university/applications',
         canActivate: [universitySupervisorGuard],
         loadComponent: () =>

@@ -1,0 +1,21 @@
+<section class="page-heading">
+  <div><span class="eyebrow">دانشجو</span><h1>شرکت‌های مورد تأیید</h1><p>شرکت‌های پیشنهادی دانشکده برای بررسی فرصت‌های کارآموزی.</p></div>
+  <a routerLink="/student/opportunities" pButton>مشاهده فرصت‌های کارآموزی</a>
+</section>
+<p class="notice">این فهرست برای آشنایی با شرکت‌هاست. برای انتخاب محل کارآموزی، ابتدا برای یک فرصت درخواست ارسال کنید و پس از پذیرش شرکت، آن درخواست را در اولویت‌های پرونده خود قرار دهید.</p>
+
+@if (loading()) {
+  <div class="state-card"><span><i class="pi pi-spin pi-spinner" aria-hidden="true"></i> در حال دریافت شرکت‌ها...</span></div>
+} @else if (loadFailed()) {
+  <div class="state-card error-state"><p>دریافت شرکت‌ها ناموفق بود.</p><p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="load()" /></div>
+} @else {
+  <p-table [value]="companies()" [rowHover]="true" responsiveLayout="scroll">
+    <ng-template #header><tr><th>نام شرکت</th><th>وب‌سایت</th><th>تلفن</th><th>ایمیل</th><th>آدرس</th></tr></ng-template>
+    <ng-template #body let-company><tr>
+      <td>{{ company.name }}</td>
+      <td dir="ltr">@if (company.website) { <a [href]="externalHref(company.website)" target="_blank" rel="noopener noreferrer">{{ company.website }}</a> } @else { — }</td>
+      <td dir="ltr">{{ company.phone || '—' }}</td><td dir="ltr">{{ company.email || '—' }}</td><td>{{ company.address || '—' }}</td>
+    </tr></ng-template>
+    <ng-template #emptymessage><tr><td colspan="5" class="muted">هنوز شرکتی در فهرست مورد تأیید دانشکده وجود ندارد.</td></tr></ng-template>
+  </p-table>
+}

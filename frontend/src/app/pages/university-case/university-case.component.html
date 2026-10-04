@@ -270,8 +270,11 @@
 
   @if (item.status === 'PASSED' || item.status === 'FAILED') {
     <p-card header="نتیجه نهایی کارآموزی (فقط خواندنی)">
+      <div class="card-status-line status-line">
+        <span class="status-label">وضعیت پرونده</span>
+        <p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" />
+      </div>
       <div class="detail-grid">
-        <div class="detail"><span>وضعیت پرونده</span><p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" /></div>
         <div class="detail"><span>نتیجه نهایی</span><strong>{{ item.finalResult ? professorFinalResultLabels[item.finalResult] : '—' }}</strong></div>
         <div class="detail full-width"><span>نظر استاد</span><strong>{{ item.professorComment || '—' }}</strong></div>
         <div class="detail"><span>تاریخ ارزیابی نهایی</span><strong>{{ item.completedAt | jalaliDate }}</strong></div>
