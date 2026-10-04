@@ -50,6 +50,9 @@ export class StudentApplicationComponent {
   private readonly confirmation = inject(ConfirmationService);
 
   readonly internshipCase = signal<InternshipCase | null>(null);
+  readonly historicalCases = signal<InternshipCase[]>([]);
+  readonly viewingHistory = signal(false);
+  private latestCase: InternshipCase | null = null;
   readonly acceptedApplications = signal<AcceptedOpportunityApplication[]>([]);
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
@@ -68,6 +71,39 @@ export class StudentApplicationComponent {
 
   reloadPage(): void {
     this.loadPage();
+  }
+
+  get canRestart(): boolean {
+    const status = this.internshipCase()?.status;
+    return !this.viewingHistory() && (status === 'FAILED' || status === 'CANCELLED') &&
+      !this.historicalCases().some(item => item.status === 'PASSED');
+  }
+
+  viewHistoricalCase(item: InternshipCase): void {
+    this.viewingHistory.set(true);
+    this.setCase(item);
+  }
+
+  returnToCurrentCase(): void {
+    this.viewingHistory.set(false);
+    if (this.latestCase) this.setCase(this.latestCase);
+    else this.internshipCase.set(null);
+  }
+
+  downloadHistoricalFinalReport(): void {
+    const report = this.internshipCase()?.finalReport;
+    if (!report) return;
+    this.internshipService.downloadFile(report.currentFileId).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = report.currentFile.originalName;
+        anchor.click();
+        URL.revokeObjectURL(url);
+      },
+      error: (error: HttpErrorResponse) => this.showError(error)
+    });
   }
 
   get isDraft(): boolean {
@@ -192,6 +228,7 @@ export class StudentApplicationComponent {
     this.loading.set(true);
     this.loadFailed.set(false);
     forkJoin({
+      historicalCases: this.internshipService.listStudentHistoricalCases(),
       acceptedApplications: this.internshipService.listAcceptedOpportunityApplications(),
       internshipCase: this.internshipService.getCurrentCase().pipe(
         catchError((error: HttpErrorResponse) => {
@@ -202,7 +239,9 @@ export class StudentApplicationComponent {
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: ({ acceptedApplications, internshipCase }) => {
+        next: ({ acceptedApplications, internshipCase, historicalCases }) => {
+          this.historicalCases.set(historicalCases);
+          this.viewingHistory.set(false);
           this.acceptedApplications.set(acceptedApplications);
           if (internshipCase) {
             this.setCase(internshipCase);
@@ -239,6 +278,7 @@ export class StudentApplicationComponent {
 
   private setCase(internshipCase: InternshipCase, syncApplicationForm = true): void {
     this.internshipCase.set(internshipCase);
+    if (!this.viewingHistory()) this.latestCase = internshipCase;
     if (syncApplicationForm) {
       this.applicationForm.reset({
         passedCredits: internshipCase.passedCredits,

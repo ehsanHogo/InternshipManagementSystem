@@ -1,6 +1,6 @@
 <section class="page-heading">
   <div>
-    <span class="eyebrow">{{ internshipCase()?.status === 'COMPLETED' ? 'پرونده تکمیل‌شده' : 'کارآموزی فعال' }}</span>
+    <span class="eyebrow">{{ internshipCase() ? internshipStatusLabels[internshipCase()!.status] : 'کارآموزی' }}</span>
     <h1>گزارش نهایی کارآموزی</h1>
     <p>نسخه پی‌دی‌اف گزارش نهایی خود را بارگذاری کنید.</p>
   </div>
@@ -13,7 +13,7 @@
     <div><i class="pi pi-exclamation-circle"></i><p>دریافت اطلاعات کارآموزی ناموفق بود.</p></div>
     <p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="load()" />
   </div>
-} @else if (internshipCase()?.status !== 'ACTIVE' && internshipCase()?.status !== 'COMPLETED') {
+} @else if (internshipCase()?.status !== 'ACTIVE' && internshipCase()?.status !== 'PASSED' && internshipCase()?.status !== 'FAILED') {
   <div class="empty-state"><div><i class="pi pi-lock"></i><p>این بخش پس از فعال شدن کارآموزی در دسترس خواهد بود.</p></div></div>
 } @else {
   @if (internshipCase()?.finalReport; as report) {

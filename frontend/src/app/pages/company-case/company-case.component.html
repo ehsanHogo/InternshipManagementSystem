@@ -171,7 +171,7 @@
     </p-card>
   }
 
-  @if (item.status === "ACTIVE" || item.status === "COMPLETED") {
+  @if (item.status === "ACTIVE" || item.status === "PASSED" || item.status === "FAILED") {
     <p-card header="گزارش‌های هفتگی">
       @if (reportsLoading()) {
         <p class="muted">در حال دریافت گزارش‌ها...</p>
@@ -317,7 +317,7 @@
       }
     </p-card>
 
-    @if (item.status === "COMPLETED") {
+    @if (item.status === "PASSED" || item.status === "FAILED") {
       <p-card header="نتیجه نهایی استاد">
         <div class="detail-grid">
           <div class="detail">
@@ -325,7 +325,7 @@
             ><strong>{{ finalResultLabel(item) }}</strong>
           </div>
           <div class="detail">
-            <span>تاریخ تکمیل پرونده</span
+            <span>تاریخ ارزیابی نهایی</span
             ><strong>{{ item.completedAt | jalaliDate }}</strong>
           </div>
           <div class="detail full-width">

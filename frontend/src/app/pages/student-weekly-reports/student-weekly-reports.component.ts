@@ -11,7 +11,7 @@ import { TextareaModule } from 'primeng/textarea';
 
 import { WeeklyReportReviewComponent } from '../../shared/weekly-report-review.component';
 import { userErrorMessage } from '../../shared/http-error-message';
-import { InternshipCase, WeeklyReport } from '../../internship/internship.models';
+import { InternshipCase, WeeklyReport, internshipStatusLabels } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
@@ -31,6 +31,7 @@ export class StudentWeeklyReportsComponent {
 
   private readonly confirmation = inject(ConfirmationService);
 
+  readonly internshipStatusLabels = internshipStatusLabels;
   readonly internshipCase = signal<InternshipCase | null>(null);
   readonly reports = signal<WeeklyReport[]>([]);
   readonly loading = signal(true);
@@ -144,7 +145,7 @@ export class StudentWeeklyReportsComponent {
     this.internshipService.getCurrentCase().subscribe({
       next: (internshipCase) => {
         this.internshipCase.set(internshipCase);
-        if (internshipCase.status !== 'ACTIVE' && internshipCase.status !== 'COMPLETED') {
+        if (internshipCase.status !== 'ACTIVE' && internshipCase.status !== 'PASSED' && internshipCase.status !== 'FAILED') {
           this.reports.set([]);
           this.loading.set(false);
           return;

@@ -176,8 +176,8 @@ export class ProfessorCaseComponent {
       return;
     }
     this.confirmation.confirm({
-      header: 'تکمیل پرونده کارآموزی',
-      message: 'با ثبت ارزیابی نهایی، پرونده کارآموزی تکمیل خواهد شد و در نسخه فعلی امکان ویرایش مجدد نتیجه وجود ندارد. آیا ادامه می‌دهید؟',
+      header: 'ثبت ارزیابی نهایی کارآموزی',
+      message: 'با ثبت ارزیابی نهایی، وضعیت پرونده بر اساس نتیجه به قبول شده یا مردود تغییر خواهد کرد و در نسخه فعلی امکان ویرایش مجدد نتیجه وجود ندارد. آیا ادامه می‌دهید؟',
       acceptLabel: 'بله، ثبت شود',
       rejectLabel: 'انصراف',
       icon: 'pi pi-exclamation-triangle',
@@ -245,7 +245,7 @@ export class ProfessorCaseComponent {
     let detail = 'انجام عملیات ناموفق بود.';
     if (error.status === 0) detail = 'ارتباط با سرور برقرار نشد.';
     if (error.status === 403) detail = 'این پرونده به شما اختصاص نیافته است.';
-    if (error.status === 400 || error.status === 409) detail = userErrorMessage(error, 'مدارک پرونده کامل نیست یا پرونده قبلاً تکمیل شده است.');
+    if (error.status === 400 || error.status === 409) detail = userErrorMessage(error, 'مدارک پرونده کامل نیست یا پرونده قبلاً ارزیابی شده است.');
     this.messages.add({ severity: 'error', summary: 'خطا', detail });
   }
 }

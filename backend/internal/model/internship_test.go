@@ -27,7 +27,8 @@ func TestInternshipCaseStatusValidation(t *testing.T) {
 		InternshipCaseStatusPendingFinalApproval,
 		InternshipCaseStatusReadyToStart,
 		InternshipCaseStatusActive,
-		InternshipCaseStatusCompleted,
+		InternshipCaseStatusPassed,
+		InternshipCaseStatusFailed,
 		InternshipCaseStatusCancelled,
 	}
 	for _, status := range valid {
@@ -36,7 +37,7 @@ func TestInternshipCaseStatusValidation(t *testing.T) {
 		}
 	}
 	for _, status := range []InternshipCaseStatus{
-		"", "PENDING_UNIVERSITY_APPROVAL", "PENDING_COMPANY_APPROVAL", "COMPANY_APPROVED", "UNIVERSITY_APPROVED",
+		"", "COMPLETED", "PENDING_UNIVERSITY_APPROVAL", "PENDING_COMPANY_APPROVAL", "COMPANY_APPROVED", "UNIVERSITY_APPROVED",
 	} {
 		if status.Valid() {
 			t.Fatalf("expected obsolete status %q to be invalid", status)

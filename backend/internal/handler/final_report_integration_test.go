@@ -65,6 +65,7 @@ func TestFinalReportV2API(t *testing.T) {
 	students := api.Group("/student", appmiddleware.RequireRole(model.RoleStudent))
 	handler.RegisterStudentFinalReportRoutes(students)
 	students.GET("/internship-case", handler.GetCurrentCase)
+	students.GET("/internship-cases/history", handler.ListStudentHistoricalCases)
 	professors := api.Group("/professor", appmiddleware.RequireRole(model.RoleProfessor))
 	handler.RegisterProfessorFinalReportRoutes(professors)
 	professors.GET("/internship-cases/:id", handler.GetProfessorCase)
@@ -398,7 +399,7 @@ func TestFinalReportV2API(t *testing.T) {
 		request(t, "GET", path, model.User{}, nil, 401)
 	})
 
-	for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingCompanyDetails, model.InternshipCaseStatusPendingFinalApproval, model.InternshipCaseStatusReadyToStart, model.InternshipCaseStatusCompleted, model.InternshipCaseStatusCancelled} {
+	for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingCompanyDetails, model.InternshipCaseStatusPendingFinalApproval, model.InternshipCaseStatusReadyToStart, model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled} {
 		t.Run("inactive "+string(status), func(t *testing.T) {
 			student, item := fixture(t, status)
 			noOrphans(t, func() { upload(t, student, "final.pdf", "application/pdf", validPDF, nil, 400) })
@@ -416,7 +417,7 @@ func TestFinalReportV2API(t *testing.T) {
 				t.Fatal(err)
 			}
 			noOrphans(t, func() { upload(t, student, "corrected.pdf", "application/pdf", validPDF, nil, 400) })
-			if status == model.InternshipCaseStatusCompleted {
+			if status == model.InternshipCaseStatusPassed || status == model.InternshipCaseStatusFailed {
 				decode(t, request(t, "GET", studentPath, student, nil, 200), model.FinalReportRevisionRequested)
 				decode(t, request(t, "GET", professorPath(item), professor, nil, 200), model.FinalReportRevisionRequested)
 				request(t, "GET", fmt.Sprintf("/api/files/%d/download", report.CurrentFileID), student, nil, 200)
@@ -498,7 +499,7 @@ func TestFinalReportV2API(t *testing.T) {
 				t.Fatal(err)
 			}
 			assertReady(false)
-			assertAPIError(t, request(t, "POST", finalPath, professor, completion, 409), 409, "APPROVED_FINAL_REPORT_REQUIRED")
+			assertAPIError(t, request(t, "POST", finalPath, professor, completion, 409), 409, "FINAL_REPORT_NOT_APPROVED")
 		}
 		if err := tx.Model(&report).Update("status", model.FinalReportSubmitted).Error; err != nil {
 			t.Fatal(err)
@@ -537,7 +538,7 @@ func TestFinalReportV2API(t *testing.T) {
 		if err := json.Unmarshal(rec.Body.Bytes(), &detail); err != nil {
 			t.Fatal(err)
 		}
-		if detail.Internship.Status != model.InternshipCaseStatusCompleted || detail.FinalResult == nil || *detail.FinalResult != model.ProfessorFinalResultGood || detail.ProfessorComment == nil || *detail.ProfessorComment != "final comment" || detail.CompletedAt == nil || detail.CanProfessorComplete {
+		if detail.Internship.Status != model.InternshipCaseStatusPassed || detail.FinalResult == nil || *detail.FinalResult != model.ProfessorFinalResultGood || detail.ProfessorComment == nil || *detail.ProfessorComment != "final comment" || detail.CompletedAt == nil || detail.CanProfessorComplete {
 			t.Fatal("existing completion contract changed")
 		}
 		noOrphans(t, func() { upload(t, student, "blocked.pdf", "application/pdf", validPDF, nil, 400) })
@@ -546,4 +547,57 @@ func TestFinalReportV2API(t *testing.T) {
 		}
 		request(t, "GET", fmt.Sprintf("/api/files/%d/download", report.CurrentFileID), professor, nil, 200)
 	})
+	t.Run("student terminal history remains owned and readable after retry", func(t *testing.T) {
+		student, item := fixture(t, model.InternshipCaseStatusActive)
+		report := firstUpload(t, student)
+		review(t, item, "approve", nil, 200)
+		now := time.Now()
+		for week := 1; week <= 8; week++ {
+			row := model.WeeklyReport{InternshipCaseID: item.ID, WeekNumber: week, StartDate: now, EndDate: now, ActivityDescription: "historical activity", SubmittedAt: &now, CompanyReviewStatus: model.WeeklyReviewApproved, ProfessorReviewStatus: model.WeeklyReviewApproved}
+			if err := tx.Create(&row).Error; err != nil {
+				t.Fatal(err)
+			}
+		}
+		evaluation := model.CompanyEvaluation{InternshipCaseID: item.ID, CompanySupervisorID: supervisor.ID, AttendanceRating: model.EvaluationRatingGood, ParticipationRating: model.EvaluationRatingGood, LearningRating: model.EvaluationRatingGood, InterestRating: model.EvaluationRatingGood, PersistenceRating: model.EvaluationRatingGood, SuggestionRating: model.EvaluationRatingGood, ResourceUsageRating: model.EvaluationRatingGood, ReportQualityRating: model.EvaluationRatingGood, ProjectPerformanceRating: model.EvaluationRatingGood, SubmittedAt: now}
+		if err := tx.Create(&evaluation).Error; err != nil {
+			t.Fatal(err)
+		}
+		finalPath := fmt.Sprintf("/api/professor/internship-cases/%d/complete", item.ID)
+		assertAPIError(t, request(t, "POST", finalPath, otherProfessor, map[string]string{"result": "GOOD"}, 403), 403, "INTERNSHIP_CASE_NOT_ASSIGNED_TO_PROFESSOR")
+		assertAPIError(t, request(t, "POST", finalPath, professor, map[string]string{"result": ""}, 400), 400, "INVALID_FINAL_RESULT")
+		finalized := request(t, "POST", finalPath, professor, map[string]string{"result": "FAILED", "comment": " final unsuccessful result "}, 200)
+		var outcome professorCaseDetailResponse
+		if err := json.Unmarshal(finalized.Body.Bytes(), &outcome); err != nil {
+			t.Fatal(err)
+		}
+		if outcome.Internship.Status != model.InternshipCaseStatusFailed || outcome.FinalResult == nil || *outcome.FinalResult != model.ProfessorFinalResultFailed || outcome.CompletedAt == nil || outcome.ProfessorComment == nil || *outcome.ProfessorComment != "final unsuccessful result" || outcome.CanProfessorComplete {
+			t.Fatalf("incorrect failed response: %+v", outcome)
+		}
+		assertAPIError(t, request(t, "POST", finalPath, professor, map[string]string{"result": "GOOD"}, 409), 409, "INTERNSHIP_CASE_NOT_ACTIVE")
+		assignment := model.ProfessorAssignment{StudentID: student.ID, ProfessorID: professor.ID, AssignedAt: now}
+		if err := tx.Create(&assignment).Error; err != nil {
+			t.Fatal(err)
+		}
+		draft, created, err := service.NewInternshipService(tx).CreateOrGetCase(student.ID)
+		if err != nil || !created || draft.ID == item.ID {
+			t.Fatalf("retry case: %v", err)
+		}
+		const path = "/api/student/internship-cases/history"
+		var history []internshipCaseResponse
+		if err := json.Unmarshal(request(t, "GET", path, student, nil, 200).Body.Bytes(), &history); err != nil {
+			t.Fatal(err)
+		}
+		if len(history) != 1 || history[0].ID != item.ID || history[0].Status != model.InternshipCaseStatusFailed || len(history[0].WeeklyReports) != 8 || history[0].FinalReport == nil || history[0].FinalReport.CurrentFileID != report.CurrentFileID || history[0].CompanyEvaluation == nil || history[0].CompletedAt == nil || !history[0].CompletedAt.Equal(*outcome.CompletedAt) {
+			t.Fatalf("lost historical case/report data: %+v", history)
+		}
+		otherStudent, _ := fixture(t, model.InternshipCaseStatusDraft)
+		response := request(t, "GET", path+"?student_id="+fmt.Sprint(student.ID), otherStudent, nil, 200)
+		if response.Body.String() != "[]" {
+			t.Fatal("history endpoint exposed another student's cases")
+		}
+		request(t, "GET", path, model.User{}, nil, 401)
+		request(t, "GET", path, supervisor, nil, 403)
+		request(t, "GET", fmt.Sprintf("/api/files/%d/download", report.CurrentFileID), student, nil, 200)
+	})
+
 }

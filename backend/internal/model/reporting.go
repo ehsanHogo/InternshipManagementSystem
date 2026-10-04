@@ -113,3 +113,19 @@ type File struct {
 	UploadedBy   uint      `gorm:"not null;index" json:"uploadedBy"`
 	UploadedAt   time.Time `gorm:"not null" json:"uploadedAt"`
 }
+
+// WeeklyReportsReadyForFinalEvaluation requires every distinct week 1..8 and
+// approvals from both reviewers on submitted content.
+func WeeklyReportsReadyForFinalEvaluation(reports []WeeklyReport) bool {
+	if len(reports) != 8 {
+		return false
+	}
+	var seen [8]bool
+	for _, report := range reports {
+		if report.WeekNumber < 1 || report.WeekNumber > 8 || seen[report.WeekNumber-1] || report.SubmittedAt == nil || report.CompanyReviewStatus != WeeklyReviewApproved || report.ProfessorReviewStatus != WeeklyReviewApproved {
+			return false
+		}
+		seen[report.WeekNumber-1] = true
+	}
+	return true
+}

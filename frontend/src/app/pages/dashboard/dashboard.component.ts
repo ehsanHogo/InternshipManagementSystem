@@ -14,11 +14,12 @@ import {
   professorFinalResultLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
+import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink, ButtonModule, CardModule, TagModule, PersianDigitsPipe],
+  imports: [RouterLink, ButtonModule, CardModule, TagModule, PersianDigitsPipe, JalaliDatePipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })

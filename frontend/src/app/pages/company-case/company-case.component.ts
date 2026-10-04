@@ -118,7 +118,7 @@ export class CompanyCaseComponent {
         this.internshipCase.set(internshipCase);
         this.syncPlacementForm(internshipCase);
         this.loading.set(false);
-        if (internshipCase.status === 'ACTIVE' || internshipCase.status === 'COMPLETED') this.loadReportingData();
+        if (internshipCase.status === 'ACTIVE' || internshipCase.status === 'PASSED' || internshipCase.status === 'FAILED') this.loadReportingData();
       },
       error: (error: HttpErrorResponse) => {
         this.loading.set(false);

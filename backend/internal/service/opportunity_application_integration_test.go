@@ -91,13 +91,13 @@ func TestOpportunityApplicationEligibilityReviewAndAuthorization(t *testing.T) {
 		})
 	}
 
-	t.Run("completed takes permanent priority", func(t *testing.T) {
+	t.Run("passed takes permanent priority", func(t *testing.T) {
 		student := applicationTestUser(t, tx, suffix, "completed", model.RoleStudent, nil)
 		applicationTestCase(t, tx, student.ID, professor.ID, model.InternshipCaseStatusCancelled)
 		applicationTestCase(t, tx, student.ID, professor.ID, model.InternshipCaseStatusDraft)
-		applicationTestCase(t, tx, student.ID, professor.ID, model.InternshipCaseStatusCompleted)
+		applicationTestCase(t, tx, student.ID, professor.ID, model.InternshipCaseStatusPassed)
 		resume := applicationTestResume(suffix, "completed")
-		if _, err := applications.Apply(student.ID, openOpportunity.ID, resume); !errors.Is(err, ErrInternshipAlreadyCompleted) {
+		if _, err := applications.Apply(student.ID, openOpportunity.ID, resume); !errors.Is(err, ErrInternshipAlreadyPassed) {
 			t.Fatalf("completed case error = %v", err)
 		}
 		assertNoApplicationOrFile(t, tx, student.ID, openOpportunity.ID, resume)

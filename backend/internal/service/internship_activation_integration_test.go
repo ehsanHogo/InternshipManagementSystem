@@ -159,7 +159,7 @@ func TestManualInternshipActivation(t *testing.T) {
 		}
 	})
 	t.Run("every other state rejects activation without any mutation", func(t *testing.T) {
-		for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingCompanyDetails, model.InternshipCaseStatusPendingFinalApproval, model.InternshipCaseStatusActive, model.InternshipCaseStatusCompleted, model.InternshipCaseStatusCancelled} {
+		for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingCompanyDetails, model.InternshipCaseStatusPendingFinalApproval, model.InternshipCaseStatusActive, model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled} {
 			t.Run(string(status), func(t *testing.T) {
 				f := create(t)
 				if err := tx.Model(&f.item).Update("status", status).Error; err != nil {

@@ -74,6 +74,7 @@ func main() {
 
 	student := authenticated.Group("/student")
 	student.Use(appmiddleware.RequireRole(model.RoleStudent))
+	student.GET("/internship-cases/history", internshipHandler.ListStudentHistoricalCases)
 	student.GET("/internship-case", internshipHandler.GetCurrentCase)
 	student.POST("/internship-case", internshipHandler.CreateOrGetCase)
 	student.PUT("/internship-case", internshipHandler.UpdateCase)

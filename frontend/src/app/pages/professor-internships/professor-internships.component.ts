@@ -56,7 +56,7 @@ export class ProfessorInternshipsComponent {
   }
 
   readinessLabel(item: ProfessorCaseListItem): string {
-    if (item.status === 'COMPLETED') return 'ارزیابی شده';
+    if (item.status === 'PASSED' || item.status === 'FAILED') return 'ارزیابی شده';
     return item.canProfessorComplete ? 'آماده ارزیابی' : 'مدارک ناقص';
   }
 

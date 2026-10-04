@@ -28,13 +28,13 @@
     </div>
   </section>
 
-  @if (item.internship.status === "COMPLETED") {
+  @if (item.internship.status === "PASSED" || item.internship.status === "FAILED") {
     <div class="submit-panel">
       <div>
         <strong>نتیجه نهایی: {{ resultLabel(item.finalResult) }}</strong>
-        <p>این پرونده تکمیل شده و نتیجه نهایی قابل ویرایش نیست.</p>
+        <p>این پرونده ارزیابی شده و نتیجه نهایی قابل ویرایش نیست.</p>
       </div>
-      <p-tag value="تکمیل شده" severity="success" />
+      <p-tag [value]="statusLabel(item)" [severity]="internshipStatusSeverity(item.internship.status)" />
     </div>
   }
 
@@ -233,7 +233,7 @@
         }
       </div>
     </div>
-    @if (!item.canProfessorComplete && item.internship.status !== "COMPLETED") {
+    @if (!item.canProfessorComplete && item.internship.status !== "PASSED" && item.internship.status !== "FAILED") {
       <div class="notice">
         ارزیابی نهایی پس از تکمیل تمام مدارک فعال خواهد شد.
       </div>
@@ -241,14 +241,14 @@
   </p-card>
 
   <p-card header="ارزیابی استاد">
-    @if (item.internship.status === "COMPLETED") {
+    @if (item.internship.status === "PASSED" || item.internship.status === "FAILED") {
       <div class="detail-grid">
         <div class="detail">
           <span>نتیجه نهایی</span
           ><strong>{{ resultLabel(item.finalResult) }}</strong>
         </div>
         <div class="detail">
-          <span>تاریخ تکمیل</span
+          <span>تاریخ ارزیابی نهایی</span
           ><strong>{{ item.completedAt | jalaliDate }}</strong>
         </div>
         <div class="detail full-width">

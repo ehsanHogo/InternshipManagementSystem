@@ -16,7 +16,8 @@ const (
 	InternshipCaseStatusPendingFinalApproval    InternshipCaseStatus = "PENDING_FINAL_APPROVAL"
 	InternshipCaseStatusReadyToStart            InternshipCaseStatus = "READY_TO_START"
 	InternshipCaseStatusActive                  InternshipCaseStatus = "ACTIVE"
-	InternshipCaseStatusCompleted               InternshipCaseStatus = "COMPLETED"
+	InternshipCaseStatusPassed                  InternshipCaseStatus = "PASSED"
+	InternshipCaseStatusFailed                  InternshipCaseStatus = "FAILED"
 	InternshipCaseStatusCancelled               InternshipCaseStatus = "CANCELLED"
 )
 
@@ -28,7 +29,8 @@ func (status InternshipCaseStatus) Valid() bool {
 		InternshipCaseStatusPendingFinalApproval,
 		InternshipCaseStatusReadyToStart,
 		InternshipCaseStatusActive,
-		InternshipCaseStatusCompleted,
+		InternshipCaseStatusPassed,
+		InternshipCaseStatusFailed,
 		InternshipCaseStatusCancelled:
 		return true
 	default:
@@ -82,7 +84,7 @@ type InternshipCase struct {
 	ID          uint                 `gorm:"primaryKey"`
 	StudentID   uint                 `gorm:"not null;index"`
 	ProfessorID uint                 `gorm:"not null;index"`
-	Status      InternshipCaseStatus `gorm:"type:varchar(32);not null;index"`
+	Status      InternshipCaseStatus `gorm:"type:varchar(32);not null;index;check:chk_internship_case_status,status IN ('DRAFT','PENDING_UNIVERSITY_REVIEW','PENDING_COMPANY_DETAILS','PENDING_FINAL_APPROVAL','READY_TO_START','ACTIVE','PASSED','FAILED','CANCELLED')"`
 
 	PassedCredits *int    `gorm:"check:passed_credits IS NULL OR passed_credits >= 0"`
 	Mobile        *string `gorm:"size:30"`
@@ -115,6 +117,7 @@ type InternshipCase struct {
 	UpdatedAt   time.Time
 	SubmittedAt *time.Time
 	ActivatedAt *time.Time
+	// CompletedAt records final evaluation for both successful and failed outcomes.
 	CompletedAt *time.Time
 	CancelledAt *time.Time
 }

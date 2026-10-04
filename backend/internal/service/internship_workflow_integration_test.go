@@ -176,14 +176,14 @@ func TestWorkflow(t *testing.T) {
 		}
 	})
 
-	t.Run("completed case blocks a new case", func(t *testing.T) {
-		student := createTestStudent(t, tx, suffix, "completed-case")
+	t.Run("passed case blocks a new case", func(t *testing.T) {
+		student := createTestStudent(t, tx, suffix, "passed-case")
 		createAssignment(t, tx, student.ID, professor.ID)
-		completed := model.InternshipCase{StudentID: student.ID, ProfessorID: professor.ID, Status: model.InternshipCaseStatusCompleted}
+		completed := model.InternshipCase{StudentID: student.ID, ProfessorID: professor.ID, Status: model.InternshipCaseStatusPassed}
 		if err := tx.Create(&completed).Error; err != nil {
 			t.Fatalf("create completed case: %v", err)
 		}
-		if _, created, err := workflow.CreateOrGetCase(student.ID); !errors.Is(err, service.ErrInternshipCompleted) || created {
+		if _, created, err := workflow.CreateOrGetCase(student.ID); !errors.Is(err, service.ErrInternshipPassed) || created {
 			t.Fatalf("completed case result: created=%v err=%v", created, err)
 		}
 	})
@@ -391,7 +391,11 @@ func TestWorkflow(t *testing.T) {
 			if err != nil {
 				t.Fatalf("complete case with %s: %v", result, err)
 			}
-			if completed.Status != model.InternshipCaseStatusCompleted || completed.FinalResult == nil ||
+			expectedStatus := model.InternshipCaseStatusPassed
+			if result == model.ProfessorFinalResultFailed {
+				expectedStatus = model.InternshipCaseStatusFailed
+			}
+			if completed.Status != expectedStatus || completed.FinalResult == nil ||
 				*completed.FinalResult != result || completed.ProfessorComment == nil || *completed.ProfessorComment != comment ||
 				completed.CompletedAt == nil {
 				t.Fatalf("completion did not persist expected fields: %+v", completed)
@@ -446,7 +450,7 @@ func TestWorkflow(t *testing.T) {
 					t.Fatalf("student completed report visibility: count=%d err=%v", len(studentReports), err)
 				}
 				companyCase, err := workflow.GetCompanyCase(supervisor.ID, readyCase.ID)
-				if err != nil || companyCase.Status != model.InternshipCaseStatusCompleted {
+				if err != nil || companyCase.Status != model.InternshipCaseStatusPassed {
 					t.Fatalf("company completed case visibility: case=%+v err=%v", companyCase, err)
 				}
 				companyReports, err := workflow.ListCompanyWeeklyReports(supervisor.ID, readyCase.ID)
@@ -456,13 +460,13 @@ func TestWorkflow(t *testing.T) {
 				if _, err := workflow.GetCompanyEvaluation(supervisor.ID, readyCase.ID); err != nil {
 					t.Fatalf("company completed evaluation visibility: %v", err)
 				}
-				completedStatus := model.InternshipCaseStatusCompleted
+				completedStatus := model.InternshipCaseStatusPassed
 				universityCases, err := workflow.ListUniversityCases(&completedStatus)
 				if err != nil || len(universityCases) == 0 {
 					t.Fatalf("university completed case list: count=%d err=%v", len(universityCases), err)
 				}
 				universityCase, err := workflow.GetUniversityCase(readyCase.ID)
-				if err != nil || universityCase.Status != model.InternshipCaseStatusCompleted ||
+				if err != nil || universityCase.Status != model.InternshipCaseStatusPassed ||
 					len(universityCase.WeeklyReports) != 8 || universityCase.CompanyEvaluation == nil ||
 					universityCase.FinalReport == nil || universityCase.FinalResult == nil {
 					t.Fatalf("university completed case detail: case=%+v err=%v", universityCase, err)

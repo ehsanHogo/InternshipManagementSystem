@@ -295,7 +295,7 @@ func TestUniversityFinalPlacementReview(t *testing.T) {
 	})
 	t.Run("only pending final approval accepts either action", func(t *testing.T) {
 		f := create(t)
-		for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingCompanyDetails, model.InternshipCaseStatusReadyToStart, model.InternshipCaseStatusActive, model.InternshipCaseStatusCompleted, model.InternshipCaseStatusCancelled} {
+		for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingCompanyDetails, model.InternshipCaseStatusReadyToStart, model.InternshipCaseStatusActive, model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled} {
 			if err := tx.Model(&f.item).Update("status", status).Error; err != nil {
 				t.Fatal(err)
 			}

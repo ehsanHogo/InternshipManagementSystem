@@ -11,6 +11,21 @@
   }
 </section>
 
+@if (!loading() && !loadFailed() && historicalCases().length) {
+  <p-card header="پرونده‌های پیشین">
+    @for (past of historicalCases(); track past.id) {
+      <div class="card-status-line status-line">
+        <span>پرونده {{ past.id | persianDigits }}</span>
+        <p-tag [value]="statusLabel(past.status)" [severity]="internshipStatusSeverity(past.status)" />
+        <p-button label="مشاهده پرونده و گزارش‌ها" severity="secondary" [text]="true" (onClick)="viewHistoricalCase(past)" />
+      </div>
+    }
+  </p-card>
+}
+@if (viewingHistory()) {
+  <p-button label="بازگشت به درخواست فعلی" icon="pi pi-arrow-right" severity="secondary" (onClick)="returnToCurrentCase()" />
+}
+
 @if (loading()) {
   <div class="state-card">
     <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
@@ -231,6 +246,7 @@
         <div class="detail"><span>تاریخ لغو</span><strong>{{ currentCase.cancelledAt | jalaliDate }}</strong></div>
         <div class="detail full-width"><span>دلیل لغو</span><strong>{{ currentCase.cancellationComment ?? "—" }}</strong></div>
       </div>
+      @if (canRestart) {
       <div class="card-actions">
         <p-button
           label="ثبت درخواست جدید کارآموزی"
@@ -239,6 +255,7 @@
           (onClick)="createCase()"
         />
       </div>
+      }
     </p-card>
   }
 
@@ -258,16 +275,41 @@
     </div>
   }
 
-  @if (currentCase.status === "COMPLETED") {
+  @if (currentCase.status === "PASSED" || currentCase.status === "FAILED") {
     <p-card header="نتیجه نهایی کارآموزی">
       <div class="card-status-line status-line">
         <span class="status-label">وضعیت</span>
-        <p-tag value="تکمیل شده" severity="contrast" />
+        <p-tag [value]="statusLabel(currentCase.status)" [severity]="internshipStatusSeverity(currentCase.status)" />
       </div>
       <div class="detail-grid">
         <div class="detail"><span>نتیجه نهایی</span><strong>{{ finalResultLabel(currentCase) }}</strong></div>
         <div class="detail full-width"><span>نظر استاد</span><strong>{{ currentCase.professorComment || "—" }}</strong></div>
+        <div class="detail"><span>تاریخ ارزیابی نهایی</span><strong>{{ currentCase.completedAt | jalaliDate }}</strong></div>
       </div>
+      @if (currentCase.status === 'FAILED' && canRestart) {
+        <p>این پرونده مردود و فقط خواندنی است. می‌توانید فرایند کارآموزی جدیدی آغاز کنید.</p>
+        <div class="card-actions">
+          <p-button label="فرصت‌های کارآموزی" routerLink="/student/opportunities" severity="secondary" />
+          <p-button label="ثبت درخواست جدید کارآموزی" icon="pi pi-file-plus" [loading]="creating()" (onClick)="createCase()" />
+        </div>
+      }
+    </p-card>
+    <p-card header="گزارش‌های این پرونده (فقط خواندنی)">
+      @for (report of currentCase.weeklyReports; track report.id) {
+        <details>
+          <summary>گزارش هفته {{ report.weekNumber | persianDigits }}</summary>
+          <p>{{ report.activityDescription }}</p>
+          <p>نظر شرکت: {{ report.companyReviewComment || '—' }}</p>
+          <p>نظر استاد: {{ report.professorReviewComment || '—' }}</p>
+        </details>
+      }
+      @if (currentCase.companyEvaluation; as evaluation) {
+        <p>ارزیابی شرکت ثبت شده است.</p>
+        <p>پیشنهادها: {{ evaluation.suggestions || '—' }}</p>
+      }
+      @if (currentCase.finalReport) {
+        <p-button label="دریافت گزارش نهایی" icon="pi pi-download" severity="secondary" (onClick)="downloadHistoricalFinalReport()" />
+      }
     </p-card>
   }
 }

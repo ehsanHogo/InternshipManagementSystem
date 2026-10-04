@@ -22,7 +22,9 @@ const REVIEW_LIST_STATUSES = [
   'PENDING_UNIVERSITY_REVIEW',
   'PENDING_FINAL_APPROVAL',
   'READY_TO_START',
-  'ACTIVE'
+  'ACTIVE',
+  'PASSED',
+  'FAILED'
 ] as const satisfies readonly ReviewListStatus[];
 
 @Component({
@@ -74,7 +76,7 @@ export class UniversityApplicationsComponent {
         this.messages.add({
           severity: 'error',
           summary: 'خطا',
-          detail: error.status === 0 ? 'ارتباط با سرور برقرار نشد.' : 'دریافت پرونده‌های در انتظار بررسی ناموفق بود.'
+          detail: error.status === 0 ? 'ارتباط با سرور برقرار نشد.' : 'دریافت پرونده‌های کارآموزی ناموفق بود.'
         });
       }
     });
@@ -87,4 +89,4 @@ export class UniversityApplicationsComponent {
   }
 }
 
-type ReviewListStatus = 'PENDING_UNIVERSITY_REVIEW' | 'PENDING_FINAL_APPROVAL' | 'READY_TO_START' | 'ACTIVE';
+type ReviewListStatus = 'PENDING_UNIVERSITY_REVIEW' | 'PENDING_FINAL_APPROVAL' | 'READY_TO_START' | 'ACTIVE' | 'PASSED' | 'FAILED';

@@ -379,7 +379,7 @@ func TestWeeklyReportsV2API(t *testing.T) {
 		}
 	})
 
-	for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingCompanyDetails, model.InternshipCaseStatusPendingFinalApproval, model.InternshipCaseStatusReadyToStart, model.InternshipCaseStatusCompleted, model.InternshipCaseStatusCancelled} {
+	for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingCompanyDetails, model.InternshipCaseStatusPendingFinalApproval, model.InternshipCaseStatusReadyToStart, model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled} {
 		t.Run("inactive "+string(status), func(t *testing.T) {
 			student, item := fixture(t, model.InternshipCaseStatusActive)
 			report := draft(t, student, 1)
@@ -400,7 +400,7 @@ func TestWeeklyReportsV2API(t *testing.T) {
 				review(t, supervisorA, "company", item, report, action, map[string]string{"comment": "change"}, 400)
 				review(t, professorA, "professor", item, report, action, map[string]string{"comment": "change"}, 400)
 			}
-			if status == model.InternshipCaseStatusCompleted {
+			if status == model.InternshipCaseStatusPassed || status == model.InternshipCaseStatusFailed {
 				decode(t, request(t, "GET", studentPath(report.ID), token(t, student), nil, 200), model.WeeklyReportSubmitted)
 			}
 		})

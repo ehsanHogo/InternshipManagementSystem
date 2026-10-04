@@ -8,6 +8,7 @@ import { TagModule } from 'primeng/tag';
 
 import {
   InternshipCase,
+  internshipStatusLabels,
   finalReportStatusLabels,
   finalReportStatusSeverity
 } from '../../internship/internship.models';
@@ -27,6 +28,7 @@ export class StudentFinalReportComponent {
 
   readonly finalReportStatusLabels = finalReportStatusLabels;
   readonly finalReportStatusSeverity = finalReportStatusSeverity;
+  readonly internshipStatusLabels = internshipStatusLabels;
   readonly internshipCase = signal<InternshipCase | null>(null);
   readonly selectedFile = signal<File | null>(null);
   readonly loading = signal(true);

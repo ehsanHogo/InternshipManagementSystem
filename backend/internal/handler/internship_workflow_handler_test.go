@@ -85,7 +85,7 @@ func TestProfessorReadinessRequiresEveryPrerequisite(t *testing.T) {
 		t.Fatal("case with an unconfirmed report was reported as ready")
 	}
 	internshipCase.WeeklyReports[0].ProfessorReviewStatus = model.WeeklyReviewApproved
-	internshipCase.Status = model.InternshipCaseStatusCompleted
+	internshipCase.Status = model.InternshipCaseStatusPassed
 	if _, _, _, _, ready := professorReadiness(internshipCase); ready {
 		t.Fatal("completed case was reported as completable")
 	}

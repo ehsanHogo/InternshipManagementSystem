@@ -212,7 +212,7 @@ func professorReadiness(internshipCase *model.InternshipCase) (int, int, bool, b
 	}
 	hasEvaluation := internshipCase.CompanyEvaluation != nil
 	hasFinalReport := internshipCase.FinalReport != nil
-	canComplete := internshipCase.Status == model.InternshipCaseStatusActive && reportCount == 8 && approvedCount == 8 && hasEvaluation && hasFinalReport && internshipCase.FinalReport.Status == model.FinalReportApproved
+	canComplete := internshipCase.Status == model.InternshipCaseStatusActive && model.WeeklyReportsReadyForFinalEvaluation(internshipCase.WeeklyReports) && hasEvaluation && hasFinalReport && internshipCase.FinalReport.Status == model.FinalReportApproved
 	return reportCount, approvedCount, hasEvaluation, hasFinalReport, canComplete
 }
 

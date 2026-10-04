@@ -118,7 +118,7 @@ export class StudentOpportunityDetailComponent {
 
   restrictionMessage(code?: string): string {
     if (code === 'INTERNSHIP_ALREADY_COMPLETED') {
-      return 'شما قبلاً دوره کارآموزی خود را با موفقیت تکمیل کرده‌اید و امکان ثبت درخواست جدید ندارید.';
+      return 'شما قبلاً دوره کارآموزی خود را با موفقیت گذرانده‌اید و امکان ثبت درخواست جدید ندارید.';
     }
     if (code === 'INTERNSHIP_CASE_ALREADY_IN_PROGRESS') {
       return 'پرونده کارآموزی شما در حال بررسی یا اجرا است و در حال حاضر امکان ارسال درخواست جدید وجود ندارد.';

@@ -94,6 +94,23 @@ func (handler *InternshipHandler) ListCompanies(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, companies)
 }
 
+func (handler *InternshipHandler) ListStudentHistoricalCases(ctx *gin.Context) {
+	studentID, ok := currentUserID(ctx)
+	if !ok {
+		return
+	}
+	cases, err := handler.service.ListStudentHistoricalCases(studentID)
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	response := make([]internshipCaseResponse, 0, len(cases))
+	for i := range cases {
+		response = append(response, caseResponse(&cases[i]))
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
 func (handler *InternshipHandler) GetCurrentCase(ctx *gin.Context) {
 	studentID, ok := currentUserID(ctx)
 	if !ok {
@@ -265,7 +282,7 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		errors.Is(err, service.ErrDuplicateEvaluation), errors.Is(err, service.ErrWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrProfessorCaseNotActive), errors.Is(err, service.ErrProfessorWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrProfessorCompanyEvaluationRequired), errors.Is(err, service.ErrProfessorFinalReportRequired),
-		errors.Is(err, service.ErrInvalidTransition), errors.Is(err, service.ErrInternshipCompleted),
+		errors.Is(err, service.ErrInvalidTransition), errors.Is(err, service.ErrInternshipPassed),
 		errors.Is(err, service.ErrObsoleteWorkflow), errors.Is(err, service.ErrCaseNotPendingUniversityReview),
 		errors.Is(err, service.ErrCompanySupervisorResolution), errors.Is(err, service.ErrInvalidCompanyPlacement),
 		errors.Is(err, service.ErrCaseNotPendingCompanyDetails), errors.Is(err, service.ErrCaseNotPendingFinalApproval),
@@ -274,7 +291,7 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		status = http.StatusConflict
 	case errors.Is(err, service.ErrFinalReportTooLarge):
 		status = http.StatusRequestEntityTooLarge
-	case errors.Is(err, service.ErrCaseAccessDenied), errors.Is(err, service.ErrCaseNotAssignedToCompany):
+	case errors.Is(err, service.ErrCaseNotAssignedToProfessor), errors.Is(err, service.ErrCaseAccessDenied), errors.Is(err, service.ErrCaseNotAssignedToCompany):
 		status = http.StatusForbidden
 	default:
 		log.Printf("internship request failed: %v", err)
@@ -294,6 +311,16 @@ func currentUserID(ctx *gin.Context) (uint, bool) {
 
 func internshipErrorCode(err error) string {
 	switch {
+	case errors.Is(err, service.ErrCaseNotAssignedToProfessor):
+		return "INTERNSHIP_CASE_NOT_ASSIGNED_TO_PROFESSOR"
+	case errors.Is(err, service.ErrInvalidProfessorResult):
+		return "INVALID_FINAL_RESULT"
+	case errors.Is(err, service.ErrProfessorCaseNotActive):
+		return "INTERNSHIP_CASE_NOT_ACTIVE"
+	case errors.Is(err, service.ErrProfessorWeeklyReportsIncomplete):
+		return "WEEKLY_REPORTS_NOT_READY"
+	case errors.Is(err, service.ErrProfessorCompanyEvaluationRequired):
+		return "COMPANY_EVALUATION_NOT_FOUND"
 	case errors.Is(err, service.ErrFinalReportState):
 		return "FINAL_REPORT_STATE_INVALID"
 	case errors.Is(err, service.ErrFinalReportCommentRequired):
@@ -303,7 +330,7 @@ func internshipErrorCode(err error) string {
 	case errors.Is(err, service.ErrFinalReportTooLarge):
 		return "FINAL_REPORT_TOO_LARGE"
 	case errors.Is(err, service.ErrProfessorFinalReportRequired):
-		return "APPROVED_FINAL_REPORT_REQUIRED"
+		return "FINAL_REPORT_NOT_APPROVED"
 	case errors.Is(err, service.ErrCaseNotReadyToStart):
 		return "INTERNSHIP_CASE_NOT_READY_TO_START"
 	case errors.Is(err, service.ErrCaseActivationIntegrityFailed):
@@ -350,7 +377,7 @@ func internshipErrorCode(err error) string {
 		return "INVALID_PREFERENCE_APPLICATION"
 	case errors.Is(err, service.ErrInvalidApplication):
 		return "INTERNSHIP_CASE_NOT_READY_FOR_SUBMISSION"
-	case errors.Is(err, service.ErrInternshipCompleted):
+	case errors.Is(err, service.ErrInternshipPassed):
 		return "INTERNSHIP_ALREADY_COMPLETED"
 	case errors.Is(err, service.ErrCaseNotFound):
 		return "INTERNSHIP_CASE_NOT_FOUND"
@@ -439,8 +466,8 @@ func publicInternshipError(err error) string {
 		return "وضعیت پرونده کارآموزی معتبر نیست."
 	case errors.Is(err, service.ErrInvalidTransition):
 		return "تغییر وضعیت در مرحله فعلی امکان‌پذیر نیست."
-	case errors.Is(err, service.ErrInternshipCompleted):
-		return "دانشجو دوره کارآموزی را تکمیل کرده است."
+	case errors.Is(err, service.ErrInternshipPassed):
+		return "شما قبلاً دوره کارآموزی خود را با موفقیت گذرانده‌اید و امکان ثبت درخواست جدید ندارید."
 	case errors.Is(err, service.ErrObsoleteWorkflow):
 		return "این گردش‌کار در نسخه جدید هنوز فعال نشده است."
 	case errors.Is(err, service.ErrCompanySupervisor):
@@ -457,7 +484,7 @@ func publicInternshipError(err error) string {
 		return "سرپرست معتبر شرکت برای این فرصت قابل شناسایی نیست."
 	case errors.Is(err, service.ErrCancellationCommentRequired):
 		return "ثبت دلیل لغو پرونده الزامی است."
-	case errors.Is(err, service.ErrCaseAccessDenied):
+	case errors.Is(err, service.ErrCaseNotAssignedToProfessor), errors.Is(err, service.ErrCaseAccessDenied):
 		return "اجازه دسترسی به این پرونده را ندارید."
 	case errors.Is(err, service.ErrWeeklyReportNotFound):
 		return "گزارش هفتگی یافت نشد."

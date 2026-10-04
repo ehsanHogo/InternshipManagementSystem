@@ -189,7 +189,8 @@ func universityCaseStatuses() []model.InternshipCaseStatus {
 		model.InternshipCaseStatusPendingFinalApproval,
 		model.InternshipCaseStatusReadyToStart,
 		model.InternshipCaseStatusActive,
-		model.InternshipCaseStatusCompleted,
+		model.InternshipCaseStatusPassed,
+		model.InternshipCaseStatusFailed,
 		model.InternshipCaseStatusCancelled,
 	}
 }
@@ -200,7 +201,8 @@ func companyVisibleStatuses() []model.InternshipCaseStatus {
 		model.InternshipCaseStatusPendingFinalApproval,
 		model.InternshipCaseStatusReadyToStart,
 		model.InternshipCaseStatusActive,
-		model.InternshipCaseStatusCompleted,
+		model.InternshipCaseStatusPassed,
+		model.InternshipCaseStatusFailed,
 	}
 }
 

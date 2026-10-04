@@ -50,7 +50,7 @@ type CompanyEvaluationInput struct {
 func (service *InternshipService) ListStudentWeeklyReports(studentID uint) ([]model.WeeklyReport, error) {
 	var internshipCase model.InternshipCase
 	err := service.db.Where("student_id = ? AND status IN ?", studentID, []model.InternshipCaseStatus{
-		model.InternshipCaseStatusActive, model.InternshipCaseStatusCompleted,
+		model.InternshipCaseStatusActive, model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed,
 	}).Order("created_at DESC").First(&internshipCase).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrInvalidCaseStatus

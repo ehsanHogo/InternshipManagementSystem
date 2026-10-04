@@ -31,6 +31,10 @@ export class InternshipService {
     return this.http.get<InternshipCase>('/api/student/internship-case');
   }
 
+  listStudentHistoricalCases(): Observable<InternshipCase[]> {
+    return this.http.get<InternshipCase[]>('/api/student/internship-cases/history');
+  }
+
   createCase(): Observable<InternshipCase> {
     return this.http.post<InternshipCase>('/api/student/internship-case', {});
   }

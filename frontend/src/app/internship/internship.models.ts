@@ -7,7 +7,8 @@ export type InternshipCaseStatus =
   | 'PENDING_FINAL_APPROVAL'
   | 'READY_TO_START'
   | 'ACTIVE'
-  | 'COMPLETED'
+  | 'PASSED'
+  | 'FAILED'
   | 'CANCELLED';
 
 /** PrimeNG Tag severities used for status chips across the app. */
@@ -307,7 +308,8 @@ export const internshipStatusLabels: Record<InternshipCaseStatus, string> = {
   PENDING_FINAL_APPROVAL: 'در انتظار تأیید نهایی آموزش',
   READY_TO_START: 'آماده شروع کارآموزی',
   ACTIVE: 'در حال انجام کارآموزی',
-  COMPLETED: 'تکمیل شده',
+  PASSED: 'قبول شده',
+  FAILED: 'مردود',
   CANCELLED: 'لغو شده'
 };
 
@@ -320,8 +322,10 @@ export function internshipStatusSeverity(status: InternshipCaseStatus): StatusTa
     case 'READY_TO_START':
     case 'ACTIVE':
       return 'success';
-    case 'COMPLETED':
-      return 'contrast';
+    case 'PASSED':
+      return 'success';
+    case 'FAILED':
+      return 'danger';
     case 'CANCELLED':
       return 'danger';
     default:

@@ -335,17 +335,17 @@ func TestOfficialInternshipApplicationFlow(t *testing.T) {
 		}
 	})
 
-	t.Run("completed history blocks new official case", func(t *testing.T) {
+	t.Run("passed history blocks new official case", func(t *testing.T) {
 		student := applicationTestUser(t, tx, suffix, "official-completed", model.RoleStudent, nil)
 		assignment := model.ProfessorAssignment{StudentID: student.ID, ProfessorID: professor.ID, AssignedAt: time.Now()}
 		if err := tx.Create(&assignment).Error; err != nil {
 			t.Fatalf("create completed assignment: %v", err)
 		}
-		completed := model.InternshipCase{StudentID: student.ID, ProfessorID: professor.ID, Status: model.InternshipCaseStatusCompleted}
+		completed := model.InternshipCase{StudentID: student.ID, ProfessorID: professor.ID, Status: model.InternshipCaseStatusPassed}
 		if err := tx.Create(&completed).Error; err != nil {
 			t.Fatalf("create completed case: %v", err)
 		}
-		if _, created, err := internships.CreateOrGetCase(student.ID); !errors.Is(err, ErrInternshipCompleted) || created {
+		if _, created, err := internships.CreateOrGetCase(student.ID); !errors.Is(err, ErrInternshipPassed) || created {
 			t.Fatalf("completed creation: created=%v err=%v", created, err)
 		}
 	})

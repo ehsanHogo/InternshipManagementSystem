@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	ErrCaseNotAssignedToProfessor         = fmt.Errorf("%w: case is not assigned to professor", ErrCaseAccessDenied)
 	ErrInvalidProfessorResult             = errors.New("invalid professor final result")
 	ErrProfessorCaseNotActive             = errors.New("internship case is not active")
 	ErrProfessorWeeklyReportsIncomplete   = errors.New("all 8 weekly reports must be approved by both reviewers")
@@ -50,6 +51,8 @@ func (service *InternshipService) GetProfessorCase(professorID, caseID uint) (*m
 	return &internshipCase, nil
 }
 
+// CompleteProfessorCase finalizes the qualitative outcome once, using the Case
+// professor snapshot. All report mutations also lock this Case before writing.
 func (service *InternshipService) CompleteProfessorCase(professorID, caseID uint, input ProfessorCompletionInput) (*model.InternshipCase, error) {
 	if !input.Result.Valid() {
 		return nil, ErrInvalidProfessorResult
@@ -65,23 +68,17 @@ func (service *InternshipService) CompleteProfessorCase(professorID, caseID uint
 			return fmt.Errorf("lock professor internship case: %w", err)
 		}
 		if internshipCase.ProfessorID != professorID {
-			return ErrCaseAccessDenied
+			return ErrCaseNotAssignedToProfessor
 		}
 		if internshipCase.Status != model.InternshipCaseStatusActive {
 			return ErrProfessorCaseNotActive
 		}
 
-		var reportCount, companyApprovedReportCount int64
-		if err := tx.Model(&model.WeeklyReport{}).
-			Where("internship_case_id = ?", caseID).Count(&reportCount).Error; err != nil {
-			return fmt.Errorf("count professor weekly reports: %w", err)
+		var reports []model.WeeklyReport
+		if err := tx.Where("internship_case_id = ?", caseID).Find(&reports).Error; err != nil {
+			return fmt.Errorf("load weekly reports for final evaluation: %w", err)
 		}
-		if err := tx.Model(&model.WeeklyReport{}).
-			Where("internship_case_id = ? AND company_review_status = ? AND professor_review_status = ? AND submitted_at IS NOT NULL", caseID, model.WeeklyReviewApproved, model.WeeklyReviewApproved).
-			Count(&companyApprovedReportCount).Error; err != nil {
-			return fmt.Errorf("count professor approved weekly reports: %w", err)
-		}
-		if reportCount != 8 || companyApprovedReportCount != 8 {
+		if !model.WeeklyReportsReadyForFinalEvaluation(reports) {
 			return ErrProfessorWeeklyReportsIncomplete
 		}
 
@@ -104,12 +101,16 @@ func (service *InternshipService) CompleteProfessorCase(professorID, caseID uint
 			return ErrProfessorFinalReportRequired
 		}
 
+		nextStatus := model.InternshipCaseStatusPassed
+		if input.Result == model.ProfessorFinalResultFailed {
+			nextStatus = model.InternshipCaseStatusFailed
+		}
 		now := time.Now()
-		if err := tx.Model(&internshipCase).Updates(map[string]any{
+		if err := tx.Model(&internshipCase).UpdateColumns(map[string]any{
 			"final_result":      input.Result,
 			"professor_comment": trimmedPointer(input.Comment),
 			"completed_at":      now,
-			"status":            model.InternshipCaseStatusCompleted,
+			"status":            nextStatus,
 		}).Error; err != nil {
 			return fmt.Errorf("complete professor internship case: %w", err)
 		}
@@ -124,6 +125,7 @@ func (service *InternshipService) CompleteProfessorCase(professorID, caseID uint
 func professorVisibleStatuses() []model.InternshipCaseStatus {
 	return []model.InternshipCaseStatus{
 		model.InternshipCaseStatusActive,
-		model.InternshipCaseStatusCompleted,
+		model.InternshipCaseStatusPassed,
+		model.InternshipCaseStatusFailed,
 	}
 }

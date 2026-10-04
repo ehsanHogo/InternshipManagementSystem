@@ -47,3 +47,21 @@ func TestWeeklyReportDerivedStatus(t *testing.T) {
 		}
 	}
 }
+
+func TestFinalReadinessRequiresExactWeeks(t *testing.T) {
+	now := time.Now()
+	ready := make([]WeeklyReport, 8)
+	for i := range ready {
+		ready[i] = WeeklyReport{WeekNumber: i + 1, SubmittedAt: &now, CompanyReviewStatus: WeeklyReviewApproved, ProfessorReviewStatus: WeeklyReviewApproved}
+	}
+	if !WeeklyReportsReadyForFinalEvaluation(ready) {
+		t.Fatal("all approved weeks should be ready")
+	}
+	for _, week := range []int{0, 2, 9} {
+		reports := append([]WeeklyReport(nil), ready...)
+		reports[0].WeekNumber = week
+		if WeeklyReportsReadyForFinalEvaluation(reports) {
+			t.Fatalf("eight approved rows with week %d replacing week 1 must not be ready", week)
+		}
+	}
+}

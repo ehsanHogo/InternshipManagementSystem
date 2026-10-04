@@ -34,7 +34,7 @@ var (
 	ErrCompanySupervisorResolution      = errors.New("company supervisor resolution failed")
 	ErrCancellationCommentRequired      = errors.New("cancellation comment is required")
 	ErrCaseAccessDenied                 = errors.New("internship case access denied")
-	ErrInternshipCompleted              = errors.New("internship requirement already completed")
+	ErrInternshipPassed                 = errors.New("internship requirement already passed")
 	ErrObsoleteWorkflow                 = errors.New("workflow is unavailable until opportunity support is implemented")
 )
 
@@ -74,6 +74,15 @@ func (service *InternshipService) GetCurrentCase(studentID uint) (*model.Interns
 	return &internshipCase, nil
 }
 
+// ListStudentHistoricalCases retains access to terminal cases after a new draft.
+func (service *InternshipService) ListStudentHistoricalCases(studentID uint) ([]model.InternshipCase, error) {
+	cases := []model.InternshipCase{}
+	err := service.caseQuery(service.db).
+		Where("student_id = ? AND status IN ?", studentID, []model.InternshipCaseStatus{model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled}).
+		Order("created_at DESC, id DESC").Find(&cases).Error
+	return cases, err
+}
+
 func (service *InternshipService) CreateOrGetCase(studentID uint) (*model.InternshipCase, bool, error) {
 	var caseID uint
 	created := false
@@ -83,14 +92,14 @@ func (service *InternshipService) CreateOrGetCase(studentID uint) (*model.Intern
 			return fmt.Errorf("lock student for case creation: %w", err)
 		}
 
-		var completedCount int64
+		var passedCount int64
 		if err := tx.Model(&model.InternshipCase{}).
-			Where("student_id = ? AND status = ?", studentID, model.InternshipCaseStatusCompleted).
-			Count(&completedCount).Error; err != nil {
-			return fmt.Errorf("check completed internship case: %w", err)
+			Where("student_id = ? AND status = ?", studentID, model.InternshipCaseStatusPassed).
+			Count(&passedCount).Error; err != nil {
+			return fmt.Errorf("check passed internship case: %w", err)
 		}
-		if completedCount > 0 {
-			return ErrInternshipCompleted
+		if passedCount > 0 {
+			return ErrInternshipPassed
 		}
 
 		var existing model.InternshipCase
@@ -524,7 +533,7 @@ func nullableString(value string) any {
 }
 
 func currentCaseStatuses() []model.InternshipCaseStatus {
-	return append(nonTerminalCaseStatuses(), model.InternshipCaseStatusCompleted, model.InternshipCaseStatusCancelled)
+	return append(nonTerminalCaseStatuses(), model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled)
 }
 
 func nonTerminalCaseStatuses() []model.InternshipCaseStatus {

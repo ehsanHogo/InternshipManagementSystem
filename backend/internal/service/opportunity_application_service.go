@@ -21,7 +21,7 @@ var (
 	ErrInvalidResumeFile               = errors.New("invalid resume file")
 	ErrResumeTooLarge                  = errors.New("resume is too large")
 	ErrInternshipCaseAlreadyInProgress = errors.New("internship case already in progress")
-	ErrInternshipAlreadyCompleted      = errors.New("internship already completed")
+	ErrInternshipAlreadyPassed         = errors.New("internship already passed")
 	ErrOpportunityApplicationNotFound  = errors.New("opportunity application not found")
 )
 
@@ -29,7 +29,8 @@ const (
 	ApplicationRestrictionAlreadyExists = "APPLICATION_ALREADY_EXISTS"
 	ApplicationRestrictionNotOpen       = "OPPORTUNITY_NOT_OPEN"
 	ApplicationRestrictionCaseActive    = "INTERNSHIP_CASE_ALREADY_IN_PROGRESS"
-	ApplicationRestrictionCompleted     = "INTERNSHIP_ALREADY_COMPLETED"
+	// Retained wire code means successful PASSED history only.
+	ApplicationRestrictionPassed = "INTERNSHIP_ALREADY_COMPLETED"
 )
 
 type ApplicationEligibility struct {
@@ -252,14 +253,14 @@ func (service *OpportunityApplicationService) Review(supervisorID, applicationID
 }
 
 func checkStudentOpportunityApplicationEligibility(db *gorm.DB, studentID uint) (ApplicationEligibility, error) {
-	var completedCount int64
+	var passedCount int64
 	if err := db.Model(&model.InternshipCase{}).
-		Where("student_id = ? AND status = ?", studentID, model.InternshipCaseStatusCompleted).
-		Count(&completedCount).Error; err != nil {
-		return ApplicationEligibility{}, fmt.Errorf("check completed internship case: %w", err)
+		Where("student_id = ? AND status = ?", studentID, model.InternshipCaseStatusPassed).
+		Count(&passedCount).Error; err != nil {
+		return ApplicationEligibility{}, fmt.Errorf("check passed internship case: %w", err)
 	}
-	if completedCount > 0 {
-		return ApplicationEligibility{CanApply: false, RestrictionCode: ApplicationRestrictionCompleted}, nil
+	if passedCount > 0 {
+		return ApplicationEligibility{CanApply: false, RestrictionCode: ApplicationRestrictionPassed}, nil
 	}
 	blocking := []model.InternshipCaseStatus{
 		model.InternshipCaseStatusPendingUniversityReview,
@@ -289,8 +290,8 @@ func eligibilityError(code string) error {
 		return ErrOpportunityNotOpen
 	case ApplicationRestrictionCaseActive:
 		return ErrInternshipCaseAlreadyInProgress
-	case ApplicationRestrictionCompleted:
-		return ErrInternshipAlreadyCompleted
+	case ApplicationRestrictionPassed:
+		return ErrInternshipAlreadyPassed
 	default:
 		return ErrInvalidApplication
 	}

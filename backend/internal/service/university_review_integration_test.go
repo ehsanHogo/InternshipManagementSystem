@@ -302,7 +302,7 @@ func TestUniversityReviewWorkflow(t *testing.T) {
 			model.InternshipCaseStatusPendingFinalApproval,
 			model.InternshipCaseStatusReadyToStart,
 			model.InternshipCaseStatusActive,
-			model.InternshipCaseStatusCompleted,
+			model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed,
 			model.InternshipCaseStatusCancelled,
 		}
 		for index, status := range statuses {

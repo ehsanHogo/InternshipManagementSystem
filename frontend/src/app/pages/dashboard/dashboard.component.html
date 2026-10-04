@@ -57,13 +57,13 @@
             </a>
           </div>
         </p-card>
-      } @else if (item.status === "COMPLETED") {
+      } @else if (item.status === "PASSED" || item.status === "FAILED") {
         <p-card header="نتیجه نهایی کارآموزی">
           <div class="detail-grid">
             <div class="detail">
               <span>وضعیت</span>
               <div class="inline-tag">
-                <p-tag value="تکمیل شده" severity="contrast" />
+                <p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" />
               </div>
             </div>
             <div class="detail">
@@ -74,6 +74,7 @@
               <span>نظر استاد</span
               ><strong>{{ item.professorComment || "—" }}</strong>
             </div>
+            <div class="detail"><span>تاریخ ارزیابی نهایی</span><strong>{{ item.completedAt | jalaliDate }}</strong></div>
           </div>
         </p-card>
       }
@@ -120,7 +121,7 @@
           <div class="more-info-card">
             <h2>مدیریت فرایند کارآموزی</h2>
             <p>
-              درخواست‌ها، مراحل تأیید و پرونده‌های فعال یا تکمیل‌شده را پیگیری
+              درخواست‌ها، مراحل تأیید و پرونده‌های فعال، قبول‌شده یا مردود را پیگیری
               کنید.
             </p>
             <p-button

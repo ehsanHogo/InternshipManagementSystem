@@ -336,8 +336,8 @@ func (handler *OpportunityApplicationHandler) writeError(ctx *gin.Context, err e
 		status, code, message = http.StatusRequestEntityTooLarge, "RESUME_TOO_LARGE", "حجم فایل رزومه نباید بیشتر از ۵ مگابایت باشد."
 	case errors.Is(err, service.ErrInternshipCaseAlreadyInProgress):
 		status, code, message = http.StatusConflict, "INTERNSHIP_CASE_ALREADY_IN_PROGRESS", "پرونده کارآموزی شما در حال بررسی یا اجرا است و تا زمان بسته شدن آن امکان ارسال درخواست جدید برای فرصت‌های کارآموزی وجود ندارد."
-	case errors.Is(err, service.ErrInternshipAlreadyCompleted):
-		status, code, message = http.StatusConflict, "INTERNSHIP_ALREADY_COMPLETED", "شما قبلاً دوره کارآموزی خود را با موفقیت تکمیل کرده‌اید و امکان ثبت درخواست جدید ندارید."
+	case errors.Is(err, service.ErrInternshipAlreadyPassed):
+		status, code, message = http.StatusConflict, "INTERNSHIP_ALREADY_COMPLETED", "شما قبلاً دوره کارآموزی خود را با موفقیت گذرانده‌اید و امکان ثبت درخواست جدید ندارید."
 	case errors.Is(err, service.ErrOpportunityApplicationNotFound):
 		status, code, message = http.StatusNotFound, "OPPORTUNITY_APPLICATION_NOT_FOUND", "درخواست فرصت کارآموزی یافت نشد."
 	case errors.Is(err, service.ErrOpportunityNotFound):

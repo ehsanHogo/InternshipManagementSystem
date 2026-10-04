@@ -38,7 +38,7 @@
         <td>
           <p-tag
             [value]="readinessLabel(item)"
-            [severity]="item.status === 'COMPLETED' || item.canProfessorComplete ? 'success' : 'warn'"
+            [severity]="(item.status === 'PASSED' || item.status === 'FAILED') || item.canProfessorComplete ? 'success' : 'warn'"
           />
         </td>
         <td><p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" /></td>

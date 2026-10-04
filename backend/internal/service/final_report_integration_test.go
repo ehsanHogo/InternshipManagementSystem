@@ -253,7 +253,7 @@ func TestFinalReportConcurrentMutations(t *testing.T) {
 		}
 		expected := model.InternshipCaseStatusActive
 		if results[1] == nil {
-			expected = model.InternshipCaseStatusCompleted
+			expected = model.InternshipCaseStatusPassed
 		}
 		if persisted.Status != expected {
 			t.Fatal("case changed after blocked completion")
