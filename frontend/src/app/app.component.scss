@@ -1,4 +1,9 @@
 :host {
   display: block;
-  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+:host:has(app-shell) {
+  height: 100dvh;
+  overflow: hidden;
 }

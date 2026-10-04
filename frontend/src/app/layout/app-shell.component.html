@@ -1,5 +1,5 @@
 <div class="shell">
-  <header class="topbar">
+  <header class="topbar" [class.topbar--elevated]="topbarElevated()">
     <div class="topbar-start">
       @if (user()) {
         <p-button
@@ -125,7 +125,7 @@
     </p-drawer>
   }
 
-  <div class="shell-body">
+  <div #shellBody class="shell-body">
     <main class="page-content">
       <router-outlet />
     </main>

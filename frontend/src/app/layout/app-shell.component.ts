@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { afterNextRender, Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -26,9 +26,13 @@ const roleLabels: Record<UserRole, string> = {
 export class AppShellComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+
+  readonly shellBodyRef = viewChild.required<ElementRef<HTMLElement>>('shellBody');
 
   readonly user = this.auth.user;
   readonly navOpen = signal(false);
+  readonly topbarElevated = signal(false);
 
   constructor() {
     this.router.events
@@ -36,8 +40,27 @@ export class AppShellComponent {
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),
         takeUntilDestroyed()
       )
-      .subscribe(() => this.navOpen.set(false));
+      .subscribe(() => {
+        this.navOpen.set(false);
+        queueMicrotask(() => {
+          this.shellBodyRef().nativeElement.scrollTop = 0;
+          this.syncTopbarElevation();
+        });
+      });
+
+    afterNextRender(() => {
+      const shellBody = this.shellBodyRef().nativeElement;
+
+      this.syncTopbarElevation();
+      shellBody.addEventListener('scroll', this.syncTopbarElevation, { passive: true });
+      this.destroyRef.onDestroy(() => shellBody.removeEventListener('scroll', this.syncTopbarElevation));
+    });
   }
+
+  private syncTopbarElevation = (): void => {
+    const shellBody = this.shellBodyRef()?.nativeElement;
+    this.topbarElevated.set((shellBody?.scrollTop ?? 0) > 2);
+  };
 
   roleLabel(role: UserRole): string {
     return roleLabels[role];

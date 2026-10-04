@@ -1,17 +1,23 @@
-:host,
-.shell {
-  display: block;
-  min-height: 100vh;
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
 }
 
 .shell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
   background: #f6f8fb;
 }
 
 .topbar {
-  position: sticky;
   z-index: var(--layer-navigation);
-  top: 0;
+  flex-shrink: 0;
   min-height: 4.75rem;
   display: flex;
   align-items: center;
@@ -20,6 +26,14 @@
   padding: 0.75rem clamp(1rem, 5vw, 4rem);
   border-bottom: 1px solid #e2e8f0;
   background: #fff;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.topbar--elevated {
+  border-bottom-color: transparent;
+  box-shadow: 0 4px 16px rgb(15 23 42 / 8%);
 }
 
 .topbar-start,
@@ -60,9 +74,11 @@
 }
 
 .shell-body {
-  width: min(100% - 2rem, 78rem);
-  margin: 0 auto;
-  padding-block: 1.5rem 3rem;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .navigation {
@@ -97,6 +113,9 @@
 
 .page-content {
   min-width: 0;
+  width: min(100% - 2rem, 78rem);
+  margin-inline: auto;
+  padding-block: 1.5rem 3rem;
 }
 
 @media (max-width: 48rem) {
@@ -106,7 +125,6 @@
   }
 
   .topbar {
-    position: static;
     flex-direction: column;
   }
 
