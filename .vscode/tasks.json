@@ -114,7 +114,7 @@
       "options": {
         "cwd": "${workspaceFolder}/backend",
         "env": {
-          "APP_PORT": "8082",
+          "APP_PORT": "8083",
           "FRONTEND_ORIGIN": "http://localhost:4200",
           "DB_HOST": "localhost",
           "DB_PORT": "5433",
@@ -207,7 +207,7 @@
     {
       "label": "Health: Check Backend",
       "type": "shell",
-      "command": "curl --fail --show-error http://localhost:8082/api/health",
+      "command": "curl --fail --show-error http://localhost:8083/api/health",
       "options": {
         "cwd": "${workspaceFolder}"
       },

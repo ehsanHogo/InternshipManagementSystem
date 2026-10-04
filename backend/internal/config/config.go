@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
@@ -28,6 +29,8 @@ type JWTConfig struct {
 	ExpiresHours int
 }
 
+const defaultJWTSecret = "development-only-secret-change-me"
+
 func Load() (Config, error) {
 	databasePort, err := strconv.Atoi(valueOrDefault("DB_PORT", "5432"))
 	if err != nil || databasePort < 1 || databasePort > 65535 {
@@ -39,7 +42,10 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("JWT_EXPIRES_HOURS must be a positive integer")
 	}
 
-	jwtSecret := valueOrDefault("JWT_SECRET", "development-only-secret-change-me")
+	jwtSecret, err := resolveJWTSecret()
+	if err != nil {
+		return Config{}, err
+	}
 
 	return Config{
 		AppPort:        valueOrDefault("APP_PORT", "8080"),
@@ -65,4 +71,23 @@ func valueOrDefault(name, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func resolveJWTSecret() (string, error) {
+	env := strings.ToLower(strings.TrimSpace(valueOrDefault("APP_ENV", "development")))
+	value, explicitlySet := os.LookupEnv("JWT_SECRET")
+	if explicitlySet {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			return "", fmt.Errorf("JWT_SECRET must not be empty when set")
+		}
+	} else if env == "development" {
+		return defaultJWTSecret, nil
+	} else {
+		return "", fmt.Errorf("JWT_SECRET must be set when APP_ENV is %q", env)
+	}
+	if env != "development" && value == defaultJWTSecret {
+		return "", fmt.Errorf("JWT_SECRET must not use the development default when APP_ENV is %q", env)
+	}
+	return value, nil
 }
