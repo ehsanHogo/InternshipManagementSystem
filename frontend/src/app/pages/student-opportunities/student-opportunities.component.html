@@ -33,6 +33,12 @@
           <div><i class="pi pi-map-marker"></i><span>محل</span><strong>{{ opportunity.location }}</strong></div>
         </div>
         <p class="description-preview">{{ opportunity.description }}</p>
+        @if (opportunity.existingApplication; as application) {
+          <p-tag [value]="applicationStatusLabels[application.status]" [severity]="applicationStatusSeverity(application.status)" />
+          <p-button label="مشاهده درخواست من" [text]="true" [routerLink]="['/student/opportunity-applications', application.id]" />
+        } @else if (!opportunity.canApply) {
+          <p>{{ restrictionMessage(opportunity.applyRestrictionCode) }}</p>
+        }
         <div class="card-actions">
           <p-button label="مشاهده جزئیات" icon="pi pi-arrow-left" iconPos="right" [routerLink]="['/student/opportunities', opportunity.id]" />
         </div>

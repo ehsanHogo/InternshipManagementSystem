@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { userErrorMessage } from '../../shared/http-error-message';
 import { Component, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -18,7 +19,7 @@ import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 
 @Component({
   selector: 'app-student-final-report',
-  imports: [JalaliDatePipe, ButtonModule, CardModule, TagModule],
+  imports: [RouterLink, JalaliDatePipe, ButtonModule, CardModule, TagModule],
   templateUrl: './student-final-report.component.html',
   styleUrls: ['../workflow-page.scss', './student-final-report.component.scss']
 })
@@ -113,7 +114,7 @@ export class StudentFinalReportComponent {
 
   download(): void {
     const report = this.internshipCase()?.finalReport;
-    if (!report) return;
+    if (!report || this.downloading()) return;
     this.downloading.set(true);
     this.internshipService.downloadFile(report.currentFileId).subscribe({
       next: (blob) => {

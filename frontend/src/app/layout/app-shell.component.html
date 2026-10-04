@@ -68,7 +68,7 @@
           </a>
           <a routerLink="/student/application" routerLinkActive="active">
             <i class="pi pi-file-edit" aria-hidden="true"></i>
-            درخواست کارآموزی
+            پرونده کارآموزی و سوابق
           </a>
           <a routerLink="/student/weekly-reports" routerLinkActive="active">
             <i class="pi pi-calendar" aria-hidden="true"></i>
@@ -82,7 +82,7 @@
         @if (user()?.role === 'UNIVERSITY_SUPERVISOR') {
           <a routerLink="/university/applications" routerLinkActive="active">
             <i class="pi pi-file-check" aria-hidden="true"></i>
-            درخواست‌های در انتظار بررسی
+            پرونده‌های کارآموزی
           </a>
           <a routerLink="/university/students" routerLinkActive="active">
             <i class="pi pi-user" aria-hidden="true"></i>
@@ -122,7 +122,7 @@
         @if (user()?.role === 'PROFESSOR') {
           <a routerLink="/professor/internships" routerLinkActive="active">
             <i class="pi pi-users" aria-hidden="true"></i>
-            دانشجویان کارآموز
+            پرونده‌های دانشجویان
           </a>
         }
       </nav>

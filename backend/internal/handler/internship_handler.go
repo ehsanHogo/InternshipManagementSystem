@@ -124,6 +124,23 @@ func (handler *InternshipHandler) GetCurrentCase(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
 }
 
+func (handler *InternshipHandler) GetStudentHistoricalCase(ctx *gin.Context) {
+	studentID, ok := currentUserID(ctx)
+	if !ok {
+		return
+	}
+	caseID, ok := caseIDFromContext(ctx)
+	if !ok {
+		return
+	}
+	item, err := handler.service.GetStudentHistoricalCase(studentID, caseID)
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, caseResponse(item))
+}
+
 func (handler *InternshipHandler) CreateOrGetCase(ctx *gin.Context) {
 	studentID, ok := currentUserID(ctx)
 	if !ok {
@@ -267,7 +284,7 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 	case errors.Is(err, service.ErrAssignmentNotFound), errors.Is(err, service.ErrInvalidApplication),
 		errors.Is(err, service.ErrInvalidPreference), errors.Is(err, service.ErrPreferenceNotOwned),
 		errors.Is(err, service.ErrPreferenceNotAccepted), errors.Is(err, service.ErrInvalidCaseStatus),
-		errors.Is(err, service.ErrCompanySupervisor), errors.Is(err, service.ErrInvalidWeeklyReport), errors.Is(err, service.ErrWeeklyReviewCommentRequired),
+		errors.Is(err, service.ErrInvalidWeeklyReport), errors.Is(err, service.ErrWeeklyReviewCommentRequired),
 		errors.Is(err, service.ErrInvalidEvaluation), errors.Is(err, service.ErrInvalidProfessorResult),
 		errors.Is(err, service.ErrPreferenceNotInCase), errors.Is(err, service.ErrIntroductionLetterNumberRequired),
 		errors.Is(err, service.ErrIntroductionLetterDateRequired), errors.Is(err, service.ErrCancellationCommentRequired),
@@ -282,8 +299,8 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		errors.Is(err, service.ErrDuplicateEvaluation), errors.Is(err, service.ErrWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrProfessorCaseNotActive), errors.Is(err, service.ErrProfessorWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrProfessorCompanyEvaluationRequired), errors.Is(err, service.ErrProfessorFinalReportRequired),
-		errors.Is(err, service.ErrInvalidTransition), errors.Is(err, service.ErrInternshipPassed),
-		errors.Is(err, service.ErrObsoleteWorkflow), errors.Is(err, service.ErrCaseNotPendingUniversityReview),
+		errors.Is(err, service.ErrInternshipPassed),
+		errors.Is(err, service.ErrCaseNotPendingUniversityReview),
 		errors.Is(err, service.ErrCompanySupervisorResolution), errors.Is(err, service.ErrInvalidCompanyPlacement),
 		errors.Is(err, service.ErrCaseNotPendingCompanyDetails), errors.Is(err, service.ErrCaseNotPendingFinalApproval),
 		errors.Is(err, service.ErrPlacementDetailsIncomplete), errors.Is(err, service.ErrPlacementRelationshipInvalid),
@@ -464,14 +481,8 @@ func publicInternshipError(err error) string {
 		return "اطلاعات درخواست کارآموزی کامل نیست."
 	case errors.Is(err, service.ErrInvalidCaseStatus):
 		return "وضعیت پرونده کارآموزی معتبر نیست."
-	case errors.Is(err, service.ErrInvalidTransition):
-		return "تغییر وضعیت در مرحله فعلی امکان‌پذیر نیست."
 	case errors.Is(err, service.ErrInternshipPassed):
 		return "شما قبلاً دوره کارآموزی خود را با موفقیت گذرانده‌اید و امکان ثبت درخواست جدید ندارید."
-	case errors.Is(err, service.ErrObsoleteWorkflow):
-		return "این گردش‌کار در نسخه جدید هنوز فعال نشده است."
-	case errors.Is(err, service.ErrCompanySupervisor):
-		return "سرپرست شرکت معتبر نیست."
 	case errors.Is(err, service.ErrCaseNotPendingUniversityReview):
 		return "این پرونده دیگر در انتظار بررسی آموزش نیست."
 	case errors.Is(err, service.ErrPreferenceNotInCase):

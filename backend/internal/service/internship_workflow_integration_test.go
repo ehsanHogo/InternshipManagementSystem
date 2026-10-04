@@ -14,25 +14,6 @@ import (
 	"internship-management-system/backend/internal/service"
 )
 
-func TestObsoleteCompanyWorkflowIsDisabled(t *testing.T) {
-	workflow := service.NewInternshipService(nil)
-	checks := []struct {
-		name string
-		run  func() error
-	}{
-		{name: "company confirmation", run: func() error {
-			_, err := workflow.ConfirmCompanyCase(1, 1, service.CompanyConfirmationInput{})
-			return err
-		}},
-		{name: "legacy university approval", run: func() error { _, err := workflow.ApproveUniversityCase(1); return err }},
-	}
-	for _, check := range checks {
-		if err := check.run(); !errors.Is(err, service.ErrObsoleteWorkflow) {
-			t.Errorf("%s error = %v, want obsolete workflow", check.name, err)
-		}
-	}
-}
-
 func TestWorkflow(t *testing.T) {
 	dsn := os.Getenv("TEST_DATABASE_DSN")
 	if dsn == "" {
@@ -406,7 +387,7 @@ func TestWorkflow(t *testing.T) {
 			if _, err := workflow.GetAccessibleFile(professor.ID, model.RoleProfessor, completed.FinalReport.CurrentFileID); err != nil {
 				t.Fatalf("professor final report access: %v", err)
 			}
-			studentView, err := workflow.GetCurrentCase(readyCase.StudentID)
+			studentView, err := workflow.GetStudentHistoricalCase(readyCase.StudentID, readyCase.ID)
 			if err != nil || studentView.FinalResult == nil || *studentView.FinalResult != result {
 				t.Fatalf("student completed result: case=%+v err=%v", studentView, err)
 			}
@@ -470,9 +451,6 @@ func TestWorkflow(t *testing.T) {
 					len(universityCase.WeeklyReports) != 8 || universityCase.CompanyEvaluation == nil ||
 					universityCase.FinalReport == nil || universityCase.FinalResult == nil {
 					t.Fatalf("university completed case detail: case=%+v err=%v", universityCase, err)
-				}
-				if _, err := workflow.ApproveUniversityCase(readyCase.ID); !errors.Is(err, service.ErrObsoleteWorkflow) {
-					t.Fatalf("university completed mutation error = %v", err)
 				}
 			}
 		}

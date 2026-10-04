@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -21,7 +22,7 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 @Component({
   selector: 'app-student-weekly-reports',
   providers: [ConfirmationService],
-  imports: [WeeklyReportReviewComponent, ConfirmDialogModule, ReactiveFormsModule, JalaliDatePickerComponent, JalaliDatePipe, PersianDigitsPipe, ButtonModule, CardModule, DialogModule, InputNumberModule, TagModule, TextareaModule],
+  imports: [RouterLink, WeeklyReportReviewComponent, ConfirmDialogModule, ReactiveFormsModule, JalaliDatePickerComponent, JalaliDatePipe, PersianDigitsPipe, ButtonModule, CardModule, DialogModule, InputNumberModule, TagModule, TextareaModule],
   templateUrl: './student-weekly-reports.component.html',
   styleUrls: ['../workflow-page.scss', './student-weekly-reports.component.scss']
 })
@@ -128,6 +129,7 @@ export class StudentWeeklyReportsComponent {
       message: report.status === 'DRAFT' ? 'آیا از ارسال این گزارش برای بررسی مطمئن هستید؟' : 'آیا از ارسال مجدد گزارش اصلاح‌شده مطمئن هستید؟',
       acceptLabel: 'ارسال', rejectLabel: 'انصراف',
       accept: () => {
+        if (!this.canEdit(report) || this.saving()) return;
         this.saving.set(true);
         this.internshipService.submitWeeklyReport(report.id).subscribe({
           next: (updated) => {
@@ -147,7 +149,7 @@ export class StudentWeeklyReportsComponent {
     this.internshipService.getCurrentCase().subscribe({
       next: (internshipCase) => {
         this.internshipCase.set(internshipCase);
-        if (internshipCase.status !== 'ACTIVE' && internshipCase.status !== 'PASSED' && internshipCase.status !== 'FAILED') {
+        if (internshipCase.status !== 'ACTIVE') {
           this.reports.set([]);
           this.loading.set(false);
           return;

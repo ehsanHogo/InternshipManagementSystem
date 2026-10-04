@@ -1,5 +1,6 @@
 import { Component, input } from '@angular/core';
 import { TagModule } from 'primeng/tag';
+import { JalaliDatePipe } from './jalali-date/jalali-date.pipe';
 import {
   WeeklyReport,
   weeklyReportStatusLabels,
@@ -10,7 +11,7 @@ import {
 
 @Component({
   selector: 'app-weekly-report-review',
-  imports: [TagModule],
+  imports: [TagModule, JalaliDatePipe],
   template: `
     <div class="reviews">
       <div class="status-line">
@@ -45,6 +46,12 @@ import {
           <strong>آخرین نظر استاد</strong>
           <p>{{ report().professorReviewComment }}</p>
         </div>
+      }
+      @if (report().companyReviewedAt) {
+        <span class="status-label">آخرین بررسی سرپرست شرکت: {{ report().companyReviewedAt | jalaliDate }}</span>
+      }
+      @if (report().professorReviewedAt) {
+        <span class="status-label">آخرین بررسی استاد: {{ report().professorReviewedAt | jalaliDate }}</span>
       }
     </div>
   `,

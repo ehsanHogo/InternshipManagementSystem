@@ -64,6 +64,7 @@ export class ProfessorCaseComponent {
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
   readonly submitting = signal(false);
+  readonly downloading = signal(false);
   readonly selectedReport = signal<WeeklyReport | null>(null);
   readonly reviewing = signal(false);
   readonly reviewForm = this.formBuilder.group({ comment: this.formBuilder.nonNullable.control('') });
@@ -166,6 +167,7 @@ export class ProfessorCaseComponent {
   }
 
   confirmCompletion(): void {
+    if (this.submitting() || this.internshipCase()?.internship.status !== 'ACTIVE') return;
     const item = this.internshipCase();
     if (!item?.canProfessorComplete || this.evaluationForm.invalid) {
       this.evaluationForm.markAllAsTouched();
@@ -187,7 +189,8 @@ export class ProfessorCaseComponent {
 
   downloadFinalReport(): void {
     const file = this.internshipCase()?.finalReport?.currentFile;
-    if (!file) return;
+    if (!file || this.downloading()) return;
+    this.downloading.set(true);
     this.internshipService.downloadFile(file.id).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
@@ -196,8 +199,12 @@ export class ProfessorCaseComponent {
         anchor.download = file.originalName;
         anchor.click();
         URL.revokeObjectURL(url);
+        this.downloading.set(false);
       },
-      error: () => this.messages.add({ severity: 'error', summary: 'خطا', detail: 'دانلود گزارش نهایی ناموفق بود.' })
+      error: () => {
+        this.downloading.set(false);
+        this.messages.add({ severity: 'error', summary: 'خطا', detail: 'دانلود گزارش نهایی ناموفق بود.' });
+      }
     });
   }
 
@@ -221,6 +228,7 @@ export class ProfessorCaseComponent {
   }
 
   private completeCase(): void {
+    if (this.submitting() || this.evaluationForm.invalid || this.internshipCase()?.internship.status !== 'ACTIVE' || !this.internshipCase()?.canProfessorComplete) return;
     const value = this.evaluationForm.getRawValue();
     if (!value.result) return;
     this.submitting.set(true);

@@ -90,8 +90,8 @@ type InternshipCase struct {
 	Mobile        *string `gorm:"size:30"`
 
 	SelectedPreferenceID *uint
-	// CompanySupervisorID is a temporary cached reference. V2 must populate it from
-	// the selected opportunity, never through arbitrary university selection.
+	// CompanySupervisorID snapshots the selected opportunity's supervisor.
+	// It is never populated through arbitrary university selection.
 	CompanySupervisorID           *uint
 	LetterNumber                  *string `gorm:"size:100"`
 	LetterDate                    *time.Time

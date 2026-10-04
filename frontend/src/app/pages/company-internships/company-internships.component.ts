@@ -12,7 +12,8 @@ import {
   CompanyInternshipCase,
   InternshipCaseStatus,
   internshipStatusLabels,
-  internshipStatusSeverity
+  internshipStatusSeverity,
+  professorFinalResultLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
@@ -33,21 +34,19 @@ export class CompanyInternshipsComponent {
   readonly listFilter = signal<CompanyListFilter>('PENDING_COMPANY_DETAILS');
 
   readonly filterOptions: { label: string; value: CompanyListFilter }[] = [
-    { label: 'در انتظار اطلاعات شروع', value: 'PENDING_COMPANY_DETAILS' },
-    { label: 'همه پرونده‌های اختصاص‌یافته', value: 'ALL' }
+    { label: 'همه پرونده‌های اختصاص‌یافته', value: 'ALL' },
+    ...(['PENDING_COMPANY_DETAILS', 'PENDING_FINAL_APPROVAL', 'READY_TO_START', 'ACTIVE', 'PASSED', 'FAILED'] as const)
+      .map(status => ({ label: internshipStatusLabels[status], value: status }))
   ];
 
-  readonly visibleCases = computed(() => {
-    if (this.listFilter() === 'ALL') {
-      return this.cases();
-    }
-    return this.cases().filter((item) => item.status === 'PENDING_COMPANY_DETAILS');
-  });
+  readonly visibleCases = computed(() => this.listFilter() === 'ALL'
+    ? this.cases() : this.cases().filter(item => item.status === this.listFilter()));
+  readonly emptyListMessage = computed(() => this.listFilter() === 'ALL'
+    ? 'پرونده‌ای به شما اختصاص نیافته است.' : 'هیچ پرونده‌ای در این وضعیت وجود ندارد.');
 
-  readonly emptyListMessage = computed(() =>
-    this.listFilter() === 'PENDING_COMPANY_DETAILS'
-      ? 'در حال حاضر پرونده‌ای برای ثبت اطلاعات شروع کارآموزی وجود ندارد.'
-      : 'پرونده‌ای به شما اختصاص نیافته است.');
+  finalResultLabel(item: CompanyInternshipCase): string {
+    return item.finalResult ? professorFinalResultLabels[item.finalResult] : '—';
+  }
 
   constructor() {
     this.load();
@@ -80,4 +79,4 @@ export class CompanyInternshipsComponent {
   }
 }
 
-type CompanyListFilter = 'PENDING_COMPANY_DETAILS' | 'ALL';
+type CompanyListFilter = 'ALL' | Exclude<InternshipCaseStatus, 'DRAFT' | 'PENDING_UNIVERSITY_REVIEW' | 'CANCELLED'>;

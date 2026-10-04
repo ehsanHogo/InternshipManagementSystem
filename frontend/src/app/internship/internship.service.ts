@@ -4,15 +4,12 @@ import { Observable } from 'rxjs';
 
 import {
   AcceptedOpportunityApplication,
-  Company,
   CompanyEvaluation,
   CompanyEvaluationPayload,
   PlacementDetailsPayload,
   InternshipCase,
   CompanyInternshipCase,
   InternshipCaseStatus,
-  InternshipPreference,
-  PreferencePayload,
   UniversityPlacementApprovalPayload,
   UniversityReviewCancellationPayload,
   FinalReport,
@@ -35,6 +32,10 @@ export class InternshipService {
     return this.http.get<InternshipCase[]>('/api/student/internship-cases/history');
   }
 
+  getStudentHistoricalCase(id: number): Observable<InternshipCase> {
+    return this.http.get<InternshipCase>(`/api/student/internship-cases/history/${id}`);
+  }
+
   createCase(): Observable<InternshipCase> {
     return this.http.post<InternshipCase>('/api/student/internship-case', {});
   }
@@ -47,24 +48,8 @@ export class InternshipService {
     return this.http.get<AcceptedOpportunityApplication[]>("/api/student/accepted-opportunity-applications");
   }
 
-  listCompanies(): Observable<Company[]> {
-    return this.http.get<Company[]>('/api/companies');
-  }
-
   replacePreferences(opportunityApplicationIds: number[]): Observable<InternshipCase> {
     return this.http.put<InternshipCase>("/api/student/internship-case/preferences", { opportunityApplicationIds });
-  }
-
-  addPreference(payload: PreferencePayload): Observable<InternshipPreference> {
-    return this.http.post<InternshipPreference>('/api/student/internship-case/preferences', payload);
-  }
-
-  updatePreference(id: number, payload: PreferencePayload): Observable<InternshipPreference> {
-    return this.http.put<InternshipPreference>(`/api/student/internship-case/preferences/${id}`, payload);
-  }
-
-  deletePreference(id: number): Observable<void> {
-    return this.http.delete<void>(`/api/student/internship-case/preferences/${id}`);
   }
 
   submitCase(): Observable<InternshipCase> {
@@ -80,20 +65,12 @@ export class InternshipService {
     return this.http.get<InternshipCase>(`/api/university/internship-cases/${id}`);
   }
 
-  listPendingUniversityReviewCases(): Observable<InternshipCase[]> {
-    return this.http.get<InternshipCase[]>("/api/university/internship-cases/pending-review");
-  }
-
   approveUniversityPlacement(id: number, payload: UniversityPlacementApprovalPayload): Observable<InternshipCase> {
     return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/approve-placement`, payload);
   }
 
   cancelUniversityReview(id: number, payload: UniversityReviewCancellationPayload): Observable<InternshipCase> {
     return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/cancel`, payload);
-  }
-
-  listPendingFinalApprovalCases(): Observable<InternshipCase[]> {
-    return this.http.get<InternshipCase[]>('/api/university/internship-cases/pending-final-approval');
   }
 
   approvePlacementDetails(id: number): Observable<InternshipCase> {
@@ -158,10 +135,6 @@ export class InternshipService {
     return this.http.get(`/api/files/${id}/download`, { responseType: 'blob' });
   }
 
-  listCompanyWeeklyReports(caseId: number): Observable<WeeklyReport[]> {
-    return this.http.get<WeeklyReport[]>(`/api/company/internship-cases/${caseId}/weekly-reports`);
-  }
-
   reviewCompanyWeeklyReport(caseId: number, reportId: number, action: 'approve' | 'request-revision', comment?: string): Observable<WeeklyReport> {
     return this.http.post<WeeklyReport>(`/api/company/internship-cases/${caseId}/weekly-reports/${reportId}/${action}`, { comment });
   }
@@ -172,10 +145,6 @@ export class InternshipService {
 
   submitWeeklyReport(reportId: number): Observable<WeeklyReport> {
     return this.http.post<WeeklyReport>(`/api/student/internship-case/weekly-reports/${reportId}/submit`, {});
-  }
-
-  getCompanyEvaluation(caseId: number): Observable<CompanyEvaluation> {
-    return this.http.get<CompanyEvaluation>(`/api/company/internship-cases/${caseId}/evaluation`);
   }
 
   createCompanyEvaluation(caseId: number, payload: CompanyEvaluationPayload): Observable<CompanyEvaluation> {

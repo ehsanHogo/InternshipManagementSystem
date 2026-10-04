@@ -48,7 +48,7 @@
   <p class="muted">پس از لغو پرونده، دانشجو می‌تواند برای فرصت‌های جدید اقدام و یک درخواست رسمی جدید ثبت کند.</p>
   <div class="dialog-actions">
     <p-button label="انصراف" severity="secondary" [text]="true" [disabled]="saving()" (onClick)="cancelDialogVisible.set(false)" />
-    <p-button label="ادامه و تأیید لغو" icon="pi pi-times-circle" severity="danger" [loading]="saving()" (onClick)="confirmCancellation()" />
+    <p-button label="ادامه و تأیید لغو" icon="pi pi-times-circle" severity="danger" [loading]="saving()" [disabled]="saving()" (onClick)="confirmCancellation()" />
   </div>
 </p-dialog>
 
@@ -161,6 +161,7 @@
           </div>
         </label>
       }
+      @if (!item.preferences.length) { <p class="muted">اولویتی در این پرونده ثبت نشده است.</p> }
     </div>
   </p-card>
 
@@ -208,6 +209,7 @@
           label="تأیید محل و ثبت معرفی‌نامه"
           icon="pi pi-check"
           [loading]="saving()"
+          [disabled]="saving()"
           (onClick)="confirmApproval()"
         />
       </div>
@@ -282,11 +284,13 @@
       </div>
       <div class="detail-grid">
         <div class="detail"><span>نتیجه نهایی</span><strong>{{ item.finalResult ? professorFinalResultLabels[item.finalResult] : '—' }}</strong></div>
-        <div class="detail full-width"><span>نظر استاد</span><strong>{{ item.professorComment || '—' }}</strong></div>
+        <div class="detail full-width"><span>نظر نهایی استاد درباره دوره کارآموزی</span><strong>{{ item.professorComment || '—' }}</strong></div>
         <div class="detail"><span>تاریخ ارزیابی نهایی</span><strong>{{ item.completedAt | jalaliDate }}</strong></div>
       </div>
     </p-card>
   }
+
+  <app-case-reports [item]="item" />
 
   @if (item.status === "CANCELLED") {
     <p-card header="نتیجه لغو پرونده">

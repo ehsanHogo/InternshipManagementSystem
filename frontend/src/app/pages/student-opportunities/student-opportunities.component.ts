@@ -6,7 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 
-import { StudentOpportunity } from '../../opportunity/opportunity.models';
+import { StudentOpportunity, applicationStatusLabels, applicationStatusSeverity, opportunityApplyRestrictionMessage } from '../../opportunity/opportunity.models';
 import { OpportunityService } from '../../opportunity/opportunity.service';
 import { userErrorMessage } from '../../shared/http-error-message';
 
@@ -20,6 +20,9 @@ export class StudentOpportunitiesComponent {
   private readonly opportunitiesService = inject(OpportunityService);
   private readonly messages = inject(MessageService);
 
+  readonly applicationStatusLabels = applicationStatusLabels;
+  readonly applicationStatusSeverity = applicationStatusSeverity;
+  readonly restrictionMessage = opportunityApplyRestrictionMessage;
   readonly opportunities = signal<StudentOpportunity[]>([]);
   readonly loading = signal(true);
   readonly loadFailed = signal(false);

@@ -10,6 +10,9 @@ export function userErrorMessage(
 ): string {
   if (error.status === 0) return "ارتباط با سرور برقرار نشد.";
 
+  if (error.error?.code === "INTERNSHIP_ALREADY_COMPLETED")
+    return "شما قبلاً دوره کارآموزی خود را با موفقیت گذرانده‌اید و امکان ثبت درخواست جدید ندارید.";
+
   const message =
     typeof error.error?.error === "string" ? error.error.error.trim() : "";
   if (message && PERSIAN_TEXT.test(message) && !TECHNICAL_ERROR.test(message))

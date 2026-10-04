@@ -41,6 +41,21 @@ export interface StudentOpportunity extends OpportunityPayload {
   existingApplication?: ExistingOpportunityApplication;
 }
 
+export function opportunityApplyRestrictionMessage(code?: string): string {
+  switch (code) {
+    case 'INTERNSHIP_ALREADY_COMPLETED':
+      return 'شما قبلاً دوره کارآموزی خود را با موفقیت گذرانده‌اید و امکان ثبت درخواست جدید ندارید.';
+    case 'INTERNSHIP_CASE_ALREADY_IN_PROGRESS':
+      return 'پرونده کارآموزی شما در حال بررسی یا اجرا است و در حال حاضر امکان ارسال درخواست جدید وجود ندارد.';
+    case 'OPPORTUNITY_NOT_OPEN':
+      return 'این فرصت کارآموزی بسته شده است و درخواست جدید نمی‌پذیرد.';
+    case 'APPLICATION_ALREADY_EXISTS':
+      return 'درخواست شما برای این فرصت قبلاً ثبت شده است.';
+    default:
+      return 'در حال حاضر امکان ارسال درخواست برای این فرصت وجود ندارد.';
+  }
+}
+
 export interface ApplicationStudent {
   id: number;
   fullName: string;

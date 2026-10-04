@@ -26,8 +26,6 @@ var (
 	ErrPreferenceAlreadyExists          = errors.New("opportunity application is already selected")
 	ErrInvalidApplication               = errors.New("internship application is incomplete")
 	ErrInvalidCaseStatus                = errors.New("invalid internship case status")
-	ErrInvalidTransition                = errors.New("invalid internship case transition")
-	ErrCompanySupervisor                = errors.New("invalid company supervisor")
 	ErrCaseNotPendingUniversityReview   = errors.New("internship case is not pending university review")
 	ErrIntroductionLetterNumberRequired = errors.New("introduction letter number is required")
 	ErrIntroductionLetterDateRequired   = errors.New("introduction letter date is required")
@@ -35,7 +33,6 @@ var (
 	ErrCancellationCommentRequired      = errors.New("cancellation comment is required")
 	ErrCaseAccessDenied                 = errors.New("internship case access denied")
 	ErrInternshipPassed                 = errors.New("internship requirement already passed")
-	ErrObsoleteWorkflow                 = errors.New("workflow is unavailable until opportunity support is implemented")
 )
 
 type InternshipService struct {
@@ -62,8 +59,8 @@ func (service *InternshipService) ListApprovedCompanies() ([]model.Company, erro
 func (service *InternshipService) GetCurrentCase(studentID uint) (*model.InternshipCase, error) {
 	var internshipCase model.InternshipCase
 	err := service.caseQuery(service.db).
-		Where("student_id = ? AND status IN ?", studentID, currentCaseStatuses()).
-		Order("created_at DESC").
+		Where("student_id = ? AND status IN ?", studentID, nonTerminalCaseStatuses()).
+		Order("created_at DESC, id DESC").
 		First(&internshipCase).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrCaseNotFound
@@ -78,9 +75,23 @@ func (service *InternshipService) GetCurrentCase(studentID uint) (*model.Interns
 func (service *InternshipService) ListStudentHistoricalCases(studentID uint) ([]model.InternshipCase, error) {
 	cases := []model.InternshipCase{}
 	err := service.caseQuery(service.db).
-		Where("student_id = ? AND status IN ?", studentID, []model.InternshipCaseStatus{model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled}).
+		Where("student_id = ? AND status IN ?", studentID, terminalCaseStatuses()).
 		Order("created_at DESC, id DESC").Find(&cases).Error
 	return cases, err
+}
+
+func (service *InternshipService) GetStudentHistoricalCase(studentID, caseID uint) (*model.InternshipCase, error) {
+	var item model.InternshipCase
+	err := service.caseQuery(service.db).
+		Where("id = ? AND student_id = ? AND status IN ?", caseID, studentID, terminalCaseStatuses()).
+		First(&item).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrCaseNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get student historical internship case: %w", err)
+	}
+	return &item, nil
 }
 
 func (service *InternshipService) CreateOrGetCase(studentID uint) (*model.InternshipCase, bool, error) {
@@ -415,10 +426,13 @@ func (service *InternshipService) getCaseByID(caseID uint) (*model.InternshipCas
 	return &internshipCase, nil
 }
 
+// The existing report reads and mutation validation retain a terminal fallback.
+// A current case always takes precedence, regardless of historical timestamps.
 func (service *InternshipService) findOwnedCase(db *gorm.DB, studentID uint) (*model.InternshipCase, error) {
 	var internshipCase model.InternshipCase
-	err := db.Where("student_id = ? AND status IN ?", studentID, currentCaseStatuses()).
-		Order("created_at DESC").First(&internshipCase).Error
+	err := db.Where("student_id = ? AND status IN ?", studentID, studentReadableCaseStatuses()).
+		Order("CASE WHEN status IN ('PASSED','FAILED','CANCELLED') THEN 1 ELSE 0 END").
+		Order("created_at DESC, id DESC").First(&internshipCase).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrCaseNotFound
 	}
@@ -431,8 +445,9 @@ func (service *InternshipService) findOwnedCase(db *gorm.DB, studentID uint) (*m
 func (service *InternshipService) findOwnedCaseForUpdate(db *gorm.DB, studentID uint) (*model.InternshipCase, error) {
 	var internshipCase model.InternshipCase
 	err := db.Clauses(clause.Locking{Strength: "UPDATE"}).
-		Where("student_id = ? AND status IN ?", studentID, currentCaseStatuses()).
-		Order("created_at DESC").First(&internshipCase).Error
+		Where("student_id = ? AND status IN ?", studentID, studentReadableCaseStatuses()).
+		Order("CASE WHEN status IN ('PASSED','FAILED','CANCELLED') THEN 1 ELSE 0 END").
+		Order("created_at DESC, id DESC").First(&internshipCase).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrCaseNotFound
 	}
@@ -532,8 +547,12 @@ func nullableString(value string) any {
 	return value
 }
 
-func currentCaseStatuses() []model.InternshipCaseStatus {
-	return append(nonTerminalCaseStatuses(), model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled)
+func studentReadableCaseStatuses() []model.InternshipCaseStatus {
+	return append(nonTerminalCaseStatuses(), terminalCaseStatuses()...)
+}
+
+func terminalCaseStatuses() []model.InternshipCaseStatus {
+	return []model.InternshipCaseStatus{model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled}
 }
 
 func nonTerminalCaseStatuses() []model.InternshipCaseStatus {

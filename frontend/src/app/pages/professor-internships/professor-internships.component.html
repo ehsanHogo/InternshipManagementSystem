@@ -2,9 +2,14 @@
   <div>
     <span class="eyebrow">استاد راهنما</span>
     <h1>دانشجویان کارآموز</h1>
-    <p>پرونده‌های فعال و تکمیل‌شده‌ای که به شما اختصاص یافته‌اند.</p>
+    <p>پرونده‌های فعال، قبول شده و مردودی که به شما اختصاص یافته‌اند.</p>
   </div>
 </section>
+
+<div class="filter-row">
+  <p-select [options]="filterOptions" optionLabel="label" optionValue="value" [ngModel]="listFilter()"
+    (ngModelChange)="listFilter.set($event)" [disabled]="loading()" appendTo="body" />
+</div>
 
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده‌ها...</span></div>
@@ -14,7 +19,7 @@
     <p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="load()" />
   </div>
 } @else {
-  <p-table [value]="cases()" [rowHover]="true" responsiveLayout="scroll">
+  <p-table [value]="visibleCases()" [rowHover]="true" responsiveLayout="scroll">
     <ng-template #header>
       <tr>
         <th>نام دانشجو</th>
@@ -45,7 +50,7 @@
         <td>{{ resultLabel(item) }}</td>
         <td>
           <p-button
-            label="مشاهده و ارزیابی"
+            [label]="item.status === 'ACTIVE' ? 'مشاهده و ارزیابی' : 'مشاهده پرونده (فقط خواندنی)'"
             icon="pi pi-eye"
             [text]="true"
             [routerLink]="['/professor/internships', item.caseId]"
@@ -54,7 +59,7 @@
       </tr>
     </ng-template>
     <ng-template #emptymessage>
-      <tr><td colspan="9" class="muted">پرونده‌ای به شما اختصاص نیافته است.</td></tr>
+      <tr><td colspan="9" class="muted">هیچ پرونده‌ای در این وضعیت وجود ندارد.</td></tr>
     </ng-template>
   </p-table>
 }

@@ -175,7 +175,7 @@
         />
       </div>
       @if (report.reviewComment) {
-        <div class="notice" style="white-space: pre-wrap"><strong>آخرین نظر استاد</strong><p>{{ report.reviewComment }}</p></div>
+        <div class="notice" style="white-space: pre-wrap"><strong>آخرین نظر استاد درباره گزارش نهایی</strong><p>{{ report.reviewComment }}</p></div>
       }
       @if (report.reviewedAt) { <p>تاریخ بررسی: {{ report.reviewedAt | jalaliDate }}</p> }
       <div class="detail-grid">
@@ -191,7 +191,7 @@
         <p-button
           label="دانلود گزارش"
           icon="pi pi-download"
-          (onClick)="downloadFinalReport()"
+          [loading]="downloading()" [disabled]="downloading()" (onClick)="downloadFinalReport()"
         />
         @if (canReviewFinalReport()) {
           <p-button label="تأیید گزارش نهایی" icon="pi pi-check" [disabled]="finalReviewing()" (onClick)="openFinalReview('approve')" />
@@ -252,7 +252,7 @@
           ><strong>{{ item.completedAt | jalaliDate }}</strong>
         </div>
         <div class="detail full-width">
-          <span>نظر استاد</span
+          <span>نظر نهایی استاد درباره دوره کارآموزی</span
           ><strong>{{ item.professorComment || "—" }}</strong>
         </div>
       </div>
@@ -270,7 +270,7 @@
           />
         </label>
         <label class="field full-width">
-          <span>نظر استاد</span>
+          <span>نظر نهایی استاد درباره دوره کارآموزی</span>
           <textarea pTextarea formControlName="comment" rows="5"></textarea>
         </label>
       </form>
@@ -278,7 +278,7 @@
         <p-button
           label="ثبت ارزیابی نهایی"
           icon="pi pi-check-circle"
-          [loading]="submitting()"
+          [loading]="submitting()" [disabled]="submitting()"
           (onClick)="confirmCompletion()"
         />
       </div>
@@ -296,14 +296,14 @@
   </div>
 }
 
-<p-dialog header="بررسی گزارش هفتگی" [visible]="selectedReport() !== null" (visibleChange)="!$event && selectedReport.set(null)" [modal]="true" appendTo="body" [style]="{ width: 'min(92vw, 34rem)' }">
+<p-dialog header="بررسی گزارش هفتگی" [closable]="!reviewing()" [closeOnEscape]="!reviewing()" [visible]="selectedReport() !== null" (visibleChange)="!$event && selectedReport.set(null)" [modal]="true" appendTo="body" [style]="{ width: 'min(92vw, 34rem)' }">
   <form [formGroup]="reviewForm">
     <label class="field"><span>نظر استاد (برای درخواست اصلاح الزامی)</span><textarea pTextarea formControlName="comment" rows="4"></textarea></label>
   </form>
   <ng-template #footer>
-    <p-button label="انصراف" severity="secondary" [text]="true" (onClick)="selectedReport.set(null)" />
-    <p-button label="تأیید گزارش" [loading]="reviewing()" (onClick)="reviewReport('approve')" />
-    <p-button label="درخواست اصلاح" severity="warn" [loading]="reviewing()" (onClick)="reviewReport('request-revision')" />
+    <p-button label="انصراف" severity="secondary" [text]="true" [disabled]="reviewing()" (onClick)="selectedReport.set(null)" />
+    <p-button label="تأیید گزارش" [loading]="reviewing()" [disabled]="reviewing()" (onClick)="reviewReport('approve')" />
+    <p-button label="درخواست اصلاح" severity="warn" [loading]="reviewing()" [disabled]="reviewing()" (onClick)="reviewReport('request-revision')" />
   </ng-template>
 </p-dialog>
 

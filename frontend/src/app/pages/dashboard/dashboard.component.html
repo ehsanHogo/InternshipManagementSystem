@@ -28,11 +28,11 @@
           } @else if (internshipStatus(); as status) {
             <p-tag [value]="statusLabel(status)" [severity]="internshipStatusSeverity(status)" />
           } @else {
-            <p-tag value="درخواستی ثبت نشده است" severity="secondary" />
+            <p-tag value="پرونده فعالی ندارید" severity="secondary" />
           }
         </div>
         <p-button
-          label="درخواست کارآموزی"
+          label="پرونده کارآموزی و سوابق"
           icon="pi pi-arrow-left"
           iconPos="right"
           routerLink="/student/application"
@@ -61,23 +61,25 @@
             </a>
           </div>
         </p-card>
-      } @else if (item.status === "PASSED" || item.status === "FAILED") {
-        <p-card header="نتیجه نهایی کارآموزی">
-          <div class="card-status-line status-line">
-            <span class="status-label">وضعیت</span>
-            <p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" />
-          </div>
-          <div class="detail-grid">
-            <div class="detail">
-              <span>نتیجه نهایی</span
-              ><strong>{{ finalResultLabel(item) }}</strong>
-            </div>
-            <div class="detail full-width">
-              <span>نظر استاد</span
-              ><strong>{{ item.professorComment || "—" }}</strong>
-            </div>
-            <div class="detail"><span>تاریخ ارزیابی نهایی</span><strong>{{ item.completedAt | jalaliDate }}</strong></div>
-          </div>
+      }
+    }
+    @if (!statusLoading() && !statusLoadFailed()) {
+      @if (hasPassedCase()) {
+        <p>دوره کارآموزی را با موفقیت گذرانده‌اید و امکان ثبت درخواست یا پرونده جدید ندارید.</p>
+      } @else if (!internshipCase() && historicalCase()) {
+        <p>پرونده فعالی ندارید. پس از پرونده مردود یا لغو شده می‌توانید فرایند کارآموزی جدیدی آغاز کنید.</p>
+      }
+      @if (historicalCase(); as past) {
+        <p-card header="آخرین پرونده تاریخی (فقط خواندنی)">
+          <p-tag [value]="statusLabel(past.status)" [severity]="internshipStatusSeverity(past.status)" />
+          @if (past.status !== 'CANCELLED') {
+            <p>نتیجه نهایی: {{ finalResultLabel(past) }}</p>
+            <p>تاریخ ارزیابی نهایی: {{ past.completedAt | jalaliDate }}</p>
+          } @else {
+            <p>دلیل لغو: {{ past.cancellationComment || '—' }}</p>
+            <p>تاریخ لغو: {{ past.cancelledAt | jalaliDate }}</p>
+          }
+          <p-button label="مشاهده سوابق و گزارش‌ها" routerLink="/student/application" severity="secondary" />
         </p-card>
       }
     }

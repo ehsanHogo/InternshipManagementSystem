@@ -3,8 +3,8 @@
 <section class="page-heading">
   <div>
     <span class="eyebrow">درخواست رسمی کارآموزی</span>
-    <h1>ثبت درخواست برای آموزش</h1>
-    <p>از میان فرصت‌هایی که شرکت پذیرفته است، حداکثر سه اولویت انتخاب کنید.</p>
+    <h1>{{ viewingHistory() ? "پرونده تاریخی کارآموزی" : "پرونده کارآموزی" }}</h1>
+    <p>{{ viewingHistory() ? "اطلاعات ثبت‌شده این پرونده فقط خواندنی است." : "پرونده فعلی و پرونده‌های پیشین خود را مشاهده کنید." }}</p>
   </div>
   @if (internshipCase(); as currentCase) {
     <p-tag [value]="statusLabel(currentCase.status)" [severity]="internshipStatusSeverity(currentCase.status)" />
@@ -12,18 +12,36 @@
 </section>
 
 @if (!loading() && !loadFailed() && historicalCases().length) {
-  <p-card header="پرونده‌های پیشین">
+  <p-card header="پرونده‌های پیشین (فقط خواندنی)">
     @for (past of historicalCases(); track past.id) {
       <div class="card-status-line status-line">
         <span>پرونده {{ past.id | persianDigits }}</span>
         <p-tag [value]="statusLabel(past.status)" [severity]="internshipStatusSeverity(past.status)" />
-        <p-button label="مشاهده پرونده و گزارش‌ها" severity="secondary" [text]="true" (onClick)="viewHistoricalCase(past)" />
+        <p-button label="مشاهده پرونده و گزارش‌ها" severity="secondary" [text]="true" [disabled]="historyLoading() || saving() || preferenceSaving() || creating()" (onClick)="viewHistoricalCase(past)" />
+      </div>
+      <div class="detail-grid">
+        @if (past.selectedPreference; as selected) {
+          <div class="detail"><span>شرکت</span><strong>{{ selected.application.opportunity.company.name }}</strong></div>
+          <div class="detail"><span>فرصت</span><strong>{{ selected.application.opportunity.title }}</strong></div>
+        }
+        @if (past.submittedAt) { <div class="detail"><span>تاریخ ارسال</span><strong>{{ past.submittedAt | jalaliDate }}</strong></div> }
+        @if (past.activatedAt) { <div class="detail"><span>تاریخ فعال‌سازی</span><strong>{{ past.activatedAt | jalaliDate }}</strong></div> }
+        @if (past.status !== 'CANCELLED') {
+          @if (past.completedAt) { <div class="detail"><span>تاریخ ارزیابی نهایی</span><strong>{{ past.completedAt | jalaliDate }}</strong></div> }
+          @if (past.finalResult) { <div class="detail"><span>نتیجه نهایی</span><strong>{{ finalResultLabel(past) }}</strong></div> }
+        } @else {
+          @if (past.cancelledAt) { <div class="detail"><span>تاریخ لغو</span><strong>{{ past.cancelledAt | jalaliDate }}</strong></div> }
+          @if (past.cancellationComment) { <div class="detail full-width"><span>دلیل لغو</span><strong>{{ past.cancellationComment }}</strong></div> }
+        }
       </div>
     }
   </p-card>
+} @else if (!loading() && !loadFailed()) {
+  <p class="inline-empty">هنوز پرونده تاریخی کارآموزی ندارید.</p>
 }
+@if (historyLoading()) { <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده تاریخی...</span></div> }
 @if (viewingHistory()) {
-  <p-button label="بازگشت به درخواست فعلی" icon="pi pi-arrow-right" severity="secondary" (onClick)="returnToCurrentCase()" />
+  <p-button label="بازگشت به نمای پرونده فعلی" icon="pi pi-arrow-right" severity="secondary" (onClick)="returnToCurrentCase()" />
 }
 
 @if (loading()) {
@@ -39,20 +57,26 @@
 } @else if (!internshipCase()) {
   <p-card>
     <div class="empty-state">
-      @if (acceptedApplications().length === 0) {
+      @if (hasPassedCase) {
+        <span class="empty-icon"><i class="pi pi-check-circle" aria-hidden="true"></i></span>
+        <h2>دوره کارآموزی را با موفقیت گذرانده‌اید</h2>
+        <p>امکان ثبت درخواست جدید یا ایجاد پرونده جدید ندارید. پرونده‌های پیشین و فرصت‌های کارآموزی همچنان قابل مشاهده هستند.</p>
+        <p-button label="مشاهده فرصت‌های کارآموزی" routerLink="/student/opportunities" severity="secondary" />
+      } @else if (acceptedApplications().length === 0) {
         <span class="empty-icon"><i class="pi pi-briefcase" aria-hidden="true"></i></span>
         <h2>فرصت پذیرفته‌شده‌ای ندارید</h2>
         <p>برای ثبت درخواست رسمی کارآموزی، ابتدا باید حداقل یک درخواست پذیرفته‌شده از یک شرکت داشته باشید.</p>
         <p-button label="مشاهده فرصت‌های کارآموزی" icon="pi pi-arrow-left" routerLink="/student/opportunities" />
       } @else {
         <span class="empty-icon"><i class="pi pi-file-plus" aria-hidden="true"></i></span>
-        <h2>درخواست رسمی خود را آغاز کنید</h2>
+        <h2>پرونده فعالی ندارید؛ می‌توانید درخواست رسمی جدیدی آغاز کنید</h2>
         <p>استاد راهنمای تعیین‌شده به‌صورت خودکار در پرونده ثبت می‌شود و فرصت‌های پذیرفته‌شده شما قابل انتخاب خواهند بود.</p>
-        <p-button label="ثبت درخواست رسمی کارآموزی" icon="pi pi-plus" [loading]="creating()" (onClick)="createCase()" />
+        <p-button label="ثبت درخواست رسمی کارآموزی" icon="pi pi-plus" [loading]="creating()" [disabled]="creating() || !canCreateCase" (onClick)="createCase()" />
       }
     </div>
   </p-card>
 } @else if (internshipCase(); as currentCase) {
+  <h2>{{ viewingHistory() ? "جزئیات پرونده تاریخی" : "پرونده فعلی" }} · {{ currentCase.id | persianDigits }}</h2>
   @if (!isDraft) {
     <div class="review-notice">
       <i class="pi pi-lock" aria-hidden="true"></i>
@@ -105,11 +129,12 @@
       </form>
       <ng-template #footer>
         <div class="card-actions">
-          <p-button label="ذخیره مشخصات" icon="pi pi-save" [loading]="saving()" (onClick)="saveApplication()" />
+          <p-button label="ذخیره مشخصات" icon="pi pi-save" [loading]="saving()" [disabled]="saving() || preferenceSaving() || historyLoading()" (onClick)="saveApplication()" />
         </div>
       </ng-template>
     } @else {
       <div class="detail-grid">
+        @if (currentCase.submittedAt) { <div class="detail"><span>تاریخ ارسال</span><strong>{{ currentCase.submittedAt | jalaliDate }}</strong></div> }
         <div class="detail"><span>نام دانشجو</span><strong>{{ currentCase.student.fullName }}</strong></div>
         <div class="detail"><span>شماره دانشجویی</span><strong>{{ currentCase.student.studentNumber ?? "—" }}</strong></div>
         <div class="detail"><span>رشته</span><strong>{{ currentCase.student.major ?? "—" }}</strong></div>
@@ -154,7 +179,7 @@
                 [icon]="isSelected(application.id) ? 'pi pi-check' : 'pi pi-plus'"
                 [severity]="isSelected(application.id) ? 'success' : 'primary'"
                 [outlined]="!isSelected(application.id)"
-                [disabled]="isSelected(application.id) || currentCase.preferences.length >= 3 || preferenceSaving()"
+                [disabled]="isSelected(application.id) || currentCase.preferences.length >= 3 || preferenceSaving() || saving() || historyLoading()"
                 (onClick)="selectApplication(application)"
               />
             </article>
@@ -166,7 +191,7 @@
 
   <p-card header="اولویت‌های انتخاب‌شده">
     <div class="preference-summary">
-      <p>اولویت ۱ انتخاب نخست شماست. برای ارسال نهایی باید اولویت‌ها از ۱ و بدون فاصله مرتب باشند.</p>
+      @if (isDraft) { <p>اولویت ۱ انتخاب نخست شماست. برای ارسال نهایی باید اولویت‌ها از ۱ و بدون فاصله مرتب باشند.</p> }
       <span>{{ currentCase.preferences.length | persianDigits }} از ۳ اولویت</span>
     </div>
 
@@ -192,9 +217,9 @@
             </div>
             @if (isDraft) {
               <div class="item-actions">
-                <p-button icon="pi pi-arrow-up" ariaLabel="افزایش اولویت" severity="secondary" [text]="true" [disabled]="first || preferenceSaving()" (onClick)="movePreference(preference, -1)" />
-                <p-button icon="pi pi-arrow-down" ariaLabel="کاهش اولویت" severity="secondary" [text]="true" [disabled]="last || preferenceSaving()" (onClick)="movePreference(preference, 1)" />
-                <p-button icon="pi pi-trash" ariaLabel="حذف اولویت" severity="danger" [text]="true" [disabled]="preferenceSaving()" (onClick)="deletePreference(preference)" />
+                <p-button icon="pi pi-arrow-up" ariaLabel="افزایش اولویت" severity="secondary" [text]="true" [disabled]="first || preferenceSaving() || saving() || historyLoading()" (onClick)="movePreference(preference, -1)" />
+                <p-button icon="pi pi-arrow-down" ariaLabel="کاهش اولویت" severity="secondary" [text]="true" [disabled]="last || preferenceSaving() || saving() || historyLoading()" (onClick)="movePreference(preference, 1)" />
+                <p-button icon="pi pi-trash" ariaLabel="حذف اولویت" severity="danger" [text]="true" [disabled]="preferenceSaving() || saving() || historyLoading()" (onClick)="deletePreference(preference)" />
               </div>
             }
           </article>
@@ -246,16 +271,6 @@
         <div class="detail"><span>تاریخ لغو</span><strong>{{ currentCase.cancelledAt | jalaliDate }}</strong></div>
         <div class="detail full-width"><span>دلیل لغو</span><strong>{{ currentCase.cancellationComment ?? "—" }}</strong></div>
       </div>
-      @if (canRestart) {
-      <div class="card-actions">
-        <p-button
-          label="ثبت درخواست جدید کارآموزی"
-          icon="pi pi-file-plus"
-          [loading]="creating()"
-          (onClick)="createCase()"
-        />
-      </div>
-      }
     </p-card>
   }
 
@@ -269,7 +284,7 @@
         label="ارسال درخواست برای آموزش"
         icon="pi pi-send"
         [loading]="saving()"
-        [disabled]="!canSubmit || preferenceSaving()"
+        [disabled]="!canSubmit || preferenceSaving() || saving() || historyLoading()"
         (onClick)="confirmSubmit()"
       />
     </div>
@@ -283,33 +298,12 @@
       </div>
       <div class="detail-grid">
         <div class="detail"><span>نتیجه نهایی</span><strong>{{ finalResultLabel(currentCase) }}</strong></div>
-        <div class="detail full-width"><span>نظر استاد</span><strong>{{ currentCase.professorComment || "—" }}</strong></div>
+        <div class="detail full-width"><span>نظر نهایی استاد درباره دوره کارآموزی</span><strong>{{ currentCase.professorComment || "—" }}</strong></div>
         <div class="detail"><span>تاریخ ارزیابی نهایی</span><strong>{{ currentCase.completedAt | jalaliDate }}</strong></div>
       </div>
-      @if (currentCase.status === 'FAILED' && canRestart) {
-        <p>این پرونده مردود و فقط خواندنی است. می‌توانید فرایند کارآموزی جدیدی آغاز کنید.</p>
-        <div class="card-actions">
-          <p-button label="فرصت‌های کارآموزی" routerLink="/student/opportunities" severity="secondary" />
-          <p-button label="ثبت درخواست جدید کارآموزی" icon="pi pi-file-plus" [loading]="creating()" (onClick)="createCase()" />
-        </div>
-      }
     </p-card>
-    <p-card header="گزارش‌های این پرونده (فقط خواندنی)">
-      @for (report of currentCase.weeklyReports; track report.id) {
-        <details>
-          <summary>گزارش هفته {{ report.weekNumber | persianDigits }}</summary>
-          <p>{{ report.activityDescription }}</p>
-          <p>نظر شرکت: {{ report.companyReviewComment || '—' }}</p>
-          <p>نظر استاد: {{ report.professorReviewComment || '—' }}</p>
-        </details>
-      }
-      @if (currentCase.companyEvaluation; as evaluation) {
-        <p>ارزیابی شرکت ثبت شده است.</p>
-        <p>پیشنهادها: {{ evaluation.suggestions || '—' }}</p>
-      }
-      @if (currentCase.finalReport) {
-        <p-button label="دریافت گزارش نهایی" icon="pi pi-download" severity="secondary" (onClick)="downloadHistoricalFinalReport()" />
-      }
-    </p-card>
+  }
+  @if (viewingHistory()) {
+    <app-case-reports [item]="currentCase" />
   }
 }

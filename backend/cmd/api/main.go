@@ -77,6 +77,7 @@ func main() {
 	student.Use(appmiddleware.RequireRole(model.RoleStudent))
 	approvalHandler.RegisterStudentRoutes(student)
 	student.GET("/internship-cases/history", internshipHandler.ListStudentHistoricalCases)
+	student.GET("/internship-cases/history/:id", internshipHandler.GetStudentHistoricalCase)
 	student.GET("/internship-case", internshipHandler.GetCurrentCase)
 	student.POST("/internship-case", internshipHandler.CreateOrGetCase)
 	student.PUT("/internship-case", internshipHandler.UpdateCase)

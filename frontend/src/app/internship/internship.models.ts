@@ -54,23 +54,23 @@ export interface InternshipCase {
   student: User;
   professor: User;
   preferences: InternshipPreference[];
-  selectedPreferenceId?: number;
+  selectedPreferenceId?: number | null;
   selectedPreference?: InternshipPreference;
-  companySupervisorId?: number;
+  companySupervisorId?: number | null;
   companySupervisor?: User;
-  letterNumber?: string;
-  letterDate?: string;
-  internshipSubject?: string;
-  startDate?: string;
-  workplaceAddress?: string;
-  workplacePhone?: string;
+  letterNumber?: string | null;
+  letterDate?: string | null;
+  internshipSubject?: string | null;
+  startDate?: string | null;
+  workplaceAddress?: string | null;
+  workplacePhone?: string | null;
   createdAt: string;
   updatedAt: string;
-  submittedAt?: string;
+  submittedAt?: string | null;
   cancellationComment?: string;
   cancelledAt?: string;
   companyDetailsRevisionComment?: string;
-  activatedAt?: string;
+  activatedAt?: string | null;
   finalReport?: FinalReport;
   weeklyReportCount: number;
   approvedReportCount: number;
@@ -230,7 +230,7 @@ export interface ProfessorCaseListItem {
   caseId: number;
   student: User;
   company: string;
-  internshipSubject?: string;
+  internshipSubject?: string | null;
   status: InternshipCaseStatus;
   weeklyReportCount: number;
   approvedWeeklyReportCount: number;
@@ -250,10 +250,10 @@ export interface ProfessorStudentInformation {
 
 export interface ProfessorInternshipInformation {
   company: string;
-  internshipSubject?: string;
-  startDate?: string;
-  workplaceAddress?: string;
-  workplacePhone?: string;
+  internshipSubject?: string | null;
+  startDate?: string | null;
+  workplaceAddress?: string | null;
+  workplacePhone?: string | null;
   companySupervisor?: User;
   status: InternshipCaseStatus;
 }
@@ -304,7 +304,7 @@ export interface PlacementDetailsPayload {
 export const internshipStatusLabels: Record<InternshipCaseStatus, string> = {
   DRAFT: 'پیش‌نویس',
   PENDING_UNIVERSITY_REVIEW: 'در انتظار بررسی آموزش',
-  PENDING_COMPANY_DETAILS: 'در انتظار اصلاح/ثبت اطلاعات توسط شرکت',
+  PENDING_COMPANY_DETAILS: 'در انتظار ثبت/اصلاح اطلاعات شرکت',
   PENDING_FINAL_APPROVAL: 'در انتظار تأیید نهایی آموزش',
   READY_TO_START: 'آماده شروع کارآموزی',
   ACTIVE: 'در حال انجام کارآموزی',
@@ -331,9 +331,4 @@ export function internshipStatusSeverity(status: InternshipCaseStatus): StatusTa
     default:
       return 'secondary';
   }
-}
-
-export interface PreferencePayload {
-  priority: number;
-  opportunityApplicationId: number;
 }

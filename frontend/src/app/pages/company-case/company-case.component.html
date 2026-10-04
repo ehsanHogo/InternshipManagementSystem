@@ -173,9 +173,7 @@
 
   @if (item.status === "ACTIVE" || item.status === "PASSED" || item.status === "FAILED") {
     <p-card header="گزارش‌های هفتگی">
-      @if (reportsLoading()) {
-        <p class="muted">در حال دریافت گزارش‌ها...</p>
-      } @else if (reports().length === 0) {
+      @if (reports().length === 0) {
         <p class="muted">هنوز گزارش هفتگی ثبت نشده است.</p>
       } @else {
         <div class="preference-list">
@@ -199,9 +197,7 @@
     </p-card>
 
     <p-card header="ارزیابی نهایی دانشجو">
-      @if (evaluationLoading()) {
-        <p class="muted">در حال دریافت ارزیابی...</p>
-      } @else if (evaluation(); as submittedEvaluation) {
+      @if (evaluation(); as submittedEvaluation) {
         <div class="detail-grid">
           @for (criterion of criteria; track criterion.key) {
             <div class="detail">
@@ -286,6 +282,7 @@
               label="ثبت ارزیابی نهایی"
               icon="pi pi-check-circle"
               [loading]="evaluationSaving()"
+              [disabled]="evaluationSaving()"
               (onClick)="confirmEvaluationSubmission()"
             />
           </div>
@@ -294,6 +291,9 @@
     </p-card>
 
     <p-card header="گزارش نهایی کارآموزی">
+      @if (item.finalReport; as finalReport) {
+        <p-tag [value]="finalReportStatusLabels[finalReport.status]" [severity]="finalReportStatusSeverity(finalReport.status)" />
+      }
       @if (item.finalReport?.currentFile; as report) {
         <div class="detail-grid">
           <div class="detail">
@@ -309,6 +309,7 @@
             label="دانلود گزارش"
             icon="pi pi-download"
             [loading]="downloading()"
+            [disabled]="downloading()"
             (onClick)="downloadFinalReport()"
           />
         </div>
@@ -329,7 +330,7 @@
             ><strong>{{ item.completedAt | jalaliDate }}</strong>
           </div>
           <div class="detail full-width">
-            <span>نظر استاد</span
+            <span>نظر نهایی استاد درباره دوره کارآموزی</span
             ><strong>{{ item.professorComment || "—" }}</strong>
           </div>
         </div>
@@ -348,6 +349,8 @@
   [visible]="reportDialogVisible()"
   (visibleChange)="reportDialogVisible.set($event)"
   [modal]="true"
+  [closable]="!confirmingReport()"
+  [closeOnEscape]="!confirmingReport()"
   appendTo="body"
   [baseZIndex]="1200"
   [style]="{ width: 'min(92vw, 34rem)' }"
@@ -363,14 +366,14 @@
       label="انصراف"
       severity="secondary"
       [text]="true"
-      (onClick)="reportDialogVisible.set(false)"
+      [disabled]="confirmingReport()" (onClick)="reportDialogVisible.set(false)"
     />
     <p-button
       label="تأیید گزارش"
       icon="pi pi-check"
-      [loading]="confirmingReport()"
+      [loading]="confirmingReport()" [disabled]="confirmingReport()"
       (onClick)="reviewWeeklyReport('approve')"
     />
-    <p-button label="درخواست اصلاح" severity="warn" [loading]="confirmingReport()" (onClick)="reviewWeeklyReport('request-revision')" />
+    <p-button label="درخواست اصلاح" severity="warn" [loading]="confirmingReport()" [disabled]="confirmingReport()" (onClick)="reviewWeeklyReport('request-revision')" />
   </ng-template>
 </p-dialog>

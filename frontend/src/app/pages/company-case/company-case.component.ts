@@ -17,13 +17,14 @@ import {
   CompanyInternshipCase,
   InternshipCaseStatus,
   CompanyPlacement,
-  CompanyEvaluation,
   EvaluationRating,
   WeeklyReport,
   evaluationRatingLabels,
   internshipStatusLabels,
   internshipStatusSeverity,
-  professorFinalResultLabels
+  professorFinalResultLabels,
+  finalReportStatusLabels,
+  finalReportStatusSeverity
 } from '../../internship/internship.models';
 import { WeeklyReportReviewComponent } from '../../shared/weekly-report-review.component';
 import { InternshipService } from '../../internship/internship.service';
@@ -47,14 +48,14 @@ export class CompanyCaseComponent {
   private readonly confirmation = inject(ConfirmationService);
   private readonly caseID = Number(this.route.snapshot.paramMap.get('id'));
 
+  readonly finalReportStatusLabels = finalReportStatusLabels;
+  readonly finalReportStatusSeverity = finalReportStatusSeverity;
   readonly internshipCase = signal<CompanyInternshipCase | null>(null);
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
   readonly saving = signal(false);
-  readonly reports = signal<WeeklyReport[]>([]);
-  readonly evaluation = signal<CompanyEvaluation | null>(null);
-  readonly reportsLoading = signal(false);
-  readonly evaluationLoading = signal(false);
+  readonly reports = computed(() => this.internshipCase()?.weeklyReports ?? []);
+  readonly evaluation = computed(() => this.internshipCase()?.companyEvaluation ?? null);
   readonly confirmingReport = signal(false);
   readonly evaluationSaving = signal(false);
   readonly downloading = signal(false);
@@ -62,8 +63,7 @@ export class CompanyCaseComponent {
   readonly selectedReport = signal<WeeklyReport | null>(null);
   readonly companyApprovedReportCount = computed(() => this.reports().filter((report) => report.companyReviewStatus === 'APPROVED').length);
   readonly canSubmitEvaluation = computed(() =>
-    this.internshipCase()?.status === 'ACTIVE' &&
-    this.reports().length === 8 && this.companyApprovedReportCount() === 8 && this.evaluation() === null
+    this.internshipCase()?.canSubmitCompanyEvaluation === true && !this.loading() && !this.loadFailed()
   );
 
   readonly ratingOptions = (Object.entries(evaluationRatingLabels) as [EvaluationRating, string][])
@@ -118,7 +118,6 @@ export class CompanyCaseComponent {
         this.internshipCase.set(internshipCase);
         this.syncPlacementForm(internshipCase);
         this.loading.set(false);
-        if (internshipCase.status === 'ACTIVE' || internshipCase.status === 'PASSED' || internshipCase.status === 'FAILED') this.loadReportingData();
       },
       error: (error: HttpErrorResponse) => {
         this.loading.set(false);
@@ -139,7 +138,7 @@ export class CompanyCaseComponent {
 
   downloadFinalReport(): void {
     const report = this.internshipCase()?.finalReport?.currentFile;
-    if (!report) return;
+    if (!report || this.downloading()) return;
     this.downloading.set(true);
     this.internshipService.downloadFile(report.id).subscribe({
       next: (blob) => {
@@ -179,8 +178,8 @@ export class CompanyCaseComponent {
     }
     this.confirmingReport.set(true);
     this.internshipService.reviewCompanyWeeklyReport(this.caseID, report.id, action, comment || undefined).subscribe({
-      next: (confirmed) => {
-        this.reports.update((reports) => reports.map((item) => item.id === confirmed.id ? confirmed : item));
+      next: () => {
+        this.loadCase();
         this.confirmingReport.set(false);
         this.reportDialogVisible.set(false);
         this.messages.add({ severity: 'success', summary: 'ثبت شد', detail: 'نظر شما درباره گزارش ثبت شد.' });
@@ -190,6 +189,7 @@ export class CompanyCaseComponent {
   }
 
   confirmEvaluationSubmission(): void {
+    if (this.evaluationSaving()) return;
     if (!this.canSubmitEvaluation()) {
       this.messages.add({ severity: 'warn', summary: 'ارزیابی غیرفعال است', detail: 'ابتدا هر ۸ گزارش هفتگی باید توسط شرکت تأیید شوند.' });
       return;
@@ -208,23 +208,8 @@ export class CompanyCaseComponent {
     });
   }
 
-  private loadReportingData(): void {
-    this.reportsLoading.set(true);
-    this.evaluationLoading.set(true);
-    this.internshipService.listCompanyWeeklyReports(this.caseID).subscribe({
-      next: (reports) => { this.reports.set(reports); this.reportsLoading.set(false); },
-      error: (error: HttpErrorResponse) => { this.reportsLoading.set(false); this.showError(error); }
-    });
-    this.internshipService.getCompanyEvaluation(this.caseID).subscribe({
-      next: (evaluation) => { this.evaluation.set(evaluation); this.evaluationLoading.set(false); },
-      error: (error: HttpErrorResponse) => {
-        this.evaluationLoading.set(false);
-        if (error.status !== 404) this.showError(error);
-      }
-    });
-  }
-
   private submitEvaluation(): void {
+    if (this.evaluationSaving() || !this.canSubmitEvaluation() || this.evaluationForm.invalid) return;
     const value = this.evaluationForm.getRawValue();
     this.evaluationSaving.set(true);
     this.internshipService.createCompanyEvaluation(this.caseID, {
@@ -236,7 +221,7 @@ export class CompanyCaseComponent {
       absenceDays: value.absenceDays, suggestions: value.suggestions.trim() || undefined
     }).subscribe({
       next: (evaluation) => {
-        this.evaluation.set(evaluation);
+        this.internshipCase.update(item => item ? { ...item, companyEvaluation: evaluation, canSubmitCompanyEvaluation: false } : item);
         this.evaluationSaving.set(false);
         this.messages.add({ severity: 'success', summary: 'ثبت شد', detail: 'ارزیابی نهایی با موفقیت ثبت شد.' });
       },

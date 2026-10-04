@@ -12,7 +12,8 @@ import {
   InternshipCase,
   InternshipCaseStatus,
   internshipStatusLabels,
-  internshipStatusSeverity
+  internshipStatusSeverity,
+  professorFinalResultLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
@@ -20,11 +21,13 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 const REVIEW_LIST_STATUSES = [
   'PENDING_UNIVERSITY_REVIEW',
+  'PENDING_COMPANY_DETAILS',
   'PENDING_FINAL_APPROVAL',
   'READY_TO_START',
   'ACTIVE',
   'PASSED',
-  'FAILED'
+  'FAILED',
+  'CANCELLED'
 ] as const satisfies readonly ReviewListStatus[];
 
 @Component({
@@ -62,9 +65,7 @@ export class UniversityApplicationsComponent {
     this.selectedStatus.set(status);
     this.loading.set(true);
     this.loadFailed.set(false);
-    const request = status === 'PENDING_FINAL_APPROVAL'
-      ? this.internshipService.listPendingFinalApprovalCases()
-      : this.internshipService.listUniversityCases(status);
+    const request = this.internshipService.listUniversityCases(status);
     request.subscribe({
       next: (cases) => {
         this.cases.set(cases);
@@ -82,6 +83,12 @@ export class UniversityApplicationsComponent {
     });
   }
 
+  outcomeLabel(item: InternshipCase): string {
+    return item.status === 'CANCELLED'
+      ? item.cancellationComment || '—'
+      : item.finalResult ? professorFinalResultLabels[item.finalResult] : '—';
+  }
+
   readonly internshipStatusSeverity = internshipStatusSeverity;
 
   caseStatusLabel(status: InternshipCaseStatus): string {
@@ -89,4 +96,4 @@ export class UniversityApplicationsComponent {
   }
 }
 
-type ReviewListStatus = 'PENDING_UNIVERSITY_REVIEW' | 'PENDING_FINAL_APPROVAL' | 'READY_TO_START' | 'ACTIVE' | 'PASSED' | 'FAILED';
+type ReviewListStatus = Exclude<InternshipCaseStatus, 'DRAFT'>;

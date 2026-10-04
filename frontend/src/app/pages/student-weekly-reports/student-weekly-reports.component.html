@@ -30,8 +30,8 @@
     <div><i class="pi pi-exclamation-circle"></i><p>دریافت گزارش‌های هفتگی ناموفق بود.</p></div>
     <p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="load()" />
   </div>
-} @else if (internshipCase()?.status !== 'ACTIVE' && internshipCase()?.status !== 'PASSED' && internshipCase()?.status !== 'FAILED') {
-  <div class="empty-state"><div><i class="pi pi-lock"></i><p>این بخش پس از فعال شدن کارآموزی در دسترس خواهد بود.</p></div></div>
+} @else if (internshipCase()?.status !== 'ACTIVE') {
+  <div class="empty-state"><div><i class="pi pi-lock"></i><p>این بخش برای پرونده فعال در دسترس است. گزارش‌های پرونده‌های پیشین را در سوابق مشاهده کنید.</p><p-button label="پرونده کارآموزی و سوابق" routerLink="/student/application" severity="secondary" /></div></div>
 } @else if (reports().length === 0) {
   <div class="empty-state"><div><i class="pi pi-file-edit"></i><p>هنوز گزارش هفتگی ثبت نشده است.</p></div></div>
 } @else {

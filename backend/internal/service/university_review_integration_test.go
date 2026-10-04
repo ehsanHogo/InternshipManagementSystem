@@ -278,7 +278,7 @@ func TestUniversityReviewWorkflow(t *testing.T) {
 		if _, err := applications.Apply(item.student.ID, openOpportunity.ID, applicationTestResume(suffix, "review-after-cancel")); err != nil {
 			t.Fatalf("recruitment did not reopen: %v", err)
 		}
-		current, err := workflow.GetCurrentCase(item.student.ID)
+		current, err := workflow.GetStudentHistoricalCase(item.student.ID, item.internship.ID)
 		if err != nil || current.ID != item.internship.ID || current.Status != model.InternshipCaseStatusCancelled {
 			t.Fatalf("student cannot view cancelled case: case=%+v err=%v", current, err)
 		}

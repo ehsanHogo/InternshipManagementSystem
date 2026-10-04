@@ -1,5 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { SelectModule } from 'primeng/select';
 import { RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -17,7 +19,7 @@ import { InternshipService } from '../../internship/internship.service';
 
 @Component({
   selector: 'app-professor-internships',
-  imports: [RouterLink, ButtonModule, TableModule, TagModule],
+  imports: [FormsModule, SelectModule, RouterLink, ButtonModule, TableModule, TagModule],
   templateUrl: './professor-internships.component.html',
   styleUrl: '../workflow-page.scss'
 })
@@ -28,6 +30,15 @@ export class ProfessorInternshipsComponent {
   readonly cases = signal<ProfessorCaseListItem[]>([]);
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
+
+  readonly listFilter = signal<'ALL' | 'ACTIVE' | 'PASSED' | 'FAILED'>('ALL');
+  readonly filterOptions = [
+    { label: 'همه پرونده‌های اختصاص‌یافته', value: 'ALL' },
+    ...(['ACTIVE', 'PASSED', 'FAILED'] as const)
+      .map(status => ({ label: internshipStatusLabels[status], value: status }))
+  ];
+  readonly visibleCases = computed(() => this.listFilter() === 'ALL'
+    ? this.cases() : this.cases().filter(item => item.status === this.listFilter()));
 
   constructor() {
     this.load();

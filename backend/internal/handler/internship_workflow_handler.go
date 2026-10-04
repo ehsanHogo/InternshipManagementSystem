@@ -154,10 +154,6 @@ func (handler *InternshipHandler) CancelUniversityReview(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
 }
 
-func (handler *InternshipHandler) ApproveUniversityCase(ctx *gin.Context) {
-	handler.performUniversityAction(ctx, handler.service.ApproveUniversityCase)
-}
-
 func (handler *InternshipHandler) ActivateUniversityCase(ctx *gin.Context) {
 	if ctx.Request.Body != nil {
 		body, err := io.ReadAll(io.LimitReader(ctx.Request.Body, 1))

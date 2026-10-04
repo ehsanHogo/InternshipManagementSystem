@@ -2,7 +2,7 @@
   <div>
     <span class="eyebrow">سرپرست شرکت</span>
     <h1>پرونده‌های کارآموزی</h1>
-    <p>محل انتخاب‌شده و معرفی‌نامه را بررسی و اطلاعات شروع کارآموزی را برای آموزش ارسال کنید.</p>
+    <p>پرونده‌های اختصاص‌یافته را بر اساس وضعیت مشاهده کنید؛ پرونده‌های قبول شده و مردود فقط خواندنی هستند.</p>
   </div>
 </section>
 
@@ -38,6 +38,8 @@
         <th>شرکت انتخاب‌شده</th>
         <th>شماره نامه</th>
         <th>تاریخ نامه</th>
+        <th>نتیجه نهایی</th>
+        <th>تاریخ ارزیابی نهایی</th>
         <th>وضعیت</th>
         <th>عملیات</th>
       </tr>
@@ -50,12 +52,14 @@
         <td>{{ placementName(item) }}</td>
         <td>{{ item.letterNumber ?? '—' }}</td>
         <td>{{ item.letterDate | jalaliDate }}</td>
+        <td>{{ finalResultLabel(item) }}</td>
+        <td>{{ item.completedAt | jalaliDate }}</td>
         <td><p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" /></td>
         <td><p-button [label]="item.status === 'PENDING_COMPANY_DETAILS' ? 'مشاهده و تکمیل اطلاعات' : 'مشاهده'" icon="pi pi-eye" [text]="true" [routerLink]="['/company/internships', item.id]" /></td>
       </tr>
     </ng-template>
     <ng-template #emptymessage>
-      <tr><td colspan="8" class="muted">پرونده‌ای به شما اختصاص نیافته است.</td></tr>
+      <tr><td colspan="10" class="muted">پرونده‌ای به شما اختصاص نیافته است.</td></tr>
     </ng-template>
   </p-table>
 }

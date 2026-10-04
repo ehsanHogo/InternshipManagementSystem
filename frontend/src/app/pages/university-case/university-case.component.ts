@@ -20,6 +20,7 @@ import {
   internshipStatusSeverity,
   professorFinalResultLabels
 } from '../../internship/internship.models';
+import { CaseReportsComponent } from '../../shared/case-reports.component';
 import { InternshipService } from '../../internship/internship.service';
 import { applicationStatusLabels, applicationStatusSeverity } from '../../opportunity/opportunity.models';
 import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
@@ -31,6 +32,7 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 @Component({
   selector: 'app-university-case',
   imports: [
+    CaseReportsComponent,
     JalaliDatePipe,
     PersianDigitsPipe,
     JalaliDatePickerComponent,
@@ -104,6 +106,7 @@ export class UniversityCaseComponent {
   }
 
   confirmApproval(): void {
+    if (this.saving() || this.internshipCase()?.status !== 'PENDING_UNIVERSITY_REVIEW') return;
     if (this.reviewForm.invalid) {
       this.reviewForm.markAllAsTouched();
       this.messages.add({
@@ -128,11 +131,13 @@ export class UniversityCaseComponent {
   }
 
   openCancellation(): void {
+    if (this.saving() || this.internshipCase()?.status !== 'PENDING_UNIVERSITY_REVIEW') return;
     this.cancellationForm.reset({ comment: '' });
     this.cancelDialogVisible.set(true);
   }
 
   confirmCancellation(): void {
+    if (this.saving() || this.internshipCase()?.status !== 'PENDING_UNIVERSITY_REVIEW') return;
     if (this.cancellationForm.invalid) {
       this.cancellationForm.markAllAsTouched();
       return;
@@ -258,6 +263,7 @@ export class UniversityCaseComponent {
   }
 
   private approvePlacement(): void {
+    if (this.saving() || this.reviewForm.invalid || this.internshipCase()?.status !== 'PENDING_UNIVERSITY_REVIEW') return;
     const value = this.reviewForm.getRawValue();
     this.saving.set(true);
     this.internshipService.approveUniversityPlacement(this.caseID, {
@@ -281,6 +287,7 @@ export class UniversityCaseComponent {
   }
 
   private cancelCase(): void {
+    if (this.saving() || this.cancellationForm.invalid || this.internshipCase()?.status !== 'PENDING_UNIVERSITY_REVIEW') return;
     const comment = this.cancellationForm.controls.comment.value.trim();
     this.saving.set(true);
     this.internshipService.cancelUniversityReview(this.caseID, { comment })

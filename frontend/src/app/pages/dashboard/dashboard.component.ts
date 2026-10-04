@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
+import { catchError, forkJoin, of } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -32,6 +33,8 @@ export class DashboardComponent {
   readonly user = this.auth.user;
   readonly internshipStatus = signal<InternshipCaseStatus | null>(null);
   readonly internshipCase = signal<InternshipCase | null>(null);
+  readonly historicalCase = signal<InternshipCase | null>(null);
+  readonly hasPassedCase = signal(false);
   readonly statusLoading = signal(false);
   readonly statusLoadFailed = signal(false);
 
@@ -44,10 +47,18 @@ export class DashboardComponent {
   loadStudentStatus(): void {
     this.statusLoading.set(true);
     this.statusLoadFailed.set(false);
-    this.internshipService.getCurrentCase().subscribe({
-      next: (internshipCase) => {
+    forkJoin({
+      current: this.internshipService.getCurrentCase().pipe(catchError((error: HttpErrorResponse) => {
+        if (error.status === 404) return of(null);
+        throw error;
+      })),
+      history: this.internshipService.listStudentHistoricalCases()
+    }).subscribe({
+      next: ({ current: internshipCase, history }) => {
+        this.historicalCase.set(history[0] ?? null);
+        this.hasPassedCase.set(history.some(item => item.status === 'PASSED'));
         this.internshipCase.set(internshipCase);
-        this.internshipStatus.set(internshipCase.status);
+        this.internshipStatus.set(internshipCase?.status ?? null);
         this.statusLoading.set(false);
       },
       error: (error: HttpErrorResponse) => {

@@ -4,13 +4,17 @@
     <h1>پرونده‌های کارآموزی</h1>
     <p>{{ selectedStatus() === 'PENDING_UNIVERSITY_REVIEW'
       ? 'پرونده‌های رسمی ارسال‌شده را بررسی و یک محل کارآموزی را انتخاب کنید، یا کل پرونده را با ذکر دلیل لغو کنید.'
+      : selectedStatus() === 'PENDING_COMPANY_DETAILS'
+        ? 'در انتظار ثبت یا اصلاح اطلاعات توسط شرکت؛ پرونده برای آموزش فقط خواندنی است.'
       : selectedStatus() === 'PENDING_FINAL_APPROVAL'
         ? 'اطلاعات شروع ثبت‌شده توسط شرکت را تأیید کنید یا برای اصلاح به شرکت بازگردانید.'
         : selectedStatus() === 'READY_TO_START'
           ? 'پرونده‌های تأییدشده را مشاهده و برای فعال‌سازی باز کنید.'
           : selectedStatus() === 'ACTIVE'
             ? 'پرونده‌های در حال انجام کارآموزی را مشاهده کنید.'
-            : 'پرونده‌های ارزیابی‌شده فقط خواندنی هستند؛ نتیجه قبول یا مردود را مشاهده کنید.' }}</p>
+            : selectedStatus() === 'CANCELLED'
+              ? 'پرونده‌های لغو شده و دلیل لغو را به‌صورت فقط خواندنی مشاهده کنید.'
+              : 'پرونده‌های ارزیابی‌شده فقط خواندنی هستند؛ نتیجه قبول یا مردود را مشاهده کنید.' }}</p>
   </div>
 </section>
 
@@ -46,6 +50,8 @@
         <th>{{ selectedStatus() !== 'PENDING_UNIVERSITY_REVIEW' ? 'محل انتخاب‌شده' : 'اولویت نخست' }}</th>
         <th>تاریخ ارسال</th>
         <th>تاریخ شروع</th>
+        <th>نتیجه / دلیل لغو</th>
+        <th>تاریخ ارزیابی / لغو</th>
         <th>وضعیت</th>
         <th>عملیات</th>
       </tr>
@@ -64,6 +70,8 @@
         </td>
         <td>{{ item.submittedAt | jalaliDate }}</td>
         <td>{{ item.startDate | jalaliDate }}</td>
+        <td>{{ outcomeLabel(item) }}</td>
+        <td>{{ (item.status === 'CANCELLED' ? item.cancelledAt : item.completedAt) | jalaliDate }}</td>
         <td><p-tag [value]="caseStatusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" /></td>
         <td>
           <p-button
@@ -76,7 +84,7 @@
       </tr>
     </ng-template>
     <ng-template #emptymessage>
-      <tr><td colspan="10" class="muted">پرونده‌ای در این مرحله وجود ندارد.</td></tr>
+      <tr><td colspan="12" class="muted">پرونده‌ای در این مرحله وجود ندارد.</td></tr>
     </ng-template>
   </p-table>
 }

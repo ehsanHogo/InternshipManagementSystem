@@ -18,13 +18,6 @@ type UniversityPlacementApprovalInput struct {
 	LetterDate   time.Time
 }
 
-type CompanyConfirmationInput struct {
-	InternshipSubject string
-	StartDate         time.Time
-	WorkplaceAddress  string
-	WorkplacePhone    string
-}
-
 func (service *InternshipService) ListUniversityCases(status *model.InternshipCaseStatus) ([]model.InternshipCase, error) {
 	statuses := universityCaseStatuses()
 	query := service.caseQuery(service.db).Where("status IN ?", statuses)
@@ -169,17 +162,6 @@ func (service *InternshipService) CancelUniversityReview(caseID uint, comment st
 		return nil, err
 	}
 	return service.getCaseByID(caseID)
-}
-
-// Deprecated: the old company acceptance action remains disabled. Use
-// SubmitPlacementDetails for the supervisor resolved from the selected opportunity.
-func (service *InternshipService) ConfirmCompanyCase(supervisorID, caseID uint, input CompanyConfirmationInput) (*model.InternshipCase, error) {
-	return nil, ErrObsoleteWorkflow
-}
-
-// Deprecated: use ApprovePlacementDetails for V2 final review.
-func (service *InternshipService) ApproveUniversityCase(caseID uint) (*model.InternshipCase, error) {
-	return nil, ErrObsoleteWorkflow
 }
 
 func universityCaseStatuses() []model.InternshipCaseStatus {

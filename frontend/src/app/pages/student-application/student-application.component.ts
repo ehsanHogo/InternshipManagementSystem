@@ -20,6 +20,7 @@ import {
   internshipStatusSeverity,
   professorFinalResultLabels
 } from '../../internship/internship.models';
+import { CaseReportsComponent } from '../../shared/case-reports.component';
 import { InternshipService } from '../../internship/internship.service';
 import { userErrorMessage } from '../../shared/http-error-message';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
@@ -28,6 +29,7 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 @Component({
   selector: 'app-student-application',
   imports: [
+    CaseReportsComponent,
     ReactiveFormsModule,
     RouterLink,
     ButtonModule,
@@ -52,6 +54,7 @@ export class StudentApplicationComponent {
   readonly internshipCase = signal<InternshipCase | null>(null);
   readonly historicalCases = signal<InternshipCase[]>([]);
   readonly viewingHistory = signal(false);
+  readonly historyLoading = signal(false);
   private latestCase: InternshipCase | null = null;
   readonly acceptedApplications = signal<AcceptedOpportunityApplication[]>([]);
   readonly loading = signal(true);
@@ -73,15 +76,27 @@ export class StudentApplicationComponent {
     this.loadPage();
   }
 
-  get canRestart(): boolean {
-    const status = this.internshipCase()?.status;
-    return !this.viewingHistory() && (status === 'FAILED' || status === 'CANCELLED') &&
-      !this.historicalCases().some(item => item.status === 'PASSED');
+  get hasPassedCase(): boolean {
+    return this.historicalCases().some(item => item.status === 'PASSED');
+  }
+
+  get canCreateCase(): boolean {
+    return !this.latestCase && !this.hasPassedCase && !this.viewingHistory() &&
+      !this.loading() && !this.loadFailed() && !this.historyLoading();
   }
 
   viewHistoricalCase(item: InternshipCase): void {
-    this.viewingHistory.set(true);
-    this.setCase(item);
+    if (this.historyLoading() || this.saving() || this.preferenceSaving() || this.creating()) return;
+    this.historyLoading.set(true);
+    this.internshipService.getStudentHistoricalCase(item.id)
+      .pipe(finalize(() => this.historyLoading.set(false)))
+      .subscribe({
+        next: detail => {
+          this.viewingHistory.set(true);
+          this.setCase(detail);
+        },
+        error: (error: HttpErrorResponse) => this.showError(error)
+      });
   }
 
   returnToCurrentCase(): void {
@@ -90,24 +105,8 @@ export class StudentApplicationComponent {
     else this.internshipCase.set(null);
   }
 
-  downloadHistoricalFinalReport(): void {
-    const report = this.internshipCase()?.finalReport;
-    if (!report) return;
-    this.internshipService.downloadFile(report.currentFileId).subscribe({
-      next: blob => {
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = report.currentFile.originalName;
-        anchor.click();
-        URL.revokeObjectURL(url);
-      },
-      error: (error: HttpErrorResponse) => this.showError(error)
-    });
-  }
-
   get isDraft(): boolean {
-    return this.internshipCase()?.status === 'DRAFT';
+    return !this.viewingHistory() && this.internshipCase()?.status === 'DRAFT';
   }
 
   get canSubmit(): boolean {
@@ -136,6 +135,7 @@ export class StudentApplicationComponent {
   }
 
   createCase(): void {
+    if (!this.canCreateCase || this.creating()) return;
     this.creating.set(true);
     this.internshipService
       .createCase()
@@ -150,6 +150,7 @@ export class StudentApplicationComponent {
   }
 
   saveApplication(): void {
+    if (!this.isDraft || this.saving() || this.preferenceSaving() || this.historyLoading()) return;
     if (this.applicationForm.invalid) {
       this.applicationForm.markAllAsTouched();
       return;
@@ -203,6 +204,7 @@ export class StudentApplicationComponent {
   }
 
   confirmSubmit(): void {
+    if (this.saving() || this.preferenceSaving() || this.historyLoading()) return;
     if (!this.canSubmit) {
       this.applicationForm.markAllAsTouched();
       this.messages.add({
@@ -242,6 +244,7 @@ export class StudentApplicationComponent {
         next: ({ acceptedApplications, internshipCase, historicalCases }) => {
           this.historicalCases.set(historicalCases);
           this.viewingHistory.set(false);
+          this.latestCase = internshipCase;
           this.acceptedApplications.set(acceptedApplications);
           if (internshipCase) {
             this.setCase(internshipCase);
@@ -257,6 +260,7 @@ export class StudentApplicationComponent {
   }
 
   private replacePreferences(applicationIDs: number[], successMessage: string): void {
+    if (!this.isDraft || this.preferenceSaving() || this.saving() || this.historyLoading()) return;
     this.preferenceSaving.set(true);
     this.internshipService
       .replacePreferences(applicationIDs)
@@ -285,7 +289,7 @@ export class StudentApplicationComponent {
         mobile: internshipCase.mobile ?? ''
       });
     }
-    if (internshipCase.status === 'DRAFT') {
+    if (this.isDraft) {
       this.applicationForm.enable({ emitEvent: false });
     } else {
       this.applicationForm.disable({ emitEvent: false });
@@ -293,6 +297,7 @@ export class StudentApplicationComponent {
   }
 
   private submitCase(): void {
+    if (!this.canSubmit || this.saving() || this.preferenceSaving() || this.historyLoading()) return;
     const value = this.applicationForm.getRawValue();
     this.saving.set(true);
     this.internshipService
