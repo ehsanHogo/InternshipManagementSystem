@@ -131,6 +131,13 @@
                 <p-tag value="محل انتخاب‌شده" severity="success" />
               }
             </div>
+            <div class="card-status-line status-line">
+              <span class="status-label">نتیجه جذب</span>
+              <p-tag
+                [value]="applicationStatusLabels[preference.application.status]"
+                [severity]="applicationStatusSeverity(preference.application.status)"
+              />
+            </div>
             <div class="detail-grid">
               <div class="detail full-width">
                 <span>عنوان فرصت</span><strong>{{ preference.application.opportunity.title }}</strong>
@@ -150,7 +157,6 @@
               <div class="detail"><span>تلفن شرکت</span><strong>{{ preference.application.opportunity.company.phone ?? "—" }}</strong></div>
               <div class="detail"><span>ایمیل شرکت</span><strong>{{ preference.application.opportunity.company.email ?? "—" }}</strong></div>
               <div class="detail full-width"><span>آدرس شرکت</span><strong>{{ preference.application.opportunity.company.address ?? "—" }}</strong></div>
-              <div class="detail"><span>نتیجه جذب</span><strong>پذیرفته‌شده</strong></div>
             </div>
           </div>
         </label>

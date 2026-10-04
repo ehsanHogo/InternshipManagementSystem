@@ -1,9 +1,12 @@
 <section class="page-heading">
   <div>
-    <span class="eyebrow">{{ internshipCase() ? internshipStatusLabels[internshipCase()!.status] : 'کارآموزی' }}</span>
+    <span class="eyebrow">کارآموزی</span>
     <h1>گزارش نهایی کارآموزی</h1>
     <p>نسخه پی‌دی‌اف گزارش نهایی خود را بارگذاری کنید.</p>
   </div>
+  @if (internshipCase(); as item) {
+    <p-tag [value]="internshipStatusLabels[item.status]" [severity]="internshipStatusSeverity(item.status)" />
+  }
 </section>
 
 @if (loading()) {

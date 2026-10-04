@@ -21,6 +21,7 @@ import {
   professorFinalResultLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
+import { applicationStatusLabels, applicationStatusSeverity } from '../../opportunity/opportunity.models';
 import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 import { externalHref } from '../../shared/external-url';
@@ -83,6 +84,8 @@ export class UniversityCaseComponent {
   }
 
   readonly internshipStatusSeverity = internshipStatusSeverity;
+  readonly applicationStatusLabels = applicationStatusLabels;
+  readonly applicationStatusSeverity = applicationStatusSeverity;
 
   readonly professorFinalResultLabels = professorFinalResultLabels;
 

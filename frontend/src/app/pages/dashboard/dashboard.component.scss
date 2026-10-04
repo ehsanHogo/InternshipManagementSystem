@@ -159,16 +159,21 @@
 
 }
 
-.inline-tag {
+.status-line {
   display: flex;
-  justify-content: flex-start;
-  width: fit-content;
-  max-width: 100%;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
 
-  p-tag {
-    display: inline-flex;
-    width: auto;
-  }
+.status-label {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.card-status-line {
+  margin-bottom: 1rem;
 }
 
 .full-width { grid-column: 1 / -1; }

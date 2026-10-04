@@ -8,10 +8,11 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TextareaModule } from 'primeng/textarea';
+import { TagModule } from 'primeng/tag';
 
 import { WeeklyReportReviewComponent } from '../../shared/weekly-report-review.component';
 import { userErrorMessage } from '../../shared/http-error-message';
-import { InternshipCase, WeeklyReport, internshipStatusLabels } from '../../internship/internship.models';
+import { InternshipCase, WeeklyReport, internshipStatusLabels, internshipStatusSeverity } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
@@ -20,7 +21,7 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 @Component({
   selector: 'app-student-weekly-reports',
   providers: [ConfirmationService],
-  imports: [WeeklyReportReviewComponent, ConfirmDialogModule, ReactiveFormsModule, JalaliDatePickerComponent, JalaliDatePipe, PersianDigitsPipe, ButtonModule, CardModule, DialogModule, InputNumberModule, TextareaModule],
+  imports: [WeeklyReportReviewComponent, ConfirmDialogModule, ReactiveFormsModule, JalaliDatePickerComponent, JalaliDatePipe, PersianDigitsPipe, ButtonModule, CardModule, DialogModule, InputNumberModule, TagModule, TextareaModule],
   templateUrl: './student-weekly-reports.component.html',
   styleUrls: ['../workflow-page.scss', './student-weekly-reports.component.scss']
 })
@@ -32,6 +33,7 @@ export class StudentWeeklyReportsComponent {
   private readonly confirmation = inject(ConfirmationService);
 
   readonly internshipStatusLabels = internshipStatusLabels;
+  readonly internshipStatusSeverity = internshipStatusSeverity;
   readonly internshipCase = signal<InternshipCase | null>(null);
   readonly reports = signal<WeeklyReport[]>([]);
   readonly loading = signal(true);

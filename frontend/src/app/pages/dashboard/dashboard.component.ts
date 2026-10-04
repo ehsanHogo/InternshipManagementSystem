@@ -9,6 +9,8 @@ import { AuthService } from '../../auth/auth.service';
 import {
   InternshipCase,
   InternshipCaseStatus,
+  finalReportStatusLabels,
+  finalReportStatusSeverity,
   internshipStatusLabels,
   internshipStatusSeverity,
   professorFinalResultLabels
@@ -61,6 +63,8 @@ export class DashboardComponent {
   }
 
   readonly internshipStatusSeverity = internshipStatusSeverity;
+  readonly finalReportStatusLabels = finalReportStatusLabels;
+  readonly finalReportStatusSeverity = finalReportStatusSeverity;
 
   statusLabel(status: InternshipCaseStatus | null): string {
     return status ? internshipStatusLabels[status] : 'درخواستی ثبت نشده است';

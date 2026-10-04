@@ -8,6 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 
 import { Company } from '../../internship/internship.models';
@@ -20,7 +21,7 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 @Component({
   selector: 'app-university-companies',
-  imports: [ReactiveFormsModule, ButtonModule, DialogModule, InputTextModule, TableModule, TextareaModule, ConfirmDialogModule, JalaliDatePipe, PersianDigitsPipe],
+  imports: [ReactiveFormsModule, ButtonModule, DialogModule, InputTextModule, TableModule, TagModule, TextareaModule, ConfirmDialogModule, JalaliDatePipe, PersianDigitsPipe],
   providers: [ConfirmationService],
   templateUrl: './university-companies.component.html',
   styleUrl: '../workflow-page.scss'

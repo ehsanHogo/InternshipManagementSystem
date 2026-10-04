@@ -36,9 +36,15 @@
     <p>دریافت اطلاعات شرکت ناموفق بود.</p>
     <p-button label="تلاش دوباره" (onClick)="review(detailId()!)" />
   } @else if (detail(); as company) {
+    <div class="card-status-line status-line">
+      <span class="status-label">وضعیت تأیید دانشکده</span>
+      <p-tag
+        [value]="company.isApproved ? 'مورد تأیید دانشکده' : 'شرکت جدید'"
+        [severity]="company.isApproved ? 'success' : 'warn'"
+      />
+    </div>
     <div class="detail-grid">
       <div class="detail"><span>نام شرکت</span><strong>{{ company.name }}</strong></div>
-      <div class="detail"><span>وضعیت تأیید دانشکده</span><strong>{{ company.isApproved ? 'مورد تأیید دانشکده' : 'شرکت جدید' }}</strong></div>
       <div class="detail"><span>شناسه ملی</span><strong dir="ltr">{{ company.nationalId }}</strong></div>
       <div class="detail"><span>کد اقتصادی</span><strong dir="ltr">{{ company.economicCode }}</strong></div>
       <div class="detail"><span>وب‌سایت</span><strong dir="ltr">{{ company.website || '—' }}</strong></div>

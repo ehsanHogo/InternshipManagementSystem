@@ -52,20 +52,22 @@
               ><strong>{{ item.approvedReportCount | persianDigits }} از ۸</strong>
             </a>
             <a routerLink="/student/final-report">
-              <i class="pi pi-file-pdf"></i><span>گزارش نهایی</span
-              ><strong>{{ item.finalReport ? "ثبت شده" : "ثبت نشده" }}</strong>
+              <i class="pi pi-file-pdf"></i><span>گزارش نهایی</span>
+              @if (item.finalReport; as report) {
+                <p-tag [value]="finalReportStatusLabels[report.status]" [severity]="finalReportStatusSeverity(report.status)" />
+              } @else {
+                <p-tag value="ثبت نشده" severity="secondary" />
+              }
             </a>
           </div>
         </p-card>
       } @else if (item.status === "PASSED" || item.status === "FAILED") {
         <p-card header="نتیجه نهایی کارآموزی">
+          <div class="card-status-line status-line">
+            <span class="status-label">وضعیت</span>
+            <p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" />
+          </div>
           <div class="detail-grid">
-            <div class="detail">
-              <span>وضعیت</span>
-              <div class="inline-tag">
-                <p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" />
-              </div>
-            </div>
             <div class="detail">
               <span>نتیجه نهایی</span
               ><strong>{{ finalResultLabel(item) }}</strong>
