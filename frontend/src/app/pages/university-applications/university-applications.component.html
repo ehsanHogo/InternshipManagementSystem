@@ -3,13 +3,13 @@
     <span class="eyebrow">مسئول آموزش</span>
     <h1>پرونده‌های کارآموزی</h1>
     <p>{{ selectedStatus() === 'PENDING_UNIVERSITY_REVIEW'
-      ? 'پرونده‌های رسمی ارسال‌شده را بررسی و یک محل کارآموزی را انتخاب کنید، یا کل پرونده را با ذکر دلیل لغو کنید.'
+      ? 'پرونده‌های رسمی ارسال‌شده را بررسی و یک محل کارآموزی را انتخاب کنید، برای اصلاح اولویت‌ها به دانشجو بازگردانید، یا کل پرونده را با ذکر دلیل لغو کنید.'
       : selectedStatus() === 'PENDING_COMPANY_DETAILS'
         ? 'در انتظار ثبت یا اصلاح اطلاعات توسط شرکت؛ پرونده برای آموزش فقط خواندنی است.'
       : selectedStatus() === 'PENDING_FINAL_APPROVAL'
         ? 'اطلاعات شروع ثبت‌شده توسط شرکت را تأیید کنید یا برای اصلاح به شرکت بازگردانید.'
-        : selectedStatus() === 'READY_TO_START'
-          ? 'پرونده‌های تأییدشده را مشاهده و برای فعال‌سازی باز کنید.'
+        : selectedStatus() === 'REVISION_REQUESTED'
+          ? 'پرونده‌های بازگردانده‌شده برای اصلاح اولویت‌ها در انتظار ارسال مجدد دانشجو هستند.'
           : selectedStatus() === 'ACTIVE'
             ? 'پرونده‌های در حال انجام کارآموزی را مشاهده کنید.'
             : selectedStatus() === 'CANCELLED'
@@ -47,7 +47,7 @@
         <th>شماره دانشجویی</th>
         <th>استاد تخصیص‌یافته</th>
         <th>تعداد اولویت‌ها</th>
-        <th>{{ selectedStatus() !== 'PENDING_UNIVERSITY_REVIEW' ? 'محل انتخاب‌شده' : 'اولویت نخست' }}</th>
+        <th>{{ selectedStatus() !== 'PENDING_UNIVERSITY_REVIEW' && selectedStatus() !== 'REVISION_REQUESTED' ? 'محل انتخاب‌شده' : 'اولویت نخست' }}</th>
         <th>تاریخ ارسال</th>
         <th>تاریخ شروع</th>
         <th>نتیجه / دلیل لغو</th>
@@ -64,7 +64,7 @@
         <td>{{ item.professor.fullName }}</td>
         <td>{{ item.preferences.length | persianDigits }}</td>
         <td>
-          @if (selectedStatus() !== 'PENDING_UNIVERSITY_REVIEW' ? item.selectedPreference : item.preferences[0]; as first) {
+          @if (selectedStatus() !== 'PENDING_UNIVERSITY_REVIEW' && selectedStatus() !== 'REVISION_REQUESTED' ? item.selectedPreference : item.preferences[0]; as first) {
             {{ first.application.opportunity.company.name }} — {{ first.application.opportunity.title }}
           } @else { — }
         </td>
@@ -75,7 +75,7 @@
         <td><p-tag [value]="caseStatusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" /></td>
         <td>
           <p-button
-            [label]="item.status === 'READY_TO_START' ? 'مشاهده و فعال‌سازی کارآموزی' : 'مشاهده پرونده'"
+            label="مشاهده پرونده"
             icon="pi pi-eye"
             [text]="true"
             [routerLink]="['/university/applications', item.id]"

@@ -316,7 +316,7 @@ func TestProfessorFinalEvaluation(t *testing.T) {
 		}
 		unchanged(t, before, load(t, item.ID))
 	})
-	for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingCompanyDetails, model.InternshipCaseStatusPendingFinalApproval, model.InternshipCaseStatusReadyToStart, model.InternshipCaseStatusCancelled} {
+	for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingCompanyDetails, model.InternshipCaseStatusPendingFinalApproval, model.InternshipCaseStatusRevisionRequested, model.InternshipCaseStatusCancelled} {
 		t.Run("cannot finalize "+string(status), func(t *testing.T) {
 			item := fixture(t)
 			if err := db.Model(&item).Update("status", status).Error; err != nil {

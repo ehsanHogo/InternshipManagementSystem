@@ -266,7 +266,7 @@ func checkStudentOpportunityApplicationEligibility(db *gorm.DB, studentID uint) 
 		model.InternshipCaseStatusPendingUniversityReview,
 		model.InternshipCaseStatusPendingCompanyDetails,
 		model.InternshipCaseStatusPendingFinalApproval,
-		model.InternshipCaseStatusReadyToStart,
+		model.InternshipCaseStatus("READY_TO_START"), // Defensive block for unmigrated legacy data only.
 		model.InternshipCaseStatusActive,
 	}
 	var activeCount int64

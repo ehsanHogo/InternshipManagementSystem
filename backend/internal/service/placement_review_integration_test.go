@@ -97,6 +97,12 @@ func TestUniversityFinalPlacementReview(t *testing.T) {
 	assertChange := func(t *testing.T, before model.InternshipCase, status model.InternshipCaseStatus, comment *string) {
 		t.Helper()
 		after := load(t, before.ID)
+		if status == model.InternshipCaseStatusActive {
+			if after.ActivatedAt == nil || after.ActivatedAt.Before(before.UpdatedAt) || after.ActivatedAt.After(time.Now().UTC().Add(time.Second)) {
+				t.Fatal("final approval must record activation time")
+			}
+			before.ActivatedAt = after.ActivatedAt
+		}
 		before.Status, before.CompanyDetailsRevisionComment, before.UpdatedAt = status, comment, after.UpdatedAt
 		if !reflect.DeepEqual(before, after) {
 			t.Fatalf("unexpected case mutation: want %+v got %+v", before, after)
@@ -123,17 +129,17 @@ func TestUniversityFinalPlacementReview(t *testing.T) {
 	}
 
 	t.Run("approval accepts past and future dates and preserves all data", func(t *testing.T) {
-		for _, year := range []int{2020, 2099} {
+		for _, date := range []time.Time{time.Date(2020, 1, 2, 0, 0, 0, 0, time.UTC), time.Now().UTC().Truncate(24 * time.Hour), time.Date(2099, 1, 2, 0, 0, 0, 0, time.UTC)} {
 			f := create(t)
-			if err := tx.Model(&f.item).Update("start_date", time.Date(year, 1, 2, 0, 0, 0, 0, time.UTC)).Error; err != nil {
+			if err := tx.Model(&f.item).Update("start_date", date).Error; err != nil {
 				t.Fatal(err)
 			}
 			before, external := load(t, f.item.ID), externalSnapshot(t, f)
 			result, err := workflow.ApprovePlacementDetails(f.item.ID)
-			if err != nil || result.Status != model.InternshipCaseStatusReadyToStart {
+			if err != nil || result.Status != model.InternshipCaseStatusActive {
 				t.Fatalf("approve: %+v %v", result, err)
 			}
-			assertChange(t, before, model.InternshipCaseStatusReadyToStart, nil)
+			assertChange(t, before, model.InternshipCaseStatusActive, nil)
 			if !reflect.DeepEqual(external, externalSnapshot(t, f)) {
 				t.Fatal("approval changed unrelated rows")
 			}
@@ -149,11 +155,47 @@ func TestUniversityFinalPlacementReview(t *testing.T) {
 			}
 			before = load(t, f.item.ID)
 			if _, err := workflow.SubmitPlacementDetails(supervisor.ID, f.item.ID, PlacementDetailsInput{}); !errors.Is(err, ErrCaseNotPendingCompanyDetails) {
-				t.Fatalf("company edits ready case: %v", err)
+				t.Fatalf("company edits active case: %v", err)
 			}
 			assertUnchanged(t, before)
 		}
 	})
+	t.Run("final approval enables reporting and evaluation without manual activation", func(t *testing.T) {
+		f := create(t)
+		if err := tx.Model(&f.item).Update("start_date", time.Date(2099, 1, 2, 0, 0, 0, 0, time.UTC)).Error; err != nil {
+			t.Fatal(err)
+		}
+		item, err := workflow.ApprovePlacementDetails(f.item.ID)
+		if err != nil || item.Status != model.InternshipCaseStatusActive || item.ActivatedAt == nil {
+			t.Fatalf("final approval: %+v %v", item, err)
+		}
+		start := time.Now().UTC().Truncate(24 * time.Hour)
+		for week := 1; week <= 8; week++ {
+			report, err := workflow.CreateWeeklyReport(f.student.ID, WeeklyReportInput{WeekNumber: week, StartDate: start, EndDate: start.Add(6 * 24 * time.Hour), ActivityDescription: "گزارش فعالیت"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := workflow.SubmitWeeklyReport(f.student.ID, report.ID); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := workflow.ReviewWeeklyReportByCompany(supervisor.ID, f.item.ID, report.ID, model.WeeklyReviewApproved, nil); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := workflow.ReviewWeeklyReportByProfessor(professor.ID, f.item.ID, report.ID, model.WeeklyReviewApproved, nil); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if _, err := workflow.CreateCompanyEvaluation(supervisor.ID, f.item.ID, CompanyEvaluationInput{
+			AttendanceRating: model.EvaluationRatingGood, ParticipationRating: model.EvaluationRatingGood,
+			LearningRating: model.EvaluationRatingGood, InterestRating: model.EvaluationRatingGood,
+			PersistenceRating: model.EvaluationRatingGood, SuggestionRating: model.EvaluationRatingGood,
+			ResourceUsageRating: model.EvaluationRatingGood, ReportQualityRating: model.EvaluationRatingGood,
+			ProjectPerformanceRating: model.EvaluationRatingGood,
+		}); err != nil {
+			t.Fatal(err)
+		}
+	})
+
 	t.Run("all missing and blank required fields reject approval atomically", func(t *testing.T) {
 		for _, field := range []string{"selected_preference_id", "company_supervisor_id", "letter_number", "letter_date", "internship_subject", "start_date", "workplace_address", "workplace_phone"} {
 			values := []any{nil}
@@ -275,10 +317,10 @@ func TestUniversityFinalPlacementReview(t *testing.T) {
 		assertChange(t, before, model.InternshipCaseStatusPendingFinalApproval, nil)
 		before = load(t, f.item.ID)
 		result, err = workflow.ApprovePlacementDetails(f.item.ID)
-		if err != nil || result.Status != model.InternshipCaseStatusReadyToStart {
+		if err != nil || result.Status != model.InternshipCaseStatusActive {
 			t.Fatalf("corrected approval: %+v %v", result, err)
 		}
-		assertChange(t, before, model.InternshipCaseStatusReadyToStart, nil)
+		assertChange(t, before, model.InternshipCaseStatusActive, nil)
 		if !reflect.DeepEqual(external, externalSnapshot(t, f)) {
 			t.Fatal("loop changed unrelated rows")
 		}
@@ -288,14 +330,14 @@ func TestUniversityFinalPlacementReview(t *testing.T) {
 			func() (*model.InternshipCase, error) { return workflow.GetCompanyCase(supervisor.ID, f.item.ID) },
 		} {
 			view, err := get()
-			if err != nil || view.Status != model.InternshipCaseStatusReadyToStart || *view.InternshipSubject != input.InternshipSubject || *view.WorkplaceAddress != input.WorkplaceAddress || view.ActivatedAt != nil {
+			if err != nil || view.Status != model.InternshipCaseStatusActive || *view.InternshipSubject != input.InternshipSubject || *view.WorkplaceAddress != input.WorkplaceAddress || view.ActivatedAt == nil {
 				t.Fatalf("corrected final visibility: %+v %v", view, err)
 			}
 		}
 	})
 	t.Run("only pending final approval accepts either action", func(t *testing.T) {
 		f := create(t)
-		for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingCompanyDetails, model.InternshipCaseStatusReadyToStart, model.InternshipCaseStatusActive, model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled} {
+		for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingCompanyDetails, model.InternshipCaseStatusRevisionRequested, model.InternshipCaseStatusActive, model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled} {
 			if err := tx.Model(&f.item).Update("status", status).Error; err != nil {
 				t.Fatal(err)
 			}

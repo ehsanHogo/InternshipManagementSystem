@@ -89,10 +89,7 @@ func TestCaseHistoryAPI(t *testing.T) {
 	universities := api.Group("/university", appmiddleware.RequireRole(model.RoleUniversitySupervisor))
 	universities.GET("/internship-cases", handler.ListUniversityCases)
 	universities.GET("/internship-cases/:id", handler.GetUniversityCase)
-	universities.POST("/internship-cases/:id/cancel", handler.CancelUniversityReview)
-	universities.POST("/internship-cases/:id/final-approve", handler.ApprovePlacementDetails)
-	universities.POST("/internship-cases/:id/activate", handler.ActivateUniversityCase)
-	universities.POST("/internship-cases/:id/request-placement-correction", handler.RequestPlacementCorrection)
+	handler.RegisterUniversityCaseRoutes(universities)
 	api.GET("/files/:id/download", handler.DownloadFile)
 	request := func(method, path string, user model.User, body any, want int) *httptest.ResponseRecorder {
 		t.Helper()
@@ -279,7 +276,7 @@ func TestCaseHistoryAPI(t *testing.T) {
 	t.Run("terminal cases reject mutation and retain protected files", func(t *testing.T) {
 		for _, item := range items {
 			path := fmt.Sprintf("/api/university/internship-cases/%d", item.ID)
-			request("POST", path+"/activate", university, nil, 409)
+			request("POST", path+"/activate", university, nil, 404)
 			request("POST", path+"/final-approve", university, nil, 409)
 			request("POST", path+"/request-placement-correction", university, gin.H{"comment": "change"}, 409)
 			request("POST", path+"/cancel", university, gin.H{"comment": "change"}, 409)

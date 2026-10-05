@@ -6,7 +6,7 @@ export type InternshipCaseStatus =
   | 'PENDING_UNIVERSITY_REVIEW'
   | 'PENDING_COMPANY_DETAILS'
   | 'PENDING_FINAL_APPROVAL'
-  | 'READY_TO_START'
+  | 'REVISION_REQUESTED'
   | 'ACTIVE'
   | 'PASSED'
   | 'FAILED'
@@ -73,6 +73,9 @@ export interface InternshipCase {
   cancellationComment?: string;
   cancelledAt?: string;
   companyDetailsRevisionComment?: string;
+  universityRevisionComment?: string | null;
+  universityRevisionRequestedAt?: string | null;
+  universityRevisionRequestedBy?: number | null;
   activatedAt?: string | null;
   finalReport?: FinalReport;
   weeklyReportCount: number;
@@ -313,7 +316,7 @@ export const internshipStatusLabels: Record<InternshipCaseStatus, string> = {
   PENDING_UNIVERSITY_REVIEW: 'در انتظار بررسی آموزش',
   PENDING_COMPANY_DETAILS: 'در انتظار ثبت/اصلاح اطلاعات شرکت',
   PENDING_FINAL_APPROVAL: 'در انتظار تأیید نهایی آموزش',
-  READY_TO_START: 'آماده شروع کارآموزی',
+  REVISION_REQUESTED: 'نیازمند اصلاح اولویت‌ها',
   ACTIVE: 'در حال انجام کارآموزی',
   PASSED: 'قبول شده',
   FAILED: 'مردود',
@@ -322,11 +325,12 @@ export const internshipStatusLabels: Record<InternshipCaseStatus, string> = {
 
 export function internshipStatusSeverity(status: InternshipCaseStatus): StatusTagSeverity {
   switch (status) {
+    case 'REVISION_REQUESTED':
+      return 'warn';
     case 'PENDING_UNIVERSITY_REVIEW':
     case 'PENDING_COMPANY_DETAILS':
       return 'info';
     case 'PENDING_FINAL_APPROVAL':
-    case 'READY_TO_START':
     case 'ACTIVE':
       return 'success';
     case 'PASSED':

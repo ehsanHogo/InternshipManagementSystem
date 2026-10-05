@@ -167,9 +167,9 @@ func (service *InternshipService) CancelUniversityReview(caseID uint, comment st
 func universityCaseStatuses() []model.InternshipCaseStatus {
 	return []model.InternshipCaseStatus{
 		model.InternshipCaseStatusPendingUniversityReview,
+		model.InternshipCaseStatusRevisionRequested,
 		model.InternshipCaseStatusPendingCompanyDetails,
 		model.InternshipCaseStatusPendingFinalApproval,
-		model.InternshipCaseStatusReadyToStart,
 		model.InternshipCaseStatusActive,
 		model.InternshipCaseStatusPassed,
 		model.InternshipCaseStatusFailed,
@@ -181,7 +181,6 @@ func companyVisibleStatuses() []model.InternshipCaseStatus {
 	return []model.InternshipCaseStatus{
 		model.InternshipCaseStatusPendingCompanyDetails,
 		model.InternshipCaseStatusPendingFinalApproval,
-		model.InternshipCaseStatusReadyToStart,
 		model.InternshipCaseStatusActive,
 		model.InternshipCaseStatusPassed,
 		model.InternshipCaseStatusFailed,
@@ -196,4 +195,47 @@ func containsStatus(statuses []model.InternshipCaseStatus, status model.Internsh
 		}
 	}
 	return false
+}
+
+var ErrUniversityRevisionCommentRequired = errors.New("university revision comment is required")
+
+// RequestUniversityRevision returns the same case for preference correction.
+// The case lock serializes revision, selection, resubmission and term closure.
+func (service *InternshipService) RequestUniversityRevision(caseID, supervisorID uint, comment string) (*model.InternshipCase, error) {
+	comment = strings.TrimSpace(comment)
+	if comment == "" {
+		return nil, ErrUniversityRevisionCommentRequired
+	}
+	err := service.db.Transaction(func(tx *gorm.DB) error {
+		var supervisor model.User
+		if err := tx.Where("id = ? AND role = ?", supervisorID, model.RoleUniversitySupervisor).First(&supervisor).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrCaseAccessDenied
+			}
+			return fmt.Errorf("authorize university revision: %w", err)
+		}
+		var item model.InternshipCase
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&item, caseID).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrCaseNotFound
+			}
+			return fmt.Errorf("lock university revision case: %w", err)
+		}
+		if item.Status != model.InternshipCaseStatusPendingUniversityReview {
+			return ErrCaseNotPendingUniversityReview
+		}
+		if err := tx.Model(&item).Updates(map[string]any{
+			"status":                           model.InternshipCaseStatusRevisionRequested,
+			"university_revision_comment":      comment,
+			"university_revision_requested_at": time.Now().UTC(),
+			"university_revision_requested_by": supervisorID,
+		}).Error; err != nil {
+			return fmt.Errorf("request university revision: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return service.getCaseByID(caseID)
 }

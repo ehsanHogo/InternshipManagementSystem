@@ -86,7 +86,7 @@
 } @else if (internshipCase(); as currentCase) {
   <h2>{{ viewingHistory() ? "جزئیات پرونده تاریخی" : "پرونده فعلی" }} · {{ currentCase.id | persianDigits }}</h2>
   <p>ترم کارآموزی: <strong>{{ termLabel(currentCase.term) | persianDigits }}</strong></p>
-  @if (!isDraft) {
+  @if (!canEditPreferences) {
     <div class="review-notice">
       <i class="pi pi-lock" aria-hidden="true"></i>
       <div class="review-notice-body">
@@ -100,6 +100,19 @@
         <p class="review-notice-text">اطلاعات و اولویت‌های این پرونده برای دانشجو فقط خواندنی است.</p>
       </div>
     </div>
+  }
+
+  @if (currentCase.universityRevisionComment) {
+    <p-card header="درخواست اصلاح اولویت‌ها از سوی آموزش">
+      <p-tag [value]="statusLabel(currentCase.status)" [severity]="internshipStatusSeverity(currentCase.status)" />
+      <p class="revision-comment">{{ currentCase.universityRevisionComment }}</p>
+      <p>تاریخ درخواست: {{ currentCase.universityRevisionRequestedAt | jalaliDate }}</p>
+      @if (isRevisionRequested) {
+        <p>اولویت‌های همین پرونده را اصلاح و دوباره ارسال کنید. می‌توانید برای فرصت‌های جدید درخواست دهید و پس از پذیرش شرکت، آن‌ها را به اولویت‌ها اضافه کنید.</p>
+        <p-button label="یافتن فرصت کارآموزی جدید" icon="pi pi-search" routerLink="/student/opportunities" />
+        <p-button label="تازه‌سازی پذیرش‌ها" icon="pi pi-refresh" severity="secondary" [text]="true" [disabled]="saving() || preferenceSaving() || historyLoading()" (onClick)="reloadPage()" />
+      }
+    </p-card>
   }
 
   <p-card header="مشخصات درخواست">
@@ -154,7 +167,7 @@
     }
   </p-card>
 
-  @if (isDraft) {
+  @if (canEditPreferences) {
     <p-card header="فرصت‌های پذیرفته‌شده">
       @if (acceptedApplications().length === 0) {
         <div class="accepted-empty">
@@ -200,7 +213,7 @@
 
   <p-card header="اولویت‌های انتخاب‌شده">
     <div class="preference-summary">
-      @if (isDraft) { <p>اولویت ۱ انتخاب نخست شماست. برای ارسال نهایی باید اولویت‌ها از ۱ و بدون فاصله مرتب باشند.</p> }
+      @if (canEditPreferences) { <p>اولویت ۱ انتخاب نخست شماست. برای ارسال نهایی باید اولویت‌ها از ۱ و بدون فاصله مرتب باشند.</p> }
       <span>{{ currentCase.preferences.length | persianDigits }} از ۳ اولویت</span>
     </div>
 
@@ -224,7 +237,7 @@
                 [severity]="preference.application.opportunity.company.isApproved ? 'success' : 'warn'"
               />
             </div>
-            @if (isDraft) {
+            @if (canEditPreferences) {
               <div class="item-actions">
                 <p-button icon="pi pi-arrow-up" ariaLabel="افزایش اولویت" severity="secondary" [text]="true" [disabled]="first || preferenceSaving() || saving() || historyLoading()" (onClick)="movePreference(preference, -1)" />
                 <p-button icon="pi pi-arrow-down" ariaLabel="کاهش اولویت" severity="secondary" [text]="true" [disabled]="last || preferenceSaving() || saving() || historyLoading()" (onClick)="movePreference(preference, 1)" />
@@ -283,14 +296,14 @@
     </p-card>
   }
 
-  @if (isDraft) {
+  @if (canEditPreferences) {
     <div class="submit-panel">
       <div>
         <strong>ارسال درخواست برای آموزش</strong>
         <p>پس از ارسال، اطلاعات و ترتیب اولویت‌ها تا تعیین تکلیف پرونده قابل ویرایش نیست.</p>
       </div>
       <p-button
-        label="ارسال درخواست برای آموزش"
+        [label]="isRevisionRequested ? 'ارسال مجدد برای آموزش' : 'ارسال درخواست برای آموزش'"
         icon="pi pi-send"
         [loading]="saving()"
         [disabled]="!canSubmit || preferenceSaving() || saving() || historyLoading()"

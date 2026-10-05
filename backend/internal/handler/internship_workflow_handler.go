@@ -154,15 +154,34 @@ func (handler *InternshipHandler) CancelUniversityReview(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
 }
 
-func (handler *InternshipHandler) ActivateUniversityCase(ctx *gin.Context) {
-	if ctx.Request.Body != nil {
-		body, err := io.ReadAll(io.LimitReader(ctx.Request.Body, 1))
-		if err != nil || len(body) != 0 {
-			ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_INTERNSHIP_CASE_ACTIVATION", "error": "برای فعال‌سازی پرونده بدنه درخواست ارسال نکنید."})
-			return
-		}
+func (handler *InternshipHandler) RequestUniversityRevision(ctx *gin.Context) {
+	supervisorID, ok := currentUserID(ctx)
+	if !ok {
+		return
 	}
-	handler.performUniversityAction(ctx, handler.service.ActivateUniversityCase)
+	caseID, ok := caseIDFromContext(ctx)
+	if !ok {
+		return
+	}
+	var request struct {
+		Comment string `json:"comment"`
+	}
+	decoder := json.NewDecoder(ctx.Request.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_UNIVERSITY_REVISION", "error": "توضیحات اصلاح اولویت‌ها معتبر نیست."})
+		return
+	}
+	if err := decoder.Decode(new(any)); err != io.EOF {
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_UNIVERSITY_REVISION", "error": "توضیحات اصلاح اولویت‌ها معتبر نیست."})
+		return
+	}
+	item, err := handler.service.RequestUniversityRevision(caseID, supervisorID, request.Comment)
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, caseResponse(item))
 }
 
 func (handler *InternshipHandler) performUniversityAction(ctx *gin.Context, action func(uint) (*model.InternshipCase, error)) {
@@ -306,4 +325,13 @@ func parseDate(value string) (time.Time, error) {
 		return time.Time{}, err
 	}
 	return date.UTC(), nil
+}
+
+// RegisterUniversityCaseRoutes is shared by production and integration tests.
+func (handler *InternshipHandler) RegisterUniversityCaseRoutes(university *gin.RouterGroup) {
+	university.POST("/internship-cases/:id/approve-placement", handler.ApproveUniversityPlacement)
+	university.POST("/internship-cases/:id/request-revision", handler.RequestUniversityRevision)
+	university.POST("/internship-cases/:id/final-approve", handler.ApprovePlacementDetails)
+	university.POST("/internship-cases/:id/request-placement-correction", handler.RequestPlacementCorrection)
+	university.POST("/internship-cases/:id/cancel", handler.CancelUniversityReview)
 }

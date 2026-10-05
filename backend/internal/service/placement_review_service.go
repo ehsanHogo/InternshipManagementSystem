@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -24,13 +25,13 @@ func (service *InternshipService) ListPendingFinalApprovalCases() ([]model.Inter
 }
 
 // ApprovePlacementDetails preserves the selected placement, supervisor snapshot,
-// letter and company fields. Activation is a separate workflow.
+// letter and company fields, and activates the finally approved case.
 func (service *InternshipService) ApprovePlacementDetails(caseID uint) (*model.InternshipCase, error) {
 	return service.reviewPlacementDetails(caseID, func(tx *gorm.DB, item *model.InternshipCase) (map[string]any, error) {
 		if err := validateFinalPlacement(tx, item); err != nil {
 			return nil, err
 		}
-		return map[string]any{"status": model.InternshipCaseStatusReadyToStart}, nil
+		return map[string]any{"status": model.InternshipCaseStatusActive, "activated_at": time.Now().UTC()}, nil
 	})
 }
 

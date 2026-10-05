@@ -198,6 +198,7 @@
         </label>
       </form>
       <div class="card-actions">
+        <p-button label="درخواست اصلاح اولویت‌ها" icon="pi pi-pencil" severity="warn" [outlined]="true" [disabled]="saving()" (onClick)="openRevision()" />
         <p-button
           label="لغو کل پرونده"
           icon="pi pi-times-circle"
@@ -254,6 +255,16 @@
     </p-card>
   }
 
+  @if (item.universityRevisionComment) {
+    <p-card header="آخرین درخواست اصلاح اولویت‌های دانشجو">
+      <p class="revision-comment">{{ item.universityRevisionComment }}</p>
+      <p>تاریخ درخواست: {{ item.universityRevisionRequestedAt | jalaliDate }}</p>
+      @if (item.status === 'REVISION_REQUESTED') {
+        <p class="muted">پس از اصلاح اولویت‌ها و ارسال مجدد توسط دانشجو، انتخاب محل کارآموزی امکان‌پذیر است.</p>
+      }
+    </p-card>
+  }
+
   @if (item.companyDetailsRevisionComment) {
     <p-card header="اصلاحات درخواستی آموزش"><p>{{ item.companyDetailsRevisionComment }}</p></p-card>
   }
@@ -264,15 +275,6 @@
       <div class="card-actions">
         <p-button label="درخواست اصلاح" icon="pi pi-pencil" severity="warn" [outlined]="true" [disabled]="saving()" (onClick)="openCorrection()" />
         <p-button label="تأیید نهایی" icon="pi pi-check" [loading]="saving()" [disabled]="saving()" (onClick)="confirmFinalApproval()" />
-      </div>
-    </p-card>
-  }
-
-  @if (item.status === 'READY_TO_START') {
-    <p-card header="فعال‌سازی کارآموزی">
-      <p class="muted">اطلاعات محل کارآموزی تأیید شده است. با فعال‌سازی، پرونده وارد مرحله انجام کارآموزی خواهد شد.</p>
-      <div class="card-actions">
-        <p-button label="فعال‌سازی کارآموزی" icon="pi pi-play" [loading]="saving()" [disabled]="saving()" (onClick)="confirmActivation()" />
       </div>
     </p-card>
   }
@@ -311,3 +313,17 @@
     <p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="loadCase()" />
   </div>
 }
+
+<p-dialog header="درخواست اصلاح اولویت‌ها" [visible]="revisionDialogVisible()" (visibleChange)="revisionDialogVisible.set($event)" [modal]="true" [closable]="!saving()" [draggable]="false" appendTo="body" [baseZIndex]="1300" [style]="{ width: 'min(92vw, 38rem)' }">
+  <form class="form-grid" [formGroup]="revisionForm" (ngSubmit)="requestRevision()">
+    <label class="field full-width">
+      <span>دلیل اصلاح اولویت‌ها <b>*</b></span>
+      <textarea pTextarea formControlName="comment" rows="5" placeholder="دلیل مناسب نبودن اولویت‌ها و اصلاحات مورد نیاز را بنویسید."></textarea>
+      @if (revisionForm.controls.comment.touched && revisionForm.controls.comment.invalid) { <small>ثبت دلیل اصلاح الزامی است.</small> }
+    </label>
+    <div class="card-actions full-width">
+      <p-button label="انصراف" severity="secondary" [text]="true" [disabled]="saving()" (onClick)="revisionDialogVisible.set(false)" />
+      <p-button label="ارسال درخواست اصلاح" icon="pi pi-send" type="submit" [loading]="saving()" [disabled]="saving()" />
+    </div>
+  </form>
+</p-dialog>

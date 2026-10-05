@@ -400,7 +400,7 @@ func TestFinalReportV2API(t *testing.T) {
 		request(t, "GET", path, model.User{}, nil, 401)
 	})
 
-	for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingCompanyDetails, model.InternshipCaseStatusPendingFinalApproval, model.InternshipCaseStatusReadyToStart, model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled} {
+	for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingCompanyDetails, model.InternshipCaseStatusPendingFinalApproval, model.InternshipCaseStatusRevisionRequested, model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled} {
 		t.Run("inactive "+string(status), func(t *testing.T) {
 			student, item := fixture(t, status)
 			noOrphans(t, func() { upload(t, student, "final.pdf", "application/pdf", validPDF, nil, 400) })

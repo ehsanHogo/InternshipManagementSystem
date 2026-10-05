@@ -345,3 +345,8 @@ p-card {
     grid-column: auto;
   }
 }
+
+.revision-comment {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

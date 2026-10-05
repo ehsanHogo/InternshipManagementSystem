@@ -191,6 +191,10 @@ func TestAcademicInternshipTerms(t *testing.T) {
 		if status == model.InternshipCaseStatusPassed || status == model.InternshipCaseStatusFailed {
 			item.CompletedAt = &now
 		}
+		if status == model.InternshipCaseStatusRevisionRequested {
+			comment := "اصلاح اولویت‌ها"
+			item.UniversityRevisionComment, item.UniversityRevisionRequestedAt, item.UniversityRevisionRequestedBy = &comment, &now, &university.ID
+		}
 		if status == model.InternshipCaseStatusActive {
 			item.ActivatedAt = &now
 		}
@@ -257,6 +261,13 @@ func TestAcademicInternshipTerms(t *testing.T) {
 				}
 			} else if after.Status != model.InternshipCaseStatusCancelled || after.CancelledAt == nil || !after.CancelledAt.Equal(*closed.ClosedAt) || after.CancellationComment == nil || *after.CancellationComment != TermClosureCancellationComment || *after.TermID != term.ID {
 				t.Fatalf("automatic cancellation: %+v", after)
+			}
+			if before.Status == model.InternshipCaseStatusRevisionRequested {
+				expected := before
+				expected.Status, expected.CancelledAt, expected.CancellationComment, expected.UpdatedAt = after.Status, after.CancelledAt, after.CancellationComment, after.UpdatedAt
+				if !reflect.DeepEqual(expected, after) {
+					t.Fatal("term closure changed revision metadata or case fields")
+				}
 			}
 		})
 	}

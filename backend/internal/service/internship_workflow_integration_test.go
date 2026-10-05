@@ -306,7 +306,7 @@ func TestWorkflow(t *testing.T) {
 
 	t.Run("reports require active internship", func(t *testing.T) {
 		student := createTestStudent(t, tx, suffix, "inactive-reporting")
-		inactiveCase := model.InternshipCase{StudentID: student.ID, ProfessorID: professor.ID, Status: model.InternshipCaseStatusReadyToStart}
+		inactiveCase := model.InternshipCase{StudentID: student.ID, ProfessorID: professor.ID, Status: model.InternshipCaseStatusPendingFinalApproval}
 		if err := tx.Create(&inactiveCase).Error; err != nil {
 			t.Fatalf("create inactive case: %v", err)
 		}

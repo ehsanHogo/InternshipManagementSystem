@@ -188,7 +188,7 @@ func TestCompanyPlacementDetails(t *testing.T) {
 	})
 	t.Run("every other state and repeated submission conflict", func(t *testing.T) {
 		f := create(t, 0)
-		for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingFinalApproval, model.InternshipCaseStatusReadyToStart, model.InternshipCaseStatusActive, model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled} {
+		for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingFinalApproval, model.InternshipCaseStatusRevisionRequested, model.InternshipCaseStatusActive, model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled} {
 			t.Run(string(status), func(t *testing.T) {
 				if err := tx.Model(&model.InternshipCase{}).Where("id = ?", f.internship.ID).Update("status", status).Error; err != nil {
 					t.Fatal(err)

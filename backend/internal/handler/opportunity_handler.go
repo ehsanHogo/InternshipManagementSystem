@@ -150,6 +150,10 @@ func (handler *OpportunityHandler) Close(ctx *gin.Context) {
 }
 
 func (handler *OpportunityHandler) ListStudent(ctx *gin.Context) {
+	studentID, ok := currentUserID(ctx)
+	if !ok {
+		return
+	}
 	opportunities, err := handler.service.ListStudent()
 	if err != nil {
 		handler.writeError(ctx, err)
@@ -157,7 +161,12 @@ func (handler *OpportunityHandler) ListStudent(ctx *gin.Context) {
 	}
 	response := make([]studentOpportunityResponse, 0, len(opportunities))
 	for _, opportunity := range opportunities {
-		response = append(response, studentOpportunityView(opportunity))
+		view, err := handler.studentOpportunityWithEligibility(studentID, opportunity)
+		if err != nil {
+			handler.writeError(ctx, err)
+			return
+		}
+		response = append(response, view)
 	}
 	ctx.JSON(http.StatusOK, response)
 }
@@ -177,23 +186,30 @@ func (handler *OpportunityHandler) GetStudent(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	response := studentOpportunityView(*opportunity)
+	response, err := handler.studentOpportunityWithEligibility(studentID, *opportunity)
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
+// The catalog and detail use the same recruitment policy and application data.
+func (handler *OpportunityHandler) studentOpportunityWithEligibility(studentID uint, opportunity model.InternshipOpportunity) (studentOpportunityResponse, error) {
+	response := studentOpportunityView(opportunity)
 	response.CanApply = true
 	if handler.applications != nil {
-		eligibility, eligibilityErr := handler.applications.CheckEligibility(studentID, uint(opportunityID))
-		if eligibilityErr != nil {
-			handler.writeError(ctx, eligibilityErr)
-			return
+		eligibility, err := handler.applications.CheckEligibility(studentID, opportunity.ID)
+		if err != nil {
+			return studentOpportunityResponse{}, err
 		}
 		response.CanApply = eligibility.CanApply
 		response.ApplyRestrictionCode = eligibility.RestrictionCode
 		if eligibility.ExistingApplicationID != nil && eligibility.ExistingStatus != nil {
-			response.ExistingApplication = &existingApplicationResponse{
-				ID: *eligibility.ExistingApplicationID, Status: *eligibility.ExistingStatus,
-			}
+			response.ExistingApplication = &existingApplicationResponse{ID: *eligibility.ExistingApplicationID, Status: *eligibility.ExistingStatus}
 		}
 	}
-	ctx.JSON(http.StatusOK, response)
+	return response, nil
 }
 
 func bindOpportunityRequest(ctx *gin.Context) (opportunityRequest, bool) {

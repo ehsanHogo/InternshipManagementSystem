@@ -152,9 +152,6 @@
       @if (item.activatedAt) {
         <div class="detail"><span>تاریخ فعال‌سازی</span><strong>{{ item.activatedAt | jalaliDate }}</strong></div>
       }
-      @if (item.status === 'READY_TO_START') {
-        <p>اطلاعات توسط آموزش تأیید شده است؛ پرونده آماده شروع کارآموزی است.</p>
-      }
       <div class="detail-grid">
         <div class="detail">
           <span>موضوع کارآموزی</span

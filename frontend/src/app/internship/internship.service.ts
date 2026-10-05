@@ -81,8 +81,8 @@ export class InternshipService {
     return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/request-placement-correction`, { comment });
   }
 
-  activateUniversityCase(id: number): Observable<InternshipCase> {
-    return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/activate`, null);
+  requestUniversityRevision(id: number, comment: string): Observable<InternshipCase> {
+    return this.http.post<InternshipCase>(`/api/university/internship-cases/${id}/request-revision`, { comment });
   }
 
   listCompanyCases(): Observable<CompanyInternshipCase[]> {

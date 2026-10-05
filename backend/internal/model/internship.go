@@ -11,10 +11,10 @@ type InternshipCaseStatus string
 
 const (
 	InternshipCaseStatusDraft                   InternshipCaseStatus = "DRAFT"
+	InternshipCaseStatusRevisionRequested       InternshipCaseStatus = "REVISION_REQUESTED"
 	InternshipCaseStatusPendingUniversityReview InternshipCaseStatus = "PENDING_UNIVERSITY_REVIEW"
 	InternshipCaseStatusPendingCompanyDetails   InternshipCaseStatus = "PENDING_COMPANY_DETAILS"
 	InternshipCaseStatusPendingFinalApproval    InternshipCaseStatus = "PENDING_FINAL_APPROVAL"
-	InternshipCaseStatusReadyToStart            InternshipCaseStatus = "READY_TO_START"
 	InternshipCaseStatusActive                  InternshipCaseStatus = "ACTIVE"
 	InternshipCaseStatusPassed                  InternshipCaseStatus = "PASSED"
 	InternshipCaseStatusFailed                  InternshipCaseStatus = "FAILED"
@@ -27,7 +27,7 @@ func (status InternshipCaseStatus) Valid() bool {
 		InternshipCaseStatusPendingUniversityReview,
 		InternshipCaseStatusPendingCompanyDetails,
 		InternshipCaseStatusPendingFinalApproval,
-		InternshipCaseStatusReadyToStart,
+		InternshipCaseStatusRevisionRequested,
 		InternshipCaseStatusActive,
 		InternshipCaseStatusPassed,
 		InternshipCaseStatusFailed,
@@ -87,7 +87,7 @@ type InternshipCase struct {
 	Term        *InternshipTerm      `gorm:"foreignKey:TermID;constraint:OnDelete:RESTRICT"`
 	StudentID   uint                 `gorm:"not null;index"`
 	ProfessorID uint                 `gorm:"not null;index"`
-	Status      InternshipCaseStatus `gorm:"type:varchar(32);not null;index;check:chk_internship_case_status,status IN ('DRAFT','PENDING_UNIVERSITY_REVIEW','PENDING_COMPANY_DETAILS','PENDING_FINAL_APPROVAL','READY_TO_START','ACTIVE','PASSED','FAILED','CANCELLED')"`
+	Status      InternshipCaseStatus `gorm:"type:varchar(32);not null;index;check:chk_internship_case_status,status IN ('DRAFT','PENDING_UNIVERSITY_REVIEW','PENDING_COMPANY_DETAILS','PENDING_FINAL_APPROVAL','REVISION_REQUESTED','ACTIVE','PASSED','FAILED','CANCELLED')"`
 
 	PassedCredits *int    `gorm:"check:passed_credits IS NULL OR passed_credits >= 0"`
 	Mobile        *string `gorm:"size:30"`
@@ -95,17 +95,22 @@ type InternshipCase struct {
 	SelectedPreferenceID *uint
 	// CompanySupervisorID snapshots the selected opportunity's supervisor.
 	// It is never populated through arbitrary university selection.
-	CompanySupervisorID           *uint
-	LetterNumber                  *string `gorm:"size:100"`
-	LetterDate                    *time.Time
-	InternshipSubject             *string `gorm:"size:500"`
-	StartDate                     *time.Time
-	WorkplaceAddress              *string               `gorm:"size:1000"`
-	WorkplacePhone                *string               `gorm:"size:50"`
-	FinalResult                   *ProfessorFinalResult `gorm:"type:varchar(16);check:final_result IS NULL OR final_result IN ('EXCELLENT','GOOD','FAILED')"`
-	ProfessorComment              *string               `gorm:"size:2000"`
-	CancellationComment           *string               `gorm:"type:text"`
-	CompanyDetailsRevisionComment *string               `gorm:"type:text"`
+	CompanySupervisorID *uint
+	LetterNumber        *string `gorm:"size:100"`
+	LetterDate          *time.Time
+	InternshipSubject   *string `gorm:"size:500"`
+	StartDate           *time.Time
+	WorkplaceAddress    *string               `gorm:"size:1000"`
+	WorkplacePhone      *string               `gorm:"size:50"`
+	FinalResult         *ProfessorFinalResult `gorm:"type:varchar(16);check:final_result IS NULL OR final_result IN ('EXCELLENT','GOOD','FAILED')"`
+	ProfessorComment    *string               `gorm:"size:2000"`
+	CancellationComment *string               `gorm:"type:text"`
+	// Latest preference revision request; retained after student resubmission.
+	UniversityRevisionComment     *string `gorm:"type:text"`
+	UniversityRevisionRequestedAt *time.Time
+	UniversityRevisionRequestedBy *uint
+	UniversityRevisionRequester   *User   `gorm:"foreignKey:UniversityRevisionRequestedBy"`
+	CompanyDetailsRevisionComment *string `gorm:"type:text"`
 
 	Student            User                   `gorm:"foreignKey:StudentID"`
 	Professor          User                   `gorm:"foreignKey:ProfessorID"`

@@ -177,7 +177,7 @@ export class UniversityCaseComponent {
     if (!this.canReviewPlacement()) return;
     this.confirmation.confirm({
       header: 'تأیید نهایی',
-      message: 'آیا از تأیید نهایی اطلاعات محل و شروع کارآموزی اطمینان دارید؟',
+      message: 'با تأیید نهایی، پرونده کارآموزی در سامانه فعال می‌شود. آیا ادامه می‌دهید؟',
       icon: 'pi pi-check-circle',
       acceptLabel: 'بله، تأیید شود',
       rejectLabel: 'انصراف',
@@ -185,37 +185,34 @@ export class UniversityCaseComponent {
     });
   }
 
-  confirmActivation(): void {
-    if (!this.canActivate()) return;
-    this.confirmation.confirm({
-      header: 'فعال‌سازی کارآموزی',
-      message: 'آیا از فعال‌سازی این پرونده کارآموزی مطمئن هستید؟ پس از فعال‌سازی، پرونده وارد مرحله انجام کارآموزی خواهد شد.',
-      icon: 'pi pi-check-circle',
-      acceptLabel: 'بله، فعال شود',
-      rejectLabel: 'انصراف',
-      accept: () => this.activateCase()
-    });
+  readonly revisionDialogVisible = signal(false);
+  readonly revisionForm = this.formBuilder.group({
+    comment: this.formBuilder.nonNullable.control('', [Validators.required, Validators.pattern(/\S/)])
+  });
+
+  openRevision(): void {
+    if (this.saving() || this.internshipCase()?.status !== 'PENDING_UNIVERSITY_REVIEW') return;
+    this.revisionForm.reset({ comment: '' });
+    this.revisionDialogVisible.set(true);
   }
 
-  private canActivate(): boolean {
-    return !this.saving() && this.internshipCase()?.status === 'READY_TO_START';
-  }
-
-  private activateCase(): void {
-    if (!this.canActivate()) return;
+  requestRevision(): void {
+    if (this.saving() || this.internshipCase()?.status !== 'PENDING_UNIVERSITY_REVIEW') return;
+    if (this.revisionForm.invalid) {
+      this.revisionForm.markAllAsTouched();
+      return;
+    }
     this.saving.set(true);
-    this.internshipService.activateUniversityCase(this.caseID)
+    this.internshipService.requestUniversityRevision(this.caseID, this.revisionForm.controls.comment.value.trim())
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
-        next: (item) => {
+        next: item => {
           this.internshipCase.set(item);
           this.syncReviewForm(item);
-          this.messages.add({ severity: 'success', summary: 'کارآموزی فعال شد', detail: 'پرونده وارد مرحله انجام کارآموزی شد.' });
+          this.revisionDialogVisible.set(false);
+          this.messages.add({ severity: 'success', summary: 'درخواست اصلاح ثبت شد', detail: 'پرونده برای اصلاح اولویت‌ها به دانشجو بازگردانده شد.' });
         },
-        error: (error: HttpErrorResponse) => {
-          this.showError(error);
-          if (error.status === 409) this.loadCase();
-        }
+        error: (error: HttpErrorResponse) => this.showError(error)
       });
   }
 
@@ -258,7 +255,7 @@ export class UniversityCaseComponent {
         next: (item) => {
           this.internshipCase.set(item);
           this.syncReviewForm(item);
-          this.messages.add({ severity: 'success', summary: 'تأیید نهایی شد', detail: 'پرونده آماده شروع کارآموزی است.' });
+          this.messages.add({ severity: 'success', summary: 'تأیید نهایی شد', detail: 'پرونده کارآموزی با تأیید نهایی فعال شد.' });
         },
         error: (error: HttpErrorResponse) => this.showError(error)
       });

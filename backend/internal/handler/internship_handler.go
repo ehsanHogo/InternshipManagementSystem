@@ -62,6 +62,9 @@ type internshipCaseResponse struct {
 	CancellationComment           *string                        `json:"cancellationComment,omitempty"`
 	CancelledAt                   *time.Time                     `json:"cancelledAt,omitempty"`
 	CompanyDetailsRevisionComment *string                        `json:"companyDetailsRevisionComment,omitempty"`
+	UniversityRevisionComment     *string                        `json:"universityRevisionComment,omitempty"`
+	UniversityRevisionRequestedAt *time.Time                     `json:"universityRevisionRequestedAt,omitempty"`
+	UniversityRevisionRequestedBy *uint                          `json:"universityRevisionRequestedBy,omitempty"`
 	ActivatedAt                   *time.Time                     `json:"activatedAt"`
 	FinalReport                   *model.FinalReport             `json:"finalReport,omitempty"`
 	WeeklyReportCount             int                            `json:"weeklyReportCount"`
@@ -303,7 +306,7 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		errors.Is(err, service.ErrInternshipSubjectRequired), errors.Is(err, service.ErrStartDateRequired),
 		errors.Is(err, service.ErrWorkplaceAddressRequired), errors.Is(err, service.ErrWorkplacePhoneRequired),
 		errors.Is(err, service.ErrInvalidStartDate), errors.Is(err, service.ErrPlacementDetailsTooLong),
-		errors.Is(err, service.ErrCompanyDetailsRevisionCommentRequired), errors.Is(err, service.ErrFinalReportCommentRequired), errors.Is(err, service.ErrInvalidFinalReportFile):
+		errors.Is(err, service.ErrUniversityRevisionCommentRequired), errors.Is(err, service.ErrCompanyDetailsRevisionCommentRequired), errors.Is(err, service.ErrFinalReportCommentRequired), errors.Is(err, service.ErrInvalidFinalReportFile):
 		status = http.StatusBadRequest
 	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit),
 		errors.Is(err, service.ErrNoOpenInternshipTerm),
@@ -316,8 +319,7 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		errors.Is(err, service.ErrCaseNotPendingUniversityReview),
 		errors.Is(err, service.ErrCompanySupervisorResolution), errors.Is(err, service.ErrInvalidCompanyPlacement),
 		errors.Is(err, service.ErrCaseNotPendingCompanyDetails), errors.Is(err, service.ErrCaseNotPendingFinalApproval),
-		errors.Is(err, service.ErrPlacementDetailsIncomplete), errors.Is(err, service.ErrPlacementRelationshipInvalid),
-		errors.Is(err, service.ErrCaseNotReadyToStart), errors.Is(err, service.ErrCaseActivationIntegrityFailed):
+		errors.Is(err, service.ErrPlacementDetailsIncomplete), errors.Is(err, service.ErrPlacementRelationshipInvalid):
 		status = http.StatusConflict
 	case errors.Is(err, service.ErrFinalReportTooLarge):
 		status = http.StatusRequestEntityTooLarge
@@ -363,16 +365,14 @@ func internshipErrorCode(err error) string {
 		return "FINAL_REPORT_TOO_LARGE"
 	case errors.Is(err, service.ErrProfessorFinalReportRequired):
 		return "FINAL_REPORT_NOT_APPROVED"
-	case errors.Is(err, service.ErrCaseNotReadyToStart):
-		return "INTERNSHIP_CASE_NOT_READY_TO_START"
-	case errors.Is(err, service.ErrCaseActivationIntegrityFailed):
-		return "INTERNSHIP_CASE_ACTIVATION_INTEGRITY_FAILED"
 	case errors.Is(err, service.ErrCaseNotPendingFinalApproval):
 		return "INTERNSHIP_CASE_NOT_PENDING_FINAL_APPROVAL"
 	case errors.Is(err, service.ErrPlacementDetailsIncomplete):
 		return "PLACEMENT_DETAILS_INCOMPLETE"
 	case errors.Is(err, service.ErrPlacementRelationshipInvalid):
 		return "PLACEMENT_RELATIONSHIP_INVALID"
+	case errors.Is(err, service.ErrUniversityRevisionCommentRequired):
+		return "UNIVERSITY_REVISION_COMMENT_REQUIRED"
 	case errors.Is(err, service.ErrCompanyDetailsRevisionCommentRequired):
 		return "COMPANY_DETAILS_REVISION_COMMENT_REQUIRED"
 	case errors.Is(err, service.ErrCaseNotAssignedToCompany):
@@ -405,6 +405,8 @@ func internshipErrorCode(err error) string {
 		return "PREFERENCE_APPLICATION_NOT_OWNED"
 	case errors.Is(err, service.ErrPreferenceNotAccepted):
 		return "PREFERENCE_APPLICATION_NOT_ACCEPTED"
+	case errors.Is(err, service.ErrInvalidCaseStatus):
+		return "INVALID_INTERNSHIP_CASE_STATUS"
 	case errors.Is(err, service.ErrInvalidPreference):
 		return "INVALID_PREFERENCE_APPLICATION"
 	case errors.Is(err, service.ErrInvalidApplication):
@@ -444,16 +446,14 @@ func publicInternshipError(err error) string {
 		return "فایل گزارش نهایی باید یک فایل پی‌دی‌اف معتبر باشد."
 	case errors.Is(err, service.ErrFinalReportTooLarge):
 		return "حجم فایل گزارش نهایی نباید بیشتر از ۱۰ مگابایت باشد."
-	case errors.Is(err, service.ErrCaseNotReadyToStart):
-		return "فعال‌سازی فقط برای پرونده آماده شروع کارآموزی امکان‌پذیر است."
-	case errors.Is(err, service.ErrCaseActivationIntegrityFailed):
-		return "اطلاعات تأییدشده پرونده برای فعال‌سازی کامل یا معتبر نیست."
 	case errors.Is(err, service.ErrCaseNotPendingFinalApproval):
 		return "این پرونده در انتظار تأیید نهایی آموزش نیست."
 	case errors.Is(err, service.ErrPlacementDetailsIncomplete):
 		return "اطلاعات محل کارآموزی یا معرفی‌نامه کامل نیست."
 	case errors.Is(err, service.ErrPlacementRelationshipInvalid):
 		return "ارتباط محل انتخاب‌شده، درخواست پذیرفته‌شده یا سرپرست شرکت معتبر نیست."
+	case errors.Is(err, service.ErrUniversityRevisionCommentRequired):
+		return "ثبت دلیل اصلاح اولویت‌ها الزامی است."
 	case errors.Is(err, service.ErrCompanyDetailsRevisionCommentRequired):
 		return "ثبت توضیحات اصلاحات مورد نیاز الزامی است."
 	case errors.Is(err, service.ErrCaseNotAssignedToCompany):
@@ -573,6 +573,9 @@ func caseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 		InternshipSubject: internshipCase.InternshipSubject, StartDate: internshipCase.StartDate,
 		WorkplaceAddress: internshipCase.WorkplaceAddress, WorkplacePhone: internshipCase.WorkplacePhone,
 		CancellationComment: internshipCase.CancellationComment, CancelledAt: internshipCase.CancelledAt,
+		UniversityRevisionComment:     internshipCase.UniversityRevisionComment,
+		UniversityRevisionRequestedAt: internshipCase.UniversityRevisionRequestedAt,
+		UniversityRevisionRequestedBy: internshipCase.UniversityRevisionRequestedBy,
 		CompanyDetailsRevisionComment: internshipCase.CompanyDetailsRevisionComment,
 		ActivatedAt:                   internshipCase.ActivatedAt,
 		FinalResult:                   internshipCase.FinalResult, ProfessorComment: internshipCase.ProfessorComment,

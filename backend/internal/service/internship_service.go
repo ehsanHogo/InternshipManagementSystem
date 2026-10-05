@@ -213,7 +213,7 @@ func (service *InternshipService) AddPreference(studentID uint, input Preference
 		if err != nil {
 			return err
 		}
-		if internshipCase.Status != model.InternshipCaseStatusDraft {
+		if !preferencesEditable(internshipCase.Status) {
 			return ErrCaseNotEditable
 		}
 		if err := service.validatePreferenceApplication(tx, studentID, internshipCase.ID, input.OpportunityApplicationID, 0); err != nil {
@@ -271,7 +271,7 @@ func (service *InternshipService) UpdatePreference(studentID, preferenceID uint,
 		if internshipCase.ID != preference.InternshipCaseID {
 			return ErrPreferenceNotFound
 		}
-		if internshipCase.Status != model.InternshipCaseStatusDraft {
+		if !preferencesEditable(internshipCase.Status) {
 			return ErrCaseNotEditable
 		}
 		if err := service.validatePreferenceApplication(tx, studentID, internshipCase.ID, input.OpportunityApplicationID, preference.ID); err != nil {
@@ -309,7 +309,7 @@ func (service *InternshipService) ReplacePreferences(studentID uint, application
 		if err != nil {
 			return err
 		}
-		if internshipCase.Status != model.InternshipCaseStatusDraft {
+		if !preferencesEditable(internshipCase.Status) {
 			return ErrCaseNotEditable
 		}
 		caseID = internshipCase.ID
@@ -360,7 +360,7 @@ func (service *InternshipService) DeletePreference(studentID, preferenceID uint)
 		if internshipCase.ID != preference.InternshipCaseID {
 			return ErrPreferenceNotFound
 		}
-		if internshipCase.Status != model.InternshipCaseStatusDraft {
+		if !preferencesEditable(internshipCase.Status) {
 			return ErrCaseNotEditable
 		}
 		if err := tx.Delete(&preference).Error; err != nil {
@@ -386,7 +386,7 @@ func (service *InternshipService) SubmitCase(studentID uint) (*model.InternshipC
 		if err != nil {
 			return err
 		}
-		if internshipCase.Status != model.InternshipCaseStatusDraft {
+		if !preferencesEditable(internshipCase.Status) {
 			return ErrCaseNotEditable
 		}
 
@@ -574,7 +574,11 @@ func nonTerminalCaseStatuses() []model.InternshipCaseStatus {
 		model.InternshipCaseStatusPendingUniversityReview,
 		model.InternshipCaseStatusPendingCompanyDetails,
 		model.InternshipCaseStatusPendingFinalApproval,
-		model.InternshipCaseStatusReadyToStart,
+		model.InternshipCaseStatusRevisionRequested,
 		model.InternshipCaseStatusActive,
 	}
+}
+
+func preferencesEditable(status model.InternshipCaseStatus) bool {
+	return status == model.InternshipCaseStatusDraft || status == model.InternshipCaseStatusRevisionRequested
 }

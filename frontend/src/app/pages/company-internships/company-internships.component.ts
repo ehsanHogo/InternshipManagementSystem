@@ -35,7 +35,7 @@ export class CompanyInternshipsComponent {
 
   readonly filterOptions: { label: string; value: CompanyListFilter }[] = [
     { label: 'همه پرونده‌های اختصاص‌یافته', value: 'ALL' },
-    ...(['PENDING_COMPANY_DETAILS', 'PENDING_FINAL_APPROVAL', 'READY_TO_START', 'ACTIVE', 'PASSED', 'FAILED'] as const)
+    ...(['PENDING_COMPANY_DETAILS', 'PENDING_FINAL_APPROVAL', 'ACTIVE', 'PASSED', 'FAILED'] as const)
       .map(status => ({ label: internshipStatusLabels[status], value: status }))
   ];
 

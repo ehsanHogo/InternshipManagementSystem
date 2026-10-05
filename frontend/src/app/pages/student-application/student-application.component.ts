@@ -114,9 +114,21 @@ export class StudentApplicationComponent {
     return !this.viewingHistory() && this.internshipCase()?.status === 'DRAFT';
   }
 
+  get isRevisionRequested(): boolean {
+    return !this.viewingHistory() && this.internshipCase()?.status === 'REVISION_REQUESTED';
+  }
+
+  get canEditPreferences(): boolean {
+    return this.isDraft || this.isRevisionRequested;
+  }
+
   get canSubmit(): boolean {
     const count = this.internshipCase()?.preferences.length ?? 0;
-    return this.isDraft && this.applicationForm.valid && count >= 1 && count <= 3;
+    const item = this.internshipCase();
+    const detailsValid = this.isDraft ? this.applicationForm.valid :
+      item?.passedCredits != null && !!item.mobile?.trim();
+    return this.canEditPreferences && detailsValid && count >= 1 && count <= 3 &&
+      !!item?.preferences.every((preference, index) => preference.priority === index + 1);
   }
 
   readonly internshipStatusSeverity = internshipStatusSeverity;
@@ -270,7 +282,7 @@ export class StudentApplicationComponent {
   }
 
   private replacePreferences(applicationIDs: number[], successMessage: string): void {
-    if (!this.isDraft || this.preferenceSaving() || this.saving() || this.historyLoading()) return;
+    if (!this.canEditPreferences || this.preferenceSaving() || this.saving() || this.historyLoading()) return;
     this.preferenceSaving.set(true);
     this.internshipService
       .replacePreferences(applicationIDs)
@@ -310,10 +322,12 @@ export class StudentApplicationComponent {
     if (!this.canSubmit || this.saving() || this.preferenceSaving() || this.historyLoading()) return;
     const value = this.applicationForm.getRawValue();
     this.saving.set(true);
-    this.internshipService
-      .updateCase(value.passedCredits, value.mobile.trim())
+    const submission = this.isDraft
+      ? this.internshipService.updateCase(value.passedCredits, value.mobile.trim()).pipe(
+          switchMap(() => this.internshipService.submitCase()))
+      : this.internshipService.submitCase();
+    submission
       .pipe(
-        switchMap(() => this.internshipService.submitCase()),
         finalize(() => this.saving.set(false))
       )
       .subscribe({

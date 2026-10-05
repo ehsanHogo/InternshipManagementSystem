@@ -301,7 +301,7 @@ func TestUniversityReviewWorkflow(t *testing.T) {
 			model.InternshipCaseStatusDraft,
 			model.InternshipCaseStatusPendingCompanyDetails,
 			model.InternshipCaseStatusPendingFinalApproval,
-			model.InternshipCaseStatusReadyToStart,
+			model.InternshipCaseStatusRevisionRequested,
 			model.InternshipCaseStatusActive,
 			model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed,
 			model.InternshipCaseStatusCancelled,

@@ -60,7 +60,7 @@ func TestOpportunityApplicationEligibilityReviewAndAuthorization(t *testing.T) {
 		}
 	})
 
-	for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusCancelled} {
+	for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusRevisionRequested, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled} {
 		status := status
 		t.Run(string(status)+" allows application", func(t *testing.T) {
 			student := applicationTestUser(t, tx, suffix, "allowed-"+string(status), model.RoleStudent, nil)
@@ -75,7 +75,6 @@ func TestOpportunityApplicationEligibilityReviewAndAuthorization(t *testing.T) {
 		model.InternshipCaseStatusPendingUniversityReview,
 		model.InternshipCaseStatusPendingCompanyDetails,
 		model.InternshipCaseStatusPendingFinalApproval,
-		model.InternshipCaseStatusReadyToStart,
 		model.InternshipCaseStatusActive,
 	}
 	for _, status := range blockingStatuses {
@@ -95,6 +94,7 @@ func TestOpportunityApplicationEligibilityReviewAndAuthorization(t *testing.T) {
 		student := applicationTestUser(t, tx, suffix, "completed", model.RoleStudent, nil)
 		applicationTestCase(t, tx, student.ID, professor.ID, model.InternshipCaseStatusCancelled)
 		applicationTestCase(t, tx, student.ID, professor.ID, model.InternshipCaseStatusDraft)
+		applicationTestCase(t, tx, student.ID, professor.ID, model.InternshipCaseStatusRevisionRequested)
 		applicationTestCase(t, tx, student.ID, professor.ID, model.InternshipCaseStatusPassed)
 		resume := applicationTestResume(suffix, "completed")
 		if _, err := applications.Apply(student.ID, openOpportunity.ID, resume); !errors.Is(err, ErrInternshipAlreadyPassed) {

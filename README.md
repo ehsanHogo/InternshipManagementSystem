@@ -84,10 +84,12 @@ OpportunityApplication: PENDING → ACCEPTED (company recruitment)
 
 InternshipCase:
 DRAFT → PENDING_UNIVERSITY_REVIEW
-      → PENDING_COMPANY_DETAILS
-      → PENDING_FINAL_APPROVAL
-
+PENDING_UNIVERSITY_REVIEW → REVISION_REQUESTED → PENDING_UNIVERSITY_REVIEW
+PENDING_UNIVERSITY_REVIEW → PENDING_COMPANY_DETAILS → PENDING_FINAL_APPROVAL
+PENDING_FINAL_APPROVAL → PENDING_COMPANY_DETAILS (company correction)
+PENDING_FINAL_APPROVAL → ACTIVE → PASSED / FAILED
 PENDING_UNIVERSITY_REVIEW → CANCELLED (university cancellation)
+Any unfinished case → CANCELLED (atomic internship term closure)
 ```
 
 Recommended demonstration order:
@@ -98,9 +100,12 @@ Before creating an official case, sign in as the university supervisor and open 
 2. As the student, create the official case, enter credits/mobile, select one to three accepted applications in priority order, and submit.
 3. As the university supervisor, select one preference and enter introduction-letter number/date. The selected opportunity determines the company supervisor automatically.
 4. As that company supervisor, open **پرونده‌های کارآموزی**, enter subject, Jalali start date, actual workplace address/phone, and confirm submission to university.
-5. Refresh the company case and inspect the student and university views. Placement details are read-only in **در انتظار تأیید نهایی آموزش**.
+5. As the university supervisor, request company placement correction if needed, then give final approval. The case becomes **ACTIVE** immediately, including when its declared start date is in the future.
+6. Continue the existing weekly reporting and evaluation workflows.
 
-There is no second company acceptance after the introduction letter. University final approval/correction and activation are deferred to later milestones. Existing legacy reporting/evaluation code is retained; this milestone adds no reporting or completion actions.
+If none of the submitted preferences is suitable, the university can request student preference revision with a required reason. The student edits and resubmits the same case, preserving its term and professor. Students may apply for new opportunities in **DRAFT** or **REVISION_REQUESTED**; successful **PASSED** history still permanently blocks recruitment.
+
+There is no separate manual activation action. On startup or `cmd/migrate`, existing **READY_TO_START** records are converted to **ACTIVE** without changing unrelated case data.
 
 ## Excel Import Format
 
@@ -152,6 +157,15 @@ cd ../frontend
 npm ci
 npm run build
 ```
+
+Enable the full PostgreSQL integration suite against a dedicated test database:
+
+```bash
+cd backend
+TEST_DATABASE_DSN='host=localhost port=5433 user=postgres password=postgres dbname=internship_test sslmode=disable' go test -p 1 ./... -count=1
+```
+
+The test database must already exist. Run packages serially (`-p 1`) because existing integration tests share the public schema and run GORM migrations. Term and compatibility tests also create and remove isolated schemas.
 
 To apply idempotent migrations/seeds to the local Docker database without deleting data:
 

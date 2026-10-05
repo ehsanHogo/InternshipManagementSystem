@@ -75,10 +75,7 @@ func TestCompanyPlacementAPI(t *testing.T) {
 	universities.GET("/internship-cases", handler.ListUniversityCases)
 	universities.GET("/internship-cases/pending-final-approval", handler.ListPendingFinalApprovalCases)
 	universities.GET("/internship-cases/:id", handler.GetUniversityCase)
-	universities.POST("/internship-cases/:id/approve-placement", handler.ApproveUniversityPlacement)
-	universities.POST("/internship-cases/:id/final-approve", handler.ApprovePlacementDetails)
-	universities.POST("/internship-cases/:id/activate", handler.ActivateUniversityCase)
-	universities.POST("/internship-cases/:id/request-placement-correction", handler.RequestPlacementCorrection)
+	handler.RegisterUniversityCaseRoutes(universities)
 	professors := api.Group("/professor")
 	professors.Use(appmiddleware.RequireRole(model.RoleProfessor))
 	professors.GET("/internship-cases/:id", handler.GetProfessorCase)
@@ -280,7 +277,6 @@ func TestCompanyPlacementAPI(t *testing.T) {
 			{http.MethodGet, "/api/university/internship-cases/pending-final-approval"},
 			{http.MethodGet, universityPath},
 			{http.MethodPost, universityPath + "/final-approve"},
-			{http.MethodPost, universityPath + "/activate"},
 			{http.MethodPost, universityPath + "/request-placement-correction"},
 		} {
 			for _, user := range []model.User{student, professor, supervisorA, supervisorB, admin} {
@@ -398,7 +394,7 @@ func TestCompanyPlacementAPI(t *testing.T) {
 			t.Fatalf("approve: %d %s", result.Code, result.Body)
 		}
 		ready := load()
-		after.Status, after.UpdatedAt = model.InternshipCaseStatusReadyToStart, ready.UpdatedAt
+		after.Status, after.UpdatedAt, after.ActivatedAt = model.InternshipCaseStatusActive, ready.UpdatedAt, ready.ActivatedAt
 		if !reflect.DeepEqual(after, ready) {
 			t.Fatalf("approval changed other case data: %+v -> %+v", after, ready)
 		}
@@ -421,7 +417,7 @@ func TestCompanyPlacementAPI(t *testing.T) {
 			if err := json.Unmarshal(result.Body.Bytes(), &view); err != nil {
 				t.Fatal(err)
 			}
-			if view.Status != model.InternshipCaseStatusReadyToStart || view.ActivatedAt != nil || view.WorkplaceAddress == nil || *view.WorkplaceAddress != "آدرس اصلاح‌شده" || view.SelectedPreference == nil {
+			if view.Status != model.InternshipCaseStatusActive || view.ActivatedAt == nil || view.WorkplaceAddress == nil || *view.WorkplaceAddress != "آدرس اصلاح‌شده" || view.SelectedPreference == nil {
 				t.Fatalf("ready detail: %+v", view)
 			}
 			if get.company {
@@ -432,53 +428,17 @@ func TestCompanyPlacementAPI(t *testing.T) {
 				t.Fatal("student/university preference ordering lost")
 			}
 		}
-		assertList("/api/university/internship-cases?status=READY_TO_START", tokenUniversity, 1)
-		for _, body := range []map[string]any{{}, {"status": "ACTIVE"}, {"activatedAt": "2099-01-01"}, {"studentId": student.ID}, {"companyId": companyA.ID}, {"supervisorId": supervisorA.ID}} {
-			assertAPIError(t, performJSONRequest(t, router, http.MethodPost, universityPath+"/activate", body, tokenUniversity), http.StatusBadRequest, "INVALID_INTERNSHIP_CASE_ACTIVATION")
-			assertUnchanged(ready)
-		}
-		if err := tx.Model(&item).Update("start_date", nil).Error; err != nil {
-			t.Fatal(err)
-		}
-		corrupt := load()
-		assertAPIError(t, performJSONRequest(t, router, http.MethodPost, universityPath+"/activate", nil, tokenUniversity), http.StatusConflict, "INTERNSHIP_CASE_ACTIVATION_INTEGRITY_FAILED")
-		assertUnchanged(corrupt)
-		if err := tx.Model(&item).UpdateColumns(map[string]any{"start_date": ready.StartDate, "updated_at": ready.UpdatedAt}).Error; err != nil {
-			t.Fatal(err)
-		}
-		assertAPIError(t, performJSONRequest(t, router, http.MethodPost, "/api/university/internship-cases/9223372036854775807/activate", nil, tokenUniversity), http.StatusNotFound, "INTERNSHIP_CASE_NOT_FOUND")
-		snapshot := func() []any {
-			var companies []model.Company
-			var users []model.User
-			var opportunities []model.InternshipOpportunity
-			var applications []model.OpportunityApplication
-			var preferences []model.InternshipPreference
-			var files []model.File
-			for _, dest := range []any{&companies, &users, &opportunities, &applications, &preferences, &files} {
-				if err := tx.Order("id").Find(dest).Error; err != nil {
-					t.Fatal(err)
-				}
-			}
-			return []any{companies, users, opportunities, applications, preferences, files}
-		}
-		external := snapshot()
 		result = performJSONRequest(t, router, http.MethodPost, universityPath+"/activate", nil, tokenUniversity)
-		if result.Code != http.StatusOK {
-			t.Fatalf("activate: %d %s", result.Code, result.Body)
+		if result.Code != http.StatusNotFound {
+			t.Fatalf("obsolete activation route remains: %d", result.Code)
 		}
 		active := load()
 		if active.Status != model.InternshipCaseStatusActive || active.ActivatedAt == nil {
-			t.Fatalf("activation: %+v", active)
+			t.Fatalf("final approval must activate: %+v", active)
 		}
-		ready.Status, ready.ActivatedAt = model.InternshipCaseStatusActive, active.ActivatedAt
 		assertUnchanged(ready)
-		if !reflect.DeepEqual(external, snapshot()) {
-			t.Fatal("activation changed recruitment, files, company approval or user affiliation")
-		}
-		assertAPIError(t, performJSONRequest(t, router, http.MethodPost, universityPath+"/activate", nil, tokenUniversity), http.StatusConflict, "INTERNSHIP_CASE_NOT_READY_TO_START")
 		assertAPIError(t, performJSONRequest(t, router, http.MethodPost, path+"/placement-details", payload, tokenB), http.StatusConflict, "INTERNSHIP_CASE_NOT_PENDING_COMPANY_DETAILS")
 		assertUnchanged(active)
-		assertList("/api/university/internship-cases?status=READY_TO_START", tokenUniversity, 0)
 		assertList("/api/university/internship-cases?status=ACTIVE", tokenUniversity, 1)
 		for _, get := range []struct{ path, token string }{{path, tokenB}, {"/api/student/internship-case", tokenStudent}, {universityPath, tokenUniversity}} {
 			result := performJSONRequest(t, router, http.MethodGet, get.path, nil, get.token)

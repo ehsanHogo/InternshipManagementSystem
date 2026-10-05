@@ -16,6 +16,9 @@ import (
 const demoPassword = "Demo123!"
 
 func MigrateAndSeed(db *gorm.DB) error {
+	if err := migrateInternshipCaseStatuses(db); err != nil {
+		return err
+	}
 	if err := db.AutoMigrate(
 		&model.Company{},
 		&model.User{},
@@ -127,4 +130,31 @@ func createDemoUserIfMissing(db *gorm.DB, user *model.User) error {
 		return fmt.Errorf("create demo user %s: %w", user.Email, err)
 	}
 	return nil
+}
+
+// GORM does not replace an existing named CHECK when its expression changes.
+// Convert approved legacy rows before atomically replacing that constraint.
+func migrateInternshipCaseStatuses(db *gorm.DB) error {
+	if !db.Migrator().HasTable(&model.InternshipCase{}) {
+		return nil
+	}
+	return db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec("LOCK TABLE internship_cases IN ACCESS EXCLUSIVE MODE").Error; err != nil {
+			return fmt.Errorf("lock internship status migration: %w", err)
+		}
+		// updated_at is the best existing audit timestamp for legacy ready cases.
+		// Preserve activated_at when present and never rewrite unrelated timestamps.
+		if err := tx.Exec(`UPDATE internship_cases SET status = 'ACTIVE',
+   activated_at = COALESCE(activated_at, updated_at, submitted_at, created_at, CURRENT_TIMESTAMP)
+   WHERE status = 'READY_TO_START'`).Error; err != nil {
+			return fmt.Errorf("migrate approved internship cases: %w", err)
+		}
+		if err := tx.Exec("ALTER TABLE internship_cases DROP CONSTRAINT IF EXISTS chk_internship_case_status").Error; err != nil {
+			return fmt.Errorf("drop legacy internship status constraint: %w", err)
+		}
+		if err := tx.Migrator().CreateConstraint(&model.InternshipCase{}, "chk_internship_case_status"); err != nil {
+			return fmt.Errorf("create internship status constraint: %w", err)
+		}
+		return nil
+	})
 }
