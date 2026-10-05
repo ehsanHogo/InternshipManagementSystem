@@ -225,3 +225,14 @@ The second command is destructive and should not be used when demo data must be 
 - A 401 clears the local session and returns the browser to login. Sign in again if a demo JWT expires.
 - Local frontend development requires the backend on port `8082`, matching `frontend/proxy.conf.json`.
 - Uploaded reports missing after a container restart usually indicates the `final_reports` volume was removed.
+
+University Supervisors can self-register at `/university-supervisor-register`. New accounts are active and pending verification; pending/rejected accounts retain Profile, password change, and `/university-supervisor/verification`, while approved accounts gain University operational access. Existing University accounts are backfilled as approved once.
+
+Admins use `/admin/user-verifications` for University identity review and `/admin/users` for read-only user inspection and enable/disable. `/admin/company-registrations` remains the separate Company registration flow. Roles are fixed by their creation workflow, and Student/Professor provisioning remains with the University. Disabled accounts cannot log in or use existing JWTs; activation does not change business history or approval decisions.
+
+```bash
+SMOKE_BASE_URL=http://127.0.0.1:14222 \
+PLAYWRIGHT_MODULE=/path/to/node_modules/playwright \
+CHROME_PATH=/usr/bin/google-chrome \
+node frontend/scripts/m22-browser-smoke.cjs
+```

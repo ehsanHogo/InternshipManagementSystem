@@ -1,0 +1,60 @@
+<section class="page-heading">
+ <div><span class="eyebrow">مدیر سیستم</span><h1>{{ verificationOnly ? 'احراز هویت مسئولان آموزش' : 'مدیریت کاربران' }}</h1><p>{{ verificationOnly ? 'درخواست‌های هویت مسئولان آموزش را تأیید یا با ذکر دلیل رد کنید.' : 'هویت کاربران را مشاهده و دسترسی حساب‌ها را فعال یا غیرفعال کنید.' }}</p></div>
+ <p-button label="به‌روزرسانی" [disabled]="loading()" (onClick)="load()" />
+</section>
+<form class="form-grid" (ngSubmit)="load()">
+ <label class="field" for="user-search">جستجوی نام یا ایمیل<input id="user-search" pInputText name="search" [(ngModel)]="search" /></label>
+ @if (verificationOnly) {
+  <label class="field">وضعیت احراز هویت<p-select name="status" inputId="verification-filter" [options]="statusOptions" optionLabel="label" optionValue="value" [(ngModel)]="status" /></label>
+ } @else {
+  <label class="field">فیلتر نقش<p-select name="role" inputId="role-filter" [options]="roleOptions" optionLabel="label" optionValue="value" [(ngModel)]="role" /></label>
+  <label class="field">وضعیت حساب<p-select name="active" inputId="active-filter" [options]="activeOptions" optionLabel="label" optionValue="value" [(ngModel)]="active" /></label>
+ }
+ <div class="card-actions"><p-button type="submit" label="جستجو" [disabled]="loading()" /></div>
+</form>
+@if (loading()) { <div class="state-card" role="status">در حال دریافت کاربران...</div> }
+@else if (failed()) { <div class="state-card"><p>دریافت کاربران ناموفق بود.</p><p-button label="تلاش دوباره" (onClick)="load()" /></div> }
+@else {
+ <p-table [value]="users()" responsiveLayout="scroll" [paginator]="true" [rows]="20">
+  <ng-template #header><tr><th>نام</th><th>ایمیل</th><th>تلفن</th><th>تاریخ ثبت</th><th>{{ verificationOnly ? 'احراز هویت' : 'نقش' }}</th><th>حساب</th><th>جزئیات</th></tr></ng-template>
+  <ng-template #body let-user><tr><td>{{ user.fullName }}</td><td dir="ltr">{{ user.email }}</td><td dir="ltr">{{ user.phone || '—' }}</td><td>{{ user.createdAt | jalaliDate }}</td><td>{{ rowLabel(user) }}</td><td>{{ user.isActive ? 'فعال' : 'غیرفعال' }}</td><td><p-button label="مشاهده" [text]="true" (onClick)="inspect(user.id)" /></td></tr></ng-template>
+  <ng-template #emptymessage><tr><td colspan="7">کاربری با این فیلترها یافت نشد.</td></tr></ng-template>
+ </p-table>
+}
+<p-dialog [header]="verificationOnly ? 'جزئیات احراز هویت' : 'جزئیات کاربر'" [visible]="visible()" (visibleChange)="visible.set($event)" [modal]="true" appendTo="body" [style]="{ width: 'min(92vw, 48rem)' }">
+ @if (detailLoading()) { <p>در حال دریافت جزئیات...</p> }
+ @else if (detailFailed()) { <p-button label="تلاش دوباره" (onClick)="inspect(detailId()!)" /> }
+ @else if (detail(); as account) {
+  <div class="detail-grid">
+   <div class="detail"><span>نام</span><strong>{{ account.fullName }}</strong></div>
+   <div class="detail"><span>ایمیل</span><strong dir="ltr">{{ account.email }}</strong></div>
+   <div class="detail"><span>تلفن</span><strong dir="ltr">{{ account.phone || '—' }}</strong></div>
+   <div class="detail"><span>نقش (فقط خواندنی)</span><strong>{{ roles[account.role] }}</strong></div>
+   <div class="detail"><span>تاریخ ثبت</span><strong>{{ account.createdAt | jalaliDate }}</strong></div>
+   <div class="detail"><span>وضعیت حساب</span><strong>{{ account.isActive ? 'فعال' : 'غیرفعال' }}</strong></div>
+   @if (account.role === 'STUDENT') {
+    <div class="detail"><span>شماره دانشجویی</span><strong>{{ account.studentNumber || '—' }}</strong></div>
+    <div class="detail"><span>رشته</span><strong>{{ account.major || '—' }}</strong></div>
+   }
+   @if (account.role === 'COMPANY_SUPERVISOR') {
+    <div class="detail"><span>شرکت</span><strong>{{ account.companyName || '—' }}</strong></div>
+    <div class="detail"><span>عنوان شغلی</span><strong>{{ account.jobTitle || '—' }}</strong></div>
+    @if (account.companyRegistrationStatus; as companyStatus) { <div class="detail"><span>وضعیت ثبت شرکت</span><strong>{{ companyLabels[companyStatus] }}</strong></div> }
+   }
+   @if (account.role === 'UNIVERSITY_SUPERVISOR') {
+    <div class="detail"><span>احراز هویت</span><strong>{{ labels[account.verificationStatus] }}</strong></div>
+    @if (account.verificationReviewedAt) { <div class="detail"><span>آخرین بررسی</span><strong>{{ account.verificationReviewedAt | jalaliDate }}</strong></div> }
+    @if (account.verificationResubmittedAt) { <div class="detail"><span>آخرین ارسال مجدد</span><strong>{{ account.verificationResubmittedAt | jalaliDate }}</strong></div> }
+   }
+  </div>
+  @if (account.verificationRejectionReason) { <p>دلیل رد: {{ account.verificationRejectionReason }}</p> }
+  @if (verificationOnly && account.verificationStatus === 'PENDING') {
+   <label class="field" for="rejection-reason">دلیل رد<textarea id="rejection-reason" pTextarea rows="3" maxlength="5000" [(ngModel)]="reason"></textarea></label>
+   <div class="card-actions"><p-button label="تأیید" [disabled]="busy()" (onClick)="review(true)" /><p-button label="رد" severity="danger" [disabled]="busy() || !reason.trim()" (onClick)="review(false)" /></div>
+  }
+  @if (!verificationOnly) {
+   <p>غیرفعال‌سازی فقط دسترسی حساب را متوقف می‌کند و اطلاعات و سوابق را نگه می‌دارد.</p>
+   <p-button [label]="account.isActive ? 'غیرفعال کردن حساب' : 'فعال کردن حساب'" [severity]="account.isActive ? 'danger' : 'success'" [disabled]="busy() || (account.isActive && !canDisable(account))" (onClick)="toggleActive()" />
+  }
+ }
+</p-dialog>

@@ -215,6 +215,9 @@ func applicationTestCompany(t *testing.T, db *gorm.DB, suffix int64, label strin
 func applicationTestUser(t *testing.T, db *gorm.DB, suffix int64, label string, role model.Role, companyID *uint) model.User {
 	t.Helper()
 	user := model.User{FullName: "کاربر آزمون", Email: fmt.Sprintf("application-%d-%s@example.test", suffix, label), PasswordHash: "unused", Role: role, CompanyID: companyID}
+	if role == model.RoleUniversitySupervisor {
+		user.VerificationStatus = model.UserVerificationApproved
+	}
 	if err := db.Create(&user).Error; err != nil {
 		t.Fatalf("create user %s: %v", label, err)
 	}

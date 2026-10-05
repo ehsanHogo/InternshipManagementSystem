@@ -1,6 +1,9 @@
 package middleware
 
 import (
+	"errors"
+	"gorm.io/gorm"
+	"log"
 	"net/http"
 	"strings"
 
@@ -63,4 +66,47 @@ func RequireRole(allowedRoles ...model.Role) gin.HandlerFunc {
 
 func abortUnauthorized(ctx *gin.Context) {
 	ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "ورود به سامانه الزامی است."})
+}
+
+// JWTs identify the user; the current database row authorizes every request.
+func RequireActiveUser(db *gorm.DB) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		id, exists := ctx.Get(ContextUserID)
+		if !exists {
+			abortUnauthorized(ctx)
+			return
+		}
+		var user model.User
+		err := db.First(&user, id).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) || (err == nil && !user.IsActive) {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "حساب کاربری غیرفعال است یا در دسترس نیست."})
+			return
+		}
+		if err != nil {
+			log.Printf("current account lookup failed: %v", err)
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "خطایی در سرور رخ داد."})
+			return
+		}
+		ctx.Set(ContextRole, user.Role)
+		ctx.Set("auth_current_user", user)
+		ctx.Next()
+	}
+}
+
+// Register personal/status endpoints before this middleware. All subsequent
+// business routes, including shared company/file routes, require verification.
+func RequireVerifiedUniversity() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		value, exists := ctx.Get("auth_current_user")
+		user, ok := value.(model.User)
+		if !exists || !ok {
+			abortUnauthorized(ctx)
+			return
+		}
+		if user.Role == model.RoleUniversitySupervisor && user.VerificationStatus != model.UserVerificationApproved {
+			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": "UNIVERSITY_VERIFICATION_REQUIRED", "error": "دسترسی به امکانات دانشگاه نیازمند تأیید احراز هویت مدیر سیستم است."})
+			return
+		}
+		ctx.Next()
+	}
 }

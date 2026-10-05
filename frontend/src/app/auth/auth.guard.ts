@@ -26,7 +26,7 @@ export const studentGuard: CanActivateFn = () => {
 export const universitySupervisorGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
-  return auth.getCurrentUser()?.role === 'UNIVERSITY_SUPERVISOR' ? true : router.createUrlTree(['/dashboard']);
+  return auth.getCurrentUser()?.role === 'UNIVERSITY_SUPERVISOR' && auth.getCurrentUser()?.verificationStatus === 'APPROVED' ? true : router.createUrlTree(['/dashboard']);
 };
 
 export const companySupervisorGuard: CanActivateFn = () => {
@@ -58,4 +58,27 @@ export const adminGuard: CanActivateFn = () => {
  const auth = inject(AuthService);
  const router = inject(Router);
  return auth.getCurrentUser()?.role === 'ADMIN' ? true : router.createUrlTree(['/dashboard']);
+};
+
+export const universityIdentityGuard: CanActivateFn = () => {
+ const auth = inject(AuthService);
+ const router = inject(Router);
+ return auth.getCurrentUser()?.role === 'UNIVERSITY_SUPERVISOR' ? true : router.createUrlTree(['/dashboard']);
+};
+
+// Refresh current account authorization on every child navigation. Approval and
+// disable decisions take effect without replacing the existing JWT.
+export const currentAccountGuard: CanActivateChildFn = (_route, state) => {
+ const auth = inject(AuthService);
+ const router = inject(Router);
+ const path = state.url.split('?')[0].split('#')[0];
+ return auth.refreshUser().pipe(
+  map(user => {
+   if (user.role === 'UNIVERSITY_SUPERVISOR' && user.verificationStatus !== 'APPROVED' && !['/profile', '/university-supervisor/verification'].includes(path)) {
+    return router.createUrlTree(['/university-supervisor/verification']);
+   }
+   return true;
+  }),
+  catchError(() => of(router.createUrlTree(['/login'])))
+ );
 };

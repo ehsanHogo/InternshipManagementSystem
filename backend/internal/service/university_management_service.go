@@ -190,7 +190,7 @@ func (service *UniversityManagementService) validateAssignmentUsers(studentID, p
 	if count == 0 {
 		return ErrManagedUserNotFound
 	}
-	if err := service.db.Model(&model.User{}).Where("id = ? AND role = ?", professorID, model.RoleProfessor).Count(&count).Error; err != nil {
+	if err := service.db.Model(&model.User{}).Where("id = ? AND role = ? AND is_active = true", professorID, model.RoleProfessor).Count(&count).Error; err != nil {
 		return fmt.Errorf("validate professor: %w", err)
 	}
 	if count == 0 {

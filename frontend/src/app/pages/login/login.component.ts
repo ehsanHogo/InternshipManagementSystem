@@ -51,7 +51,7 @@ export class LoginComponent {
     if (error.status === 0) {
       detail = 'خطا در ارتباط با سرور';
     } else if (error.status === 401) {
-      detail = 'ایمیل یا رمز عبور صحیح نیست';
+      detail = error.error?.error || 'ایمیل یا رمز عبور صحیح نیست';
     }
 
     this.messages.add({ severity: 'error', summary: 'ورود ناموفق', detail });

@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 
 import {
   authGuard,
+  currentAccountGuard,
+  universityIdentityGuard,
   adminGuard,
   companyAccessGuard,
   companySupervisorGuard,
@@ -12,6 +14,7 @@ import {
 } from './auth/auth.guard';
 
 export const routes: Routes = [
+ { path: 'university-supervisor-register', canActivate: [guestGuard], loadComponent: () => import('./pages/university-register/university-register.component').then(m => m.UniversityRegisterComponent) },
   {
     path: 'login',
     canActivate: [guestGuard],
@@ -26,9 +29,12 @@ export const routes: Routes = [
   {
     path: '',
     canActivate: [authGuard],
-    canActivateChild: [companyAccessGuard],
+    canActivateChild: [currentAccountGuard, companyAccessGuard],
     loadComponent: () => import('./layout/app-shell.component').then((module) => module.AppShellComponent),
     children: [
+      { path: 'university-supervisor/verification', canActivate: [universityIdentityGuard], loadComponent: () => import('./pages/university-verification/university-verification.component').then(m => m.UniversityVerificationComponent) },
+      { path: 'admin/user-verifications', canActivate: [adminGuard], data: { verificationOnly: true }, loadComponent: () => import('./pages/admin-users/admin-users.component').then(m => m.AdminUsersComponent) },
+      { path: 'admin/users', canActivate: [adminGuard], data: { verificationOnly: false }, loadComponent: () => import('./pages/admin-users/admin-users.component').then(m => m.AdminUsersComponent) },
       {
         path: 'profile',
         loadComponent: () => import('./pages/profile/profile.component').then(module => module.ProfileComponent)

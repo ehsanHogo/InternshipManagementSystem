@@ -50,7 +50,7 @@ func TestProfileReadAndUpdateAllRoles(t *testing.T) {
 			if err := json.Unmarshal(read.Body.Bytes(), &fields); err != nil {
 				t.Fatal(err)
 			}
-			allowed := map[string]bool{"id": true, "fullName": true, "email": true, "role": true, "phone": true, "studentNumber": true, "major": true, "jobTitle": true, "companyId": true, "companyName": true, "companyRegistrationStatus": true}
+			allowed := map[string]bool{"isActive": true, "createdAt": true, "verificationStatus": true, "verificationReviewedAt": true, "verificationRejectionReason": true, "verificationResubmittedAt": true, "id": true, "fullName": true, "email": true, "role": true, "phone": true, "studentNumber": true, "major": true, "jobTitle": true, "companyId": true, "companyName": true, "companyRegistrationStatus": true}
 			for key := range fields {
 				if !allowed[key] {
 					t.Fatalf("unsafe profile field: %s", key)

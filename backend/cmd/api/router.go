@@ -34,15 +34,19 @@ func newRouter(cfg config.Config, db *gorm.DB) *gin.Engine {
 	api := router.Group("/api")
 	api.GET("/health", healthHandler.Get)
 	api.POST("/auth/login", authHandler.Login)
+	userAccessHandler := handler.NewUserAccessHandler(service.NewUserAccessService(db))
+	api.POST("/auth/university-supervisor-register", userAccessHandler.Register)
 	api.POST("/auth/company-register", companyAccountHandler.Register)
-	api.GET("/auth/me", appmiddleware.RequireAuth(cfg.JWT.Secret), authHandler.Me)
-	api.GET("/protected", appmiddleware.RequireAuth(cfg.JWT.Secret), authHandler.Protected)
+	api.GET("/auth/me", appmiddleware.RequireAuth(cfg.JWT.Secret), appmiddleware.RequireActiveUser(db), authHandler.Me)
+	api.GET("/protected", appmiddleware.RequireAuth(cfg.JWT.Secret), appmiddleware.RequireActiveUser(db), authHandler.Protected)
 
 	authenticated := api.Group("")
-	authenticated.Use(appmiddleware.RequireAuth(cfg.JWT.Secret))
+	authenticated.Use(appmiddleware.RequireAuth(cfg.JWT.Secret), appmiddleware.RequireActiveUser(db))
 	profileHandler := handler.NewProfileHandler(service.NewProfileService(db))
 	authenticated.PUT("/profile", profileHandler.Update)
 	authenticated.POST("/profile/change-password", profileHandler.ChangePassword)
+	authenticated.POST("/university-supervisor/verification/resubmit", appmiddleware.RequireRole(model.RoleUniversitySupervisor), userAccessHandler.Resubmit)
+	authenticated.Use(appmiddleware.RequireVerifiedUniversity())
 	authenticated.GET("/companies", appmiddleware.RequireApprovedCompanyIfSupervisor(db), internshipHandler.ListCompanies)
 
 	student := authenticated.Group("/student")
@@ -117,6 +121,7 @@ func newRouter(cfg config.Config, db *gorm.DB) *gin.Engine {
 
 	admin := authenticated.Group("/admin")
 	admin.Use(appmiddleware.RequireRole(model.RoleAdmin))
+	userAccessHandler.RegisterAdminRoutes(admin)
 	handler.NewCompanyRegistrationHandler(service.NewCompanyRegistrationService(db)).RegisterRoutes(admin)
 
 	professor := authenticated.Group("/professor")

@@ -1,0 +1,6 @@
+.registration-page { min-height: 100dvh; display: grid; place-items: center; padding: 2rem 1rem; background: #f8fafc; }
+.registration-card { width: min(100%, 32rem); padding: 2rem; border: 1px solid #e2e8f0; border-radius: 1rem; background: #fff; }
+.form-grid, label { display: grid; gap: .6rem; }
+.form-grid { gap: 1.2rem; }
+input { width: 100%; }
+[role='alert'] { color: #b91c1c; }

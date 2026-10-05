@@ -49,6 +49,10 @@ func (handler *AuthHandler) Login(ctx *gin.Context) {
 		return
 	}
 
+	if !user.IsActive {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "حساب کاربری غیرفعال است. با مدیر سیستم تماس بگیرید."})
+		return
+	}
 	token, err := auth.CreateToken(user, handler.jwtSecret, handler.tokenLifetime)
 	if err != nil {
 		log.Printf("create login token: %v", err)

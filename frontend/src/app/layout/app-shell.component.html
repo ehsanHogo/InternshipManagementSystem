@@ -12,7 +12,7 @@
           (onClick)="openNav()"
         />
       }
-      <a class="brand" [routerLink]="restrictedCompany() ? '/company/profile' : '/dashboard'" aria-label="سامانه مدیریت کارآموزی">
+      <a class="brand" [routerLink]="restrictedUniversity() ? '/university-supervisor/verification' : restrictedCompany() ? '/company/profile' : '/dashboard'" aria-label="سامانه مدیریت کارآموزی">
         <i class="pi pi-graduation-cap" aria-hidden="true"></i>
         <span>سامانه مدیریت کارآموزی دانشجویان</span>
       </a>
@@ -52,11 +52,13 @@
       [closeOnEscape]="true"
     >
       <nav class="navigation navigation--drawer" aria-label="منوی اصلی">
-        @if (!restrictedCompany()) {
+        @if (!restrictedCompany() && !restrictedUniversity()) {
           <a routerLink="/dashboard" routerLinkActive="active"><i class="pi pi-home" aria-hidden="true"></i>داشبورد</a>
         }
         @if (user()?.role === 'ADMIN') {
           <a routerLink="/admin/company-registrations" routerLinkActive="active"><i class="pi pi-building" aria-hidden="true"></i>بررسی ثبت شرکت‌ها</a>
+          <a routerLink="/admin/user-verifications" routerLinkActive="active">احراز هویت مسئولان آموزش</a>
+          <a routerLink="/admin/users" routerLinkActive="active">مدیریت کاربران</a>
         }
         @if (user()?.role === 'STUDENT') {
           <a routerLink="/student/approved-companies" routerLinkActive="active">
@@ -85,6 +87,9 @@
           </a>
         }
         @if (user()?.role === 'UNIVERSITY_SUPERVISOR') {
+          <a routerLink="/university-supervisor/verification" routerLinkActive="active">وضعیت احراز هویت</a>
+        }
+        @if (user()?.role === 'UNIVERSITY_SUPERVISOR' && !restrictedUniversity()) {
           <a routerLink="/university/internship-terms" routerLinkActive="active">
             <i class="pi pi-calendar" aria-hidden="true"></i>
             ترم‌های کارآموزی

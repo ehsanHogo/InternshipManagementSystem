@@ -1,0 +1,17 @@
+<section class="page-heading"><div><h1>وضعیت احراز هویت</h1><p>ثبت‌نام مسئول آموزش نیازمند تأیید مدیر سیستم است.</p></div><p-button label="به‌روزرسانی وضعیت" [disabled]="busy()" (onClick)="refresh()" /></section>
+@if (user(); as account) {
+ <div class="state-card">
+  <h2>وضعیت احراز هویت: {{ labels[account.verificationStatus] }}</h2>
+  @if (account.verificationReviewedAt) { <p>تاریخ بررسی: {{ account.verificationReviewedAt | jalaliDate }}</p> }
+  @if (account.verificationStatus === 'REJECTED') {
+   <p>دلیل رد: {{ account.verificationRejectionReason }}</p>
+   <p>اطلاعات شخصی خود را در پروفایل اصلاح کنید و سپس درخواست را صریحاً دوباره ارسال کنید. ویرایش پروفایل وضعیت را تغییر نمی‌دهد.</p>
+   <p-button label="ارسال مجدد درخواست" [loading]="busy()" [disabled]="busy()" (onClick)="resubmit()" />
+  }
+  @if (account.verificationStatus === 'PENDING') { <p>در انتظار بررسی مدیر سیستم هستید. تا زمان تأیید، امکانات دانشگاه در دسترس نیست.</p> }
+  @if (account.verificationResubmittedAt) { <p>آخرین ارسال مجدد: {{ account.verificationResubmittedAt | jalaliDate }}</p> }
+  <p><a routerLink="/profile">پروفایل و تغییر رمز عبور</a></p>
+  @if (account.verificationStatus === 'APPROVED') { <p><a routerLink="/university/internship-terms">ورود به امکانات دانشگاه</a></p> }
+ </div>
+}
+@if (error()) { <p role="alert">{{ error() }}</p> }

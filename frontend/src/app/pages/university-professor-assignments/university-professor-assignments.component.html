@@ -15,7 +15,9 @@
     <ng-template #header><tr><th>دانشجو</th><th>شماره دانشجویی</th><th>استاد فعلی</th><th>عملیات</th></tr></ng-template>
     <ng-template #body let-assignment><tr>
       <td>{{ assignment.student.fullName }}</td><td>{{ assignment.student.studentNumber || '—' }}</td>
-      <td><p-select [options]="professors()" optionLabel="fullName" optionValue="id" [ngModel]="selectedProfessors[assignment.student.id]" (ngModelChange)="selectionChanged(assignment.student.id, $event)" placeholder="انتخاب استاد" appendTo="body" /></td>
+      <td>
+        @if (assignment.professor && !assignment.professor.isActive) { <p>{{ assignment.professor.fullName }} (غیرفعال؛ تخصیص قبلی)</p> }
+        <p-select [options]="professors()" optionLabel="fullName" optionValue="id" [ngModel]="selectedProfessors[assignment.student.id]" (ngModelChange)="selectionChanged(assignment.student.id, $event)" placeholder="انتخاب استاد" appendTo="body" /></td>
       <td><p-button [label]="assignment.id ? 'تغییر استاد' : 'تخصیص استاد'" icon="pi pi-check" [disabled]="!selectedProfessors[assignment.student.id]" [loading]="savingStudentId() === assignment.student.id" (onClick)="save(assignment)" /></td>
     </tr></ng-template>
     <ng-template #emptymessage><tr><td colspan="4" class="muted">دانشجویی ثبت نشده است.</td></tr></ng-template>

@@ -250,6 +250,9 @@ func createOpportunityTestUser(t *testing.T, db *gorm.DB, suffix int64, label st
 		FullName: "کاربر آزمون", Email: fmt.Sprintf("opportunity-%d-%s@example.test", suffix, label),
 		PasswordHash: "unused-in-route-test", Role: role, CompanyID: companyID,
 	}
+	if role == model.RoleUniversitySupervisor {
+		user.VerificationStatus = model.UserVerificationApproved
+	}
 	if err := db.Create(&user).Error; err != nil {
 		t.Fatalf("create opportunity test user: %v", err)
 	}

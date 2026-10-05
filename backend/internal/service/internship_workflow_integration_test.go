@@ -560,6 +560,9 @@ func createTestUser(t *testing.T, db *gorm.DB, suffix int64, label string, role 
 		FullName: label, Email: fmt.Sprintf("%s-%d@example.test", label, suffix),
 		PasswordHash: "test", Role: role,
 	}
+	if role == model.RoleUniversitySupervisor {
+		user.VerificationStatus = model.UserVerificationApproved
+	}
 	if err := db.Create(&user).Error; err != nil {
 		t.Fatalf("create %s: %v", label, err)
 	}

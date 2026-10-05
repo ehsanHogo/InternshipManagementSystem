@@ -31,6 +31,7 @@ export class AppShellComponent {
   readonly shellBodyRef = viewChild.required<ElementRef<HTMLElement>>('shellBody');
 
   readonly user = this.auth.user;
+  readonly restrictedUniversity = computed(() => this.user()?.role === 'UNIVERSITY_SUPERVISOR' && this.user()?.verificationStatus !== 'APPROVED');
   readonly restrictedCompany = computed(() => this.user()?.role === 'COMPANY_SUPERVISOR' && this.user()?.companyRegistrationStatus !== 'APPROVED');
   readonly navOpen = signal(false);
   readonly topbarElevated = signal(false);

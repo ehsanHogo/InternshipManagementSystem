@@ -55,7 +55,7 @@ export class UniversityProfessorAssignmentsComponent {
     forkJoin({ assignments: this.management.listProfessorAssignments(), professors: this.management.listProfessors() }).subscribe({
       next: ({ assignments, professors }) => {
         this.assignments.set(assignments);
-        this.professors.set(professors);
+        this.professors.set(professors.filter(professor => professor.isActive));
         for (const assignment of assignments) this.selectedProfessors[assignment.student.id] = assignment.professor?.id ?? null;
         this.loading.set(false);
       },

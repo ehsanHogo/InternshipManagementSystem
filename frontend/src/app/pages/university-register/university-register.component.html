@@ -1,0 +1,21 @@
+<main class="registration-page" dir="rtl">
+ <section class="registration-card">
+  <h1>ثبت‌نام مسئول آموزش</h1>
+  <p>ثبت‌نام مسئول آموزش نیازمند تأیید مدیر سیستم است.</p>
+  @if (registered()) {
+   <p role="status">ثبت‌نام انجام شد. برای مشاهده وضعیت احراز هویت وارد شوید.</p>
+   <a routerLink="/login">ورود به سامانه</a>
+  } @else {
+   <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
+    <label for="register-name">نام و نام خانوادگی<input id="register-name" pInputText formControlName="fullName" autocomplete="name" maxlength="200" /></label>
+    <label for="register-email">ایمیل<input id="register-email" pInputText type="email" dir="ltr" formControlName="email" autocomplete="email" maxlength="320" /></label>
+    <label for="register-phone">شماره تماس (اختیاری)<input id="register-phone" pInputText type="tel" dir="ltr" formControlName="phone" autocomplete="tel" maxlength="50" /></label>
+    <label for="register-password">رمز عبور<input id="register-password" pInputText type="password" dir="ltr" formControlName="password" autocomplete="new-password" /></label>
+    <p>رمز عبور نباید خالی باشد و باید حداکثر ۷۲ بایت باشد.</p>
+    @if (error()) { <p role="alert">{{ error() }}</p> }
+    <p-button type="submit" label="ثبت‌نام" [loading]="busy()" [disabled]="busy()" />
+    <a routerLink="/login">بازگشت به ورود</a>
+   </form>
+  }
+ </section>
+</main>

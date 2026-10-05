@@ -16,6 +16,9 @@ import (
 const demoPassword = "Demo123!"
 
 func MigrateAndSeed(db *gorm.DB) error {
+	if err := migrateUserAccess(db); err != nil {
+		return err
+	}
 	if err := migrateCompanyRegistrations(db); err != nil {
 		return err
 	}
@@ -63,7 +66,7 @@ func MigrateAndSeed(db *gorm.DB) error {
 	users := []model.User{
 		{FullName: "علی رضایی", Email: "student@demo.local", Role: model.RoleStudent, StudentNumber: &studentNumber, Major: &major},
 		{FullName: "دکتر محمد احمدی", Email: "professor@demo.local", Role: model.RoleProfessor},
-		{FullName: "کارشناس آموزش", Email: "university@demo.local", Role: model.RoleUniversitySupervisor},
+		{FullName: "کارشناس آموزش", Email: "university@demo.local", Role: model.RoleUniversitySupervisor, VerificationStatus: model.UserVerificationApproved},
 		{FullName: "رضا محمدی", Email: "company@demo.local", Role: model.RoleCompanySupervisor, Phone: &phone, JobTitle: &jobTitle, CompanyID: &demoCompany.ID},
 		{FullName: "مدیر سیستم", Email: "admin@demo.local", Role: model.RoleAdmin},
 	}
@@ -104,7 +107,7 @@ func seedProfessorAssignment(db *gorm.DB) error {
 	if err := db.Where("email = ?", "professor@demo.local").First(&professor).Error; err != nil {
 		return fmt.Errorf("find demo professor for assignment: %w", err)
 	}
-	if student.Role != model.RoleStudent || professor.Role != model.RoleProfessor {
+	if student.Role != model.RoleStudent || professor.Role != model.RoleProfessor || !professor.IsActive {
 		return nil
 	}
 
@@ -185,5 +188,32 @@ func migrateCompanyRegistrations(db *gorm.DB) error {
 			}
 		}
 		return tx.Exec("ALTER TABLE companies ALTER COLUMN registration_status SET DEFAULT 'PENDING'").Error
+	})
+}
+
+// Backfill only when each column is first introduced. Table locking makes the
+// legacy boundary atomic; future startups preserve all account decisions.
+func migrateUserAccess(db *gorm.DB) error {
+	if !db.Migrator().HasTable(&model.User{}) {
+		return nil
+	}
+	return db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec("LOCK TABLE users IN ACCESS EXCLUSIVE MODE").Error; err != nil {
+			return err
+		}
+		if !tx.Migrator().HasColumn(&model.User{}, "is_active") {
+			if err := tx.Exec("ALTER TABLE users ADD COLUMN is_active boolean NOT NULL DEFAULT true").Error; err != nil {
+				return err
+			}
+		}
+		if !tx.Migrator().HasColumn(&model.User{}, "verification_status") {
+			if err := tx.Exec("ALTER TABLE users ADD COLUMN verification_status varchar(16) NOT NULL DEFAULT 'NOT_REQUIRED'").Error; err != nil {
+				return err
+			}
+			if err := tx.Exec("UPDATE users SET verification_status = 'APPROVED' WHERE role = 'UNIVERSITY_SUPERVISOR'").Error; err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 }
