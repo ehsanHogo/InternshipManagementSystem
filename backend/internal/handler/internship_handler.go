@@ -67,6 +67,8 @@ type internshipCaseResponse struct {
 	UniversityRevisionRequestedBy *uint                          `json:"universityRevisionRequestedBy,omitempty"`
 	ActivatedAt                   *time.Time                     `json:"activatedAt"`
 	FinalReport                   *model.FinalReport             `json:"finalReport,omitempty"`
+	WeeklyReportsReady            bool                           `json:"weeklyReportsReady"`
+	CanUploadFinalReport          bool                           `json:"canUploadFinalReport"`
 	WeeklyReportCount             int                            `json:"weeklyReportCount"`
 	ApprovedReportCount           int                            `json:"approvedReportCount"`
 	CompanyApprovedReportCount    int                            `json:"companyApprovedReportCount"`
@@ -313,7 +315,7 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit),
 		errors.Is(err, service.ErrNoOpenInternshipTerm),
 		errors.Is(err, service.ErrDuplicatePriority), errors.Is(err, service.ErrPreferenceAlreadyExists),
-		errors.Is(err, service.ErrDuplicateWeeklyReport), errors.Is(err, service.ErrWeeklyReportState), errors.Is(err, service.ErrFinalReportState),
+		errors.Is(err, service.ErrDuplicateWeeklyReport), errors.Is(err, service.ErrWeeklyReportState), errors.Is(err, service.ErrFinalReportState), errors.Is(err, service.ErrFinalReportWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrDuplicateEvaluation), errors.Is(err, service.ErrWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrProfessorCaseNotActive), errors.Is(err, service.ErrProfessorWeeklyReportsIncomplete),
 		errors.Is(err, service.ErrProfessorCompanyEvaluationRequired), errors.Is(err, service.ErrProfessorFinalReportRequired),
@@ -345,6 +347,8 @@ func currentUserID(ctx *gin.Context) (uint, bool) {
 
 func internshipErrorCode(err error) string {
 	switch {
+	case errors.Is(err, service.ErrFinalReportWeeklyReportsIncomplete):
+		return "FINAL_REPORT_WEEKLY_REPORTS_NOT_READY"
 	case errors.Is(err, service.ErrNoOpenInternshipTerm):
 		return "NO_OPEN_INTERNSHIP_TERM"
 	case errors.Is(err, service.ErrCaseNotAssignedToProfessor):
@@ -438,6 +442,8 @@ func internshipErrorCode(err error) string {
 
 func publicInternshipError(err error) string {
 	switch {
+	case errors.Is(err, service.ErrFinalReportWeeklyReportsIncomplete):
+		return "برای ارسال گزارش نهایی، ابتدا باید هر ۸ گزارش هفتگی توسط نماینده شرکت و استاد تأیید شده باشند."
 	case errors.Is(err, service.ErrNoOpenInternshipTerm):
 		return "در حال حاضر ترم کارآموزی بازی وجود ندارد. پس از باز شدن ترم توسط مسئول آموزش می‌توانید پرونده جدید ایجاد کنید."
 	case errors.Is(err, service.ErrFinalReportState):
@@ -606,6 +612,8 @@ func caseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 		}
 	}
 	response.FinalReport = internshipCase.FinalReport
+	response.WeeklyReportsReady = model.WeeklyReportsReadyForFinalEvaluation(internshipCase.WeeklyReports)
+	response.CanUploadFinalReport = service.CanUploadFinalReport(internshipCase)
 	response.CanSubmitCompanyEvaluation = internshipCase.Status == model.InternshipCaseStatusActive &&
 		response.WeeklyReportCount == 8 && response.CompanyApprovedReportCount == 8 && internshipCase.CompanyEvaluation == nil
 	return response

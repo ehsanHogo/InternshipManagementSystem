@@ -68,11 +68,11 @@ export class StudentFinalReportComponent {
   }
 
   canUpload(): boolean {
-    const item = this.internshipCase();
-    return item?.status === 'ACTIVE' && (!item.finalReport || item.finalReport.status === 'REVISION_REQUESTED');
+    return this.internshipCase()?.canUploadFinalReport === true;
   }
 
   chooseFile(): void {
+    if (!this.canUpload() || this.uploading()) return;
     this.fileInput()?.nativeElement.click();
   }
 
@@ -98,7 +98,7 @@ export class StudentFinalReportComponent {
     this.internshipService.uploadFinalReport(file).subscribe({
       next: (metadata) => {
         const current = this.internshipCase();
-        if (current) this.internshipCase.set({ ...current, finalReport: metadata });
+        if (current) this.internshipCase.set({ ...current, finalReport: metadata, canUploadFinalReport: false });
         this.selectedFile.set(null);
         if (this.fileInput()) this.fileInput()!.nativeElement.value = '';
         this.uploading.set(false);
@@ -108,6 +108,7 @@ export class StudentFinalReportComponent {
         this.uploading.set(false);
         const detail = userErrorMessage(error, 'بارگذاری گزارش نهایی ناموفق بود.');
         this.messages.add({ severity: 'error', summary: 'خطا', detail });
+        if (error.status === 400 || error.status === 409) this.load();
       }
     });
   }

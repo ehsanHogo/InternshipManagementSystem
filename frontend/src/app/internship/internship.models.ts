@@ -87,6 +87,8 @@ export interface InternshipCase {
   universityRevisionRequestedBy?: number | null;
   activatedAt?: string | null;
   finalReport?: FinalReport;
+  weeklyReportsReady: boolean;
+  canUploadFinalReport: boolean;
   weeklyReportCount: number;
   approvedReportCount: number;
   companyApprovedReportCount: number;

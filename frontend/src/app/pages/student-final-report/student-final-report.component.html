@@ -42,7 +42,15 @@
       </div>
     </p-card>
   } @else {
-    <div class="notice neutral">گزارش نهایی هنوز ارسال نشده است.</div>
+    @if (!canUpload()) {
+      <div class="notice neutral">
+        <strong><i class="pi pi-lock"></i> گزارش نهایی هنوز قابل ارسال نیست.</strong>
+        <p>ابتدا باید هر ۸ گزارش هفتگی توسط نماینده شرکت و استاد تأیید شوند.</p>
+        <p-button label="گزارش‌های هفتگی" routerLink="/student/weekly-reports" severity="secondary" [outlined]="true" />
+      </div>
+    } @else {
+      <div class="notice neutral">هر ۸ گزارش هفتگی تأیید شده‌اند. اکنون می‌توانید گزارش نهایی را ارسال کنید.</div>
+    }
   }
 
   @if (canUpload()) {

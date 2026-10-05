@@ -140,10 +140,11 @@ Each successful row returns a temporary password. It is shown only in that resul
 ## File Upload Rules
 
 - Final reports must be non-empty PDF files no larger than 10 MB.
+- Initial final report upload requires an `ACTIVE` case and all distinct weeks 1–8 submitted and approved by both the company reviewer and professor.
 - The server validates extension and MIME type and generates a unique storage name.
 - Files are downloaded only through an authenticated, case-authorized endpoint.
 - Filesystem paths and stored filenames are not exposed by the API.
-- A student may replace a final report only while the case is `ACTIVE`; completed cases are immutable.
+- A student may replace a final report only while the case is `ACTIVE` and the report is `REVISION_REQUESTED`. Corrections do not revalidate initial weekly readiness; completed cases are immutable.
 
 ## How to Run
 

@@ -137,7 +137,7 @@ func TestFinalReportConcurrentMutations(t *testing.T) {
 	}
 
 	t.Run("duplicate first uploads have one winner and no orphan metadata", func(t *testing.T) {
-		item := fixture(t, false)
+		item := fixture(t, true)
 		before := fileCount(t)
 		a, b := file("first-a"), file("first-b")
 		results := race(t, func() error { return upload(item.StudentID, a) }, func() error { return upload(item.StudentID, b) })
@@ -156,7 +156,7 @@ func TestFinalReportConcurrentMutations(t *testing.T) {
 	})
 
 	t.Run("competing professor decisions cannot overwrite", func(t *testing.T) {
-		item := fixture(t, false)
+		item := fixture(t, true)
 		if err := upload(item.StudentID, file("review")); err != nil {
 			t.Fatal(err)
 		}
@@ -180,7 +180,7 @@ func TestFinalReportConcurrentMutations(t *testing.T) {
 	})
 
 	t.Run("duplicate corrections replace once", func(t *testing.T) {
-		item := fixture(t, false)
+		item := fixture(t, true)
 		old := file("correction-old")
 		if err := upload(item.StudentID, old); err != nil {
 			t.Fatal(err)
@@ -203,7 +203,7 @@ func TestFinalReportConcurrentMutations(t *testing.T) {
 	})
 
 	t.Run("correction and review serialize on the current content", func(t *testing.T) {
-		item := fixture(t, false)
+		item := fixture(t, true)
 		if err := upload(item.StudentID, file("resubmit-old")); err != nil {
 			t.Fatal(err)
 		}

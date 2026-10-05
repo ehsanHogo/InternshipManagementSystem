@@ -293,6 +293,18 @@ func TestWorkflow(t *testing.T) {
 			OriginalName: "final.pdf", StoredName: fmt.Sprintf("final-%d.pdf", suffix), Path: "/tmp/final.pdf",
 			MimeType: "application/pdf", SizeBytes: 100, UploadedBy: student.ID, UploadedAt: time.Now(),
 		}
+		if _, _, err := workflow.AttachFinalReport(student.ID, file); !errors.Is(err, service.ErrFinalReportWeeklyReportsIncomplete) {
+			t.Fatalf("final upload before professor approvals = %v", err)
+		}
+		reports, err := workflow.ListStudentWeeklyReports(student.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, report := range reports {
+			if _, err := workflow.ReviewWeeklyReportByProfessor(professor.ID, activeCase.ID, report.ID, model.WeeklyReviewApproved, nil); err != nil {
+				t.Fatal(err)
+			}
+		}
 		if _, _, err := workflow.AttachFinalReport(student.ID, file); err != nil {
 			t.Fatalf("attach final report: %v", err)
 		}

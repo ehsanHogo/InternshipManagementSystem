@@ -149,6 +149,13 @@ func TestFinalReportV2API(t *testing.T) {
 		if err := tx.Create(&item).Error; err != nil {
 			t.Fatal(err)
 		}
+		now := time.Now()
+		for week := 1; week <= 8; week++ {
+			row := model.WeeklyReport{InternshipCaseID: item.ID, WeekNumber: week, StartDate: now, EndDate: now, ActivityDescription: "activity", SubmittedAt: &now, CompanyReviewStatus: model.WeeklyReviewApproved, ProfessorReviewStatus: model.WeeklyReviewApproved}
+			if err := tx.Create(&row).Error; err != nil {
+				t.Fatal(err)
+			}
+		}
 		return student, item
 	}
 	validPDF := []byte("%PDF-1.4\nfinal report\n%%EOF")
@@ -192,9 +199,72 @@ func TestFinalReportV2API(t *testing.T) {
 		t.Helper()
 		return request(t, "POST", professorPath(item)+"/"+action, professor, comment, want)
 	}
+	assertStudentReadiness := func(t *testing.T, student model.User, weeklyReady, canUpload bool) {
+		t.Helper()
+		rec := request(t, "GET", "/api/student/internship-case", student, nil, 200)
+		var response struct {
+			WeeklyReportsReady   *bool `json:"weeklyReportsReady"`
+			CanUploadFinalReport *bool `json:"canUploadFinalReport"`
+		}
+		if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+			t.Fatal(err)
+		}
+		if response.WeeklyReportsReady == nil || *response.WeeklyReportsReady != weeklyReady || response.CanUploadFinalReport == nil || *response.CanUploadFinalReport != canUpload {
+			t.Fatalf("student readiness want weeks=%v upload=%v: %s", weeklyReady, canUpload, rec.Body.String())
+		}
+	}
 
-	t.Run("first upload without weekly reports and server controlled fields", func(t *testing.T) {
+	for _, blocker := range []struct {
+		name    string
+		remove  bool
+		all     bool
+		updates map[string]any
+	}{
+		{name: "no weekly reports", remove: true, all: true},
+		{name: "fewer than eight reports", remove: true},
+		{name: "draft among eight reports", updates: map[string]any{"submitted_at": nil}},
+		{name: "submitted without approvals", all: true, updates: map[string]any{"company_review_status": model.WeeklyReviewPending, "professor_review_status": model.WeeklyReviewPending}},
+		{name: "company approved only", all: true, updates: map[string]any{"professor_review_status": model.WeeklyReviewPending}},
+		{name: "professor approved only", all: true, updates: map[string]any{"company_review_status": model.WeeklyReviewPending}},
+		{name: "company revision requested", updates: map[string]any{"company_review_status": model.WeeklyReviewRevisionRequested}},
+		{name: "professor revision requested", updates: map[string]any{"professor_review_status": model.WeeklyReviewRevisionRequested}},
+	} {
+		t.Run("initial upload blocked by "+blocker.name, func(t *testing.T) {
+			student, item := fixture(t, model.InternshipCaseStatusActive)
+			query := tx.Model(&model.WeeklyReport{}).Where("internship_case_id = ?", item.ID)
+			if !blocker.all {
+				query = query.Where("week_number = 8")
+			}
+			var err error
+			if blocker.remove {
+				err = query.Delete(&model.WeeklyReport{}).Error
+			} else {
+				err = query.Updates(blocker.updates).Error
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			assertStudentReadiness(t, student, false, false)
+			if err := workflow.EnsureCanUploadFinalReport(student.ID); !errors.Is(err, service.ErrFinalReportWeeklyReportsIncomplete) {
+				t.Fatalf("preflight error = %v", err)
+			}
+			noOrphans(t, func() {
+				file := &model.File{OriginalName: "direct.pdf", StoredName: fmt.Sprintf("direct-%d.pdf", item.ID), Path: "/tmp/direct.pdf", MimeType: "application/pdf", SizeBytes: 128, UploadedAt: time.Now()}
+				if _, _, err := workflow.AttachFinalReport(student.ID, file); !errors.Is(err, service.ErrFinalReportWeeklyReportsIncomplete) {
+					t.Fatalf("direct service upload error = %v", err)
+				}
+				rec := upload(t, student, "final.pdf", "application/pdf", validPDF, nil, 409)
+				assertAPIError(t, rec, 409, "FINAL_REPORT_WEEKLY_REPORTS_NOT_READY")
+				if !bytes.Contains(rec.Body.Bytes(), []byte(publicInternshipError(service.ErrFinalReportWeeklyReportsIncomplete))) {
+					t.Fatal("missing Persian readiness explanation")
+				}
+			})
+		})
+	}
+
+	t.Run("first upload after weekly approvals and server controlled fields", func(t *testing.T) {
 		student, item := fixture(t, model.InternshipCaseStatusActive)
+		assertStudentReadiness(t, student, true, true)
 		rec := request(t, "GET", studentPath, student, nil, 200)
 		if rec.Body.String() != "null" {
 			t.Fatal("report exists before first PDF")
@@ -206,6 +276,7 @@ func TestFinalReportV2API(t *testing.T) {
 			t.Fatalf("wrong first submission: %+v", report)
 		}
 		persisted := stored(t, report.ID)
+		assertStudentReadiness(t, student, true, false)
 		data, err := os.ReadFile(persisted.CurrentFile.Path)
 		if err != nil || !bytes.Equal(data, validPDF) {
 			t.Fatalf("PDF storage mismatch: %v", err)
@@ -218,6 +289,7 @@ func TestFinalReportV2API(t *testing.T) {
 		}
 		review(t, item, "approve", map[string]string{"comment": "  accepted  "}, 200)
 		approved := stored(t, report.ID)
+		assertStudentReadiness(t, student, true, false)
 		if approved.Status != model.FinalReportApproved || approved.ReviewedAt == nil || approved.ReviewComment == nil || *approved.ReviewComment != "accepted" {
 			t.Fatalf("invalid approval: %+v", approved)
 		}
@@ -270,9 +342,19 @@ func TestFinalReportV2API(t *testing.T) {
 			review(t, item, action, map[string]string{"comment": "change"}, 409)
 		}
 		previous := stored(t, report.ID)
+		assertStudentReadiness(t, student, true, true)
+		// Historical inconsistencies must not block replacement after a valid first upload.
+		if err := tx.Where("internship_case_id = ? AND week_number = 8", item.ID).Delete(&model.WeeklyReport{}).Error; err != nil {
+			t.Fatal(err)
+		}
+		if err := tx.Model(&model.WeeklyReport{}).Where("internship_case_id = ? AND week_number = 1", item.ID).Update("professor_review_status", model.WeeklyReviewRevisionRequested).Error; err != nil {
+			t.Fatal(err)
+		}
+		assertStudentReadiness(t, student, false, true)
 		files, disks := count(t, &model.File{}), diskCount(t)
 		corrected := []byte("%PDF-1.7\ncorrected final report\n%%EOF")
 		report = decode(t, upload(t, student, "corrected.pdf", "application/pdf", corrected, nil, 201), model.FinalReportSubmitted)
+		assertStudentReadiness(t, student, false, false)
 		if report.ID != previous.ID || report.CurrentFileID == previous.CurrentFileID || !report.SubmittedAt.After(previous.SubmittedAt) || report.ReviewedAt != nil || report.ReviewComment == nil || *report.ReviewComment != *previous.ReviewComment {
 			t.Fatal("correction did not reset submission and preserve latest feedback")
 		}
@@ -481,15 +563,11 @@ func TestFinalReportV2API(t *testing.T) {
 		completion := map[string]string{"result": "GOOD", "comment": " final comment "}
 		assertReady(false)
 		request(t, "POST", finalPath, professor, completion, 409)
-		reports := []model.WeeklyReport{}
-		now := time.Now()
-		for week := 1; week <= 8; week++ {
-			row := model.WeeklyReport{InternshipCaseID: item.ID, WeekNumber: week, StartDate: now, EndDate: now, ActivityDescription: "activity", SubmittedAt: &now, CompanyReviewStatus: model.WeeklyReviewApproved, ProfessorReviewStatus: model.WeeklyReviewApproved}
-			if err := tx.Create(&row).Error; err != nil {
-				t.Fatal(err)
-			}
-			reports = append(reports, row)
+		var reports []model.WeeklyReport
+		if err := tx.Where("internship_case_id = ?", item.ID).Order("week_number ASC").Find(&reports).Error; err != nil {
+			t.Fatal(err)
 		}
+		now := time.Now()
 		eval := model.CompanyEvaluation{InternshipCaseID: item.ID, CompanySupervisorID: supervisor.ID, AttendanceRating: model.EvaluationRatingGood, ParticipationRating: model.EvaluationRatingGood, LearningRating: model.EvaluationRatingGood, InterestRating: model.EvaluationRatingGood, PersistenceRating: model.EvaluationRatingGood, SuggestionRating: model.EvaluationRatingGood, ResourceUsageRating: model.EvaluationRatingGood, ReportQualityRating: model.EvaluationRatingGood, ProjectPerformanceRating: model.EvaluationRatingGood, SubmittedAt: now}
 		if err := tx.Create(&eval).Error; err != nil {
 			t.Fatal(err)
@@ -553,12 +631,6 @@ func TestFinalReportV2API(t *testing.T) {
 		report := firstUpload(t, student)
 		review(t, item, "approve", nil, 200)
 		now := time.Now()
-		for week := 1; week <= 8; week++ {
-			row := model.WeeklyReport{InternshipCaseID: item.ID, WeekNumber: week, StartDate: now, EndDate: now, ActivityDescription: "historical activity", SubmittedAt: &now, CompanyReviewStatus: model.WeeklyReviewApproved, ProfessorReviewStatus: model.WeeklyReviewApproved}
-			if err := tx.Create(&row).Error; err != nil {
-				t.Fatal(err)
-			}
-		}
 		evaluation := model.CompanyEvaluation{InternshipCaseID: item.ID, CompanySupervisorID: supervisor.ID, AttendanceRating: model.EvaluationRatingGood, ParticipationRating: model.EvaluationRatingGood, LearningRating: model.EvaluationRatingGood, InterestRating: model.EvaluationRatingGood, PersistenceRating: model.EvaluationRatingGood, SuggestionRating: model.EvaluationRatingGood, ResourceUsageRating: model.EvaluationRatingGood, ReportQualityRating: model.EvaluationRatingGood, ProjectPerformanceRating: model.EvaluationRatingGood, SubmittedAt: now}
 		if err := tx.Create(&evaluation).Error; err != nil {
 			t.Fatal(err)

@@ -12,11 +12,35 @@ import (
 )
 
 var (
-	ErrFinalReportState           = errors.New("final report does not allow this action")
-	ErrFinalReportCommentRequired = errors.New("final report revision comment is required")
-	ErrInvalidFinalReportFile     = errors.New("invalid final report PDF")
-	ErrFinalReportTooLarge        = errors.New("final report exceeds size limit")
+	ErrFinalReportState                   = errors.New("final report does not allow this action")
+	ErrFinalReportCommentRequired         = errors.New("final report revision comment is required")
+	ErrInvalidFinalReportFile             = errors.New("invalid final report PDF")
+	ErrFinalReportTooLarge                = errors.New("final report exceeds size limit")
+	ErrFinalReportWeeklyReportsIncomplete = errors.New("all 8 weekly reports must be approved by both reviewers before the initial final report upload")
 )
+
+// CanUploadFinalReport uses the preloaded case data for response readiness.
+// The upload path enforces the same rule again under the case lock.
+func CanUploadFinalReport(item *model.InternshipCase) bool {
+	return finalReportUploadError(item) == nil
+}
+
+func finalReportUploadError(item *model.InternshipCase) error {
+	if item.Status != model.InternshipCaseStatusActive {
+		return ErrInvalidCaseStatus
+	}
+	if item.FinalReport != nil {
+		if item.FinalReport.Status != model.FinalReportRevisionRequested {
+			return ErrFinalReportState
+		}
+		// Corrections retain the existing lifecycle even with inconsistent historical weeks.
+		return nil
+	}
+	if !model.WeeklyReportsReadyForFinalEvaluation(item.WeeklyReports) {
+		return ErrFinalReportWeeklyReportsIncomplete
+	}
+	return nil
+}
 
 func (service *InternshipService) GetStudentFinalReport(studentID uint) (*model.FinalReport, error) {
 	item, err := service.GetCurrentCase(studentID)
@@ -47,23 +71,24 @@ func (service *InternshipService) EnsureCanUploadFinalReport(studentID uint) err
 	if err != nil {
 		return err
 	}
-	_, err = uploadableFinalReport(service.db, item.ID)
+	_, err = uploadableFinalReport(service.db, item)
 	return err
 }
 
-func uploadableFinalReport(db *gorm.DB, caseID uint) (*model.FinalReport, error) {
+func uploadableFinalReport(db *gorm.DB, item *model.InternshipCase) (*model.FinalReport, error) {
 	var report model.FinalReport
-	err := db.Where("internship_case_id = ?", caseID).First(&report).Error
+	err := db.Where("internship_case_id = ?", item.ID).First(&report).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
+		if err := db.Where("internship_case_id = ?", item.ID).Find(&item.WeeklyReports).Error; err != nil {
+			return nil, fmt.Errorf("load weekly reports for final report upload: %w", err)
+		}
+		return nil, finalReportUploadError(item)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("get final report for upload: %w", err)
 	}
-	if report.Status != model.FinalReportRevisionRequested {
-		return nil, ErrFinalReportState
-	}
-	return &report, nil
+	item.FinalReport = &report
+	return &report, finalReportUploadError(item)
 }
 
 // The case lock serializes first uploads, corrections, reviews, and completion.
@@ -80,7 +105,7 @@ func (service *InternshipService) AttachFinalReport(studentID uint, file *model.
 		if err != nil {
 			return err
 		}
-		report, err = uploadableFinalReport(tx, item.ID)
+		report, err = uploadableFinalReport(tx, item)
 		if err != nil {
 			return err
 		}
