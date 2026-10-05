@@ -48,15 +48,9 @@ type CompanyEvaluationInput struct {
 }
 
 func (service *InternshipService) ListStudentWeeklyReports(studentID uint) ([]model.WeeklyReport, error) {
-	var internshipCase model.InternshipCase
-	err := service.db.Where("student_id = ? AND status IN ?", studentID, []model.InternshipCaseStatus{
-		model.InternshipCaseStatusActive, model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed,
-	}).Order("created_at DESC").First(&internshipCase).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrInvalidCaseStatus
-	}
+	internshipCase, err := service.findStudentActiveCase(service.db, studentID, false)
 	if err != nil {
-		return nil, fmt.Errorf("get reporting-visible student case: %w", err)
+		return nil, err
 	}
 	return service.listWeeklyReports(internshipCase.ID)
 }
@@ -93,8 +87,12 @@ func (service *InternshipService) CreateWeeklyReport(studentID uint, input Weekl
 }
 
 func (service *InternshipService) GetStudentWeeklyReport(studentID, reportID uint) (*model.WeeklyReport, error) {
+	internshipCase, err := service.findStudentActiveCase(service.db, studentID, false)
+	if err != nil {
+		return nil, err
+	}
 	var report model.WeeklyReport
-	err := service.db.Model(&model.WeeklyReport{}).Joins("JOIN internship_cases c ON c.id = weekly_reports.internship_case_id").Where("weekly_reports.id = ? AND c.student_id = ?", reportID, studentID).First(&report).Error
+	err = service.db.Where("id = ? AND internship_case_id = ?", reportID, internshipCase.ID).First(&report).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrWeeklyReportNotFound
 	}
@@ -104,7 +102,7 @@ func (service *InternshipService) GetStudentWeeklyReport(studentID, reportID uin
 	return &report, nil
 }
 
-// Every mutation locks the case before the report. This also serializes activation,
+// Every mutation locks the case before the report. This also serializes final approval,
 // completion, evaluation readiness, resubmission, and simultaneous reviews.
 func lockWeeklyReport(tx *gorm.DB, caseID, reportID uint) (*model.WeeklyReport, error) {
 	var report model.WeeklyReport
@@ -360,31 +358,40 @@ func (service *InternshipService) GetAccessibleFile(userID uint, role model.Role
 		return nil, fmt.Errorf("get file: %w", err)
 	}
 
-	finalReportQuery := service.db.Model(&model.FinalReport{}).
-		Joins("JOIN internship_cases ON internship_cases.id = final_reports.internship_case_id").
-		Where("final_reports.current_file_id = ?", fileID)
-	switch role {
-	case model.RoleStudent:
-		finalReportQuery = finalReportQuery.Where("student_id = ?", userID)
-	case model.RoleProfessor:
-		finalReportQuery = finalReportQuery.Where("professor_id = ?", userID)
-	case model.RoleCompanySupervisor:
-		// The existing company case page grants its assigned supervisor read-only downloads.
-		finalReportQuery = finalReportQuery.Where("company_supervisor_id = ?", userID)
-		if companyAccessErr != nil {
-			finalReportQuery = finalReportQuery.Where("internship_cases.status IN ?", []model.InternshipCaseStatus{model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled})
+	var finalReport model.FinalReport
+	err := service.db.Where("current_file_id = ?", fileID).First(&finalReport).Error
+	if err == nil {
+		// Download authorization uses the same case permissions as case detail.
+		var accessErr error
+		switch role {
+		case model.RoleStudent:
+			var count int64
+			accessErr = service.db.Model(&model.InternshipCase{}).
+				Where("id = ? AND student_id = ?", finalReport.InternshipCaseID, userID).Count(&count).Error
+			if accessErr == nil && count != 1 {
+				accessErr = ErrCaseAccessDenied
+			}
+		case model.RoleProfessor:
+			_, accessErr = service.GetProfessorCase(userID, finalReport.InternshipCaseID)
+		case model.RoleCompanySupervisor:
+			// M17 preserves terminal history even when registration is restricted.
+			// Both helpers enforce the selected placement and current membership.
+			_, accessErr = service.GetCompanyHistoricalCase(userID, finalReport.InternshipCaseID)
+			if errors.Is(accessErr, ErrCaseNotAssignedToCompany) {
+				_, accessErr = service.GetCompanyCase(userID, finalReport.InternshipCaseID)
+			}
+		case model.RoleUniversitySupervisor:
+			_, accessErr = service.GetUniversityCase(finalReport.InternshipCaseID)
+		default:
+			accessErr = ErrCaseAccessDenied
 		}
-	case model.RoleUniversitySupervisor:
-		// University supervisors retain their existing system-wide final-report access.
-	default:
-		return nil, ErrCaseAccessDenied
-	}
-	var finalReportCount int64
-	if err := finalReportQuery.Count(&finalReportCount).Error; err != nil {
-		return nil, fmt.Errorf("authorize final report file: %w", err)
-	}
-	if finalReportCount > 0 {
+		if accessErr != nil {
+			return nil, accessErr
+		}
 		return &file, nil
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("authorize final report file: %w", err)
 	}
 
 	if companyAccessErr != nil {

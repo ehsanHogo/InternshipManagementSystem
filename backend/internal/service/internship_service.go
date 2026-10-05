@@ -48,12 +48,9 @@ func NewInternshipService(db *gorm.DB) *InternshipService {
 	return &InternshipService{db: db}
 }
 
-func (service *InternshipService) ListApprovedCompanies() ([]model.Company, error) {
-	var companies []model.Company
-	if err := service.db.Where("is_approved = ?", true).Order("name ASC").Find(&companies).Error; err != nil {
-		return nil, fmt.Errorf("list approved companies: %w", err)
-	}
-	return companies, nil
+// The generic directory has the same safe contract as the student directory.
+func (service *InternshipService) ListApprovedCompanies() ([]PublicApprovedCompany, error) {
+	return NewCompanyApprovalService(service.db).ListStudentApprovedCompanies()
 }
 
 func (service *InternshipService) GetCurrentCase(studentID uint) (*model.InternshipCase, error) {
@@ -439,22 +436,8 @@ func (service *InternshipService) getCaseByID(caseID uint) (*model.InternshipCas
 	return &internshipCase, nil
 }
 
-// The existing report reads and mutation validation retain a terminal fallback.
-// A current case always takes precedence, regardless of historical timestamps.
-func (service *InternshipService) findOwnedCase(db *gorm.DB, studentID uint) (*model.InternshipCase, error) {
-	var internshipCase model.InternshipCase
-	err := db.Where("student_id = ? AND status IN ?", studentID, studentReadableCaseStatuses()).
-		Order("CASE WHEN status IN ('PASSED','FAILED','CANCELLED') THEN 1 ELSE 0 END").
-		Order("created_at DESC, id DESC").First(&internshipCase).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrCaseNotFound
-	}
-	if err != nil {
-		return nil, fmt.Errorf("get owned internship case: %w", err)
-	}
-	return &internshipCase, nil
-}
-
+// Mutation validation prefers the current case; terminal fallback only provides
+// the existing non-editable error and never permits historical writes.
 func (service *InternshipService) findOwnedCaseForUpdate(db *gorm.DB, studentID uint) (*model.InternshipCase, error) {
 	var internshipCase model.InternshipCase
 	err := db.Clauses(clause.Locking{Strength: "UPDATE"}).

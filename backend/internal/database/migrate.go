@@ -39,12 +39,20 @@ func MigrateAndSeed(db *gorm.DB) error {
 		return fmt.Errorf("migrate database: %w", err)
 	}
 
-	if err := seedCompanies(db); err != nil {
-		return err
-	}
 	var demoCompany model.Company
-	if err := db.Where("national_id = ?", "14000000001").First(&demoCompany).Error; err != nil {
-		return fmt.Errorf("find demo company for supervisor: %w", err)
+	var existingSupervisor model.User
+	err := db.Where("email = ?", "company@demo.local").First(&existingSupervisor).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// Demo companies are bootstrap data. Once the demo account exists,
+		// names, legal identifiers and membership may all have changed at runtime.
+		if err := seedCompanies(db); err != nil {
+			return err
+		}
+		if err := db.Where("national_id = ?", "14000000001").First(&demoCompany).Error; err != nil {
+			return fmt.Errorf("find demo company for supervisor: %w", err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("find demo supervisor: %w", err)
 	}
 
 	studentNumber := "40123456"
@@ -95,13 +103,16 @@ func seedProfessorAssignment(db *gorm.DB) error {
 	if err := db.Where("email = ?", "professor@demo.local").First(&professor).Error; err != nil {
 		return fmt.Errorf("find demo professor for assignment: %w", err)
 	}
+	if student.Role != model.RoleStudent || professor.Role != model.RoleProfessor {
+		return nil
+	}
 
 	assignment := model.ProfessorAssignment{
 		StudentID: student.ID, ProfessorID: professor.ID, AssignedAt: time.Now(),
 	}
 	if err := db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "student_id"}},
-		DoUpdates: clause.Assignments(map[string]any{"professor_id": professor.ID}),
+		DoNothing: true,
 	}).Create(&assignment).Error; err != nil {
 		return fmt.Errorf("seed professor assignment: %w", err)
 	}
@@ -112,9 +123,7 @@ func createDemoUserIfMissing(db *gorm.DB, user *model.User) error {
 	var existing model.User
 	result := db.Where("email = ?", strings.ToLower(user.Email)).First(&existing)
 	if result.Error == nil {
-		return db.Model(&existing).Updates(map[string]any{
-			"phone": user.Phone, "job_title": user.JobTitle, "company_id": user.CompanyID,
-		}).Error
+		return nil
 	}
 	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("look up demo user %s: %w", user.Email, result.Error)

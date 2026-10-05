@@ -401,7 +401,7 @@ func TestWeeklyReportsV2API(t *testing.T) {
 				review(t, professorA, "professor", item, report, action, map[string]string{"comment": "change"}, 400)
 			}
 			if status == model.InternshipCaseStatusPassed || status == model.InternshipCaseStatusFailed {
-				decode(t, request(t, "GET", studentPath(report.ID), token(t, student), nil, 200), model.WeeklyReportSubmitted)
+				request(t, "GET", studentPath(report.ID), token(t, student), nil, 400)
 			}
 		})
 	}

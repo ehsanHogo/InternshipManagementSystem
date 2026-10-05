@@ -79,4 +79,4 @@ export class CompanyInternshipsComponent {
   }
 }
 
-type CompanyListFilter = 'ALL' | Exclude<InternshipCaseStatus, 'DRAFT' | 'PENDING_UNIVERSITY_REVIEW' | 'CANCELLED'>;
+type CompanyListFilter = 'ALL' | Exclude<InternshipCaseStatus, 'DRAFT' | 'REVISION_REQUESTED' | 'PENDING_UNIVERSITY_REVIEW' | 'CANCELLED'>;

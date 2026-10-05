@@ -69,16 +69,12 @@
         <p>ایجاد پرونده جدید پس از باز شدن ترم توسط مسئول آموزش امکان‌پذیر خواهد بود. می‌توانید فرصت‌ها و درخواست‌های پذیرش خود را همچنان مشاهده کنید.</p>
         <p-button label="مشاهده فرصت‌های کارآموزی" routerLink="/student/opportunities" severity="secondary" />
         <p-button label="بررسی دوباره وضعیت ترم" icon="pi pi-refresh" [text]="true" (onClick)="reloadPage()" />
-      } @else if (acceptedApplications().length === 0) {
-        <span class="empty-icon"><i class="pi pi-briefcase" aria-hidden="true"></i></span>
-        <h2>فرصت پذیرفته‌شده‌ای ندارید</h2>
-        <p>برای ثبت درخواست رسمی کارآموزی، ابتدا باید حداقل یک درخواست پذیرفته‌شده از یک شرکت داشته باشید.</p>
-        <p-button label="مشاهده فرصت‌های کارآموزی" icon="pi pi-arrow-left" routerLink="/student/opportunities" />
       } @else {
         <span class="empty-icon"><i class="pi pi-file-plus" aria-hidden="true"></i></span>
         <h2>پرونده فعالی ندارید؛ می‌توانید درخواست رسمی جدیدی آغاز کنید</h2>
         <p>ترم جاری کارآموزی: {{ termLabel(openTerm()) | persianDigits }} — به‌صورت خودکار در پرونده ثبت می‌شود.</p>
         <p>استاد راهنمای تعیین‌شده به‌صورت خودکار در پرونده ثبت می‌شود و فرصت‌های پذیرفته‌شده شما قابل انتخاب خواهند بود.</p>
+        <p>می‌توانید پیش‌نویس را اکنون ایجاد کنید و همچنان برای فرصت‌ها درخواست دهید. برای انتخاب اولویت و ارسال پرونده به آموزش، حداقل یک پذیرش از شرکت لازم است.</p>
         <p-button label="ثبت درخواست رسمی کارآموزی" icon="pi pi-plus" [loading]="creating()" [disabled]="creating() || !canCreateCase" (onClick)="createCase()" />
       }
     </div>
@@ -136,7 +132,7 @@
         </label>
         <label class="field">
           <span>تعداد واحد گذرانده <b>*</b></span>
-          <p-inputnumber formControlName="passedCredits" [min]="0" [max]="300" [useGrouping]="false" />
+          <p-inputnumber formControlName="passedCredits" [min]="0" [maxFractionDigits]="0" [useGrouping]="false" />
           @if (applicationForm.controls.passedCredits.touched && applicationForm.controls.passedCredits.invalid) {
             <small>تعداد واحد گذرانده الزامی است.</small>
           }

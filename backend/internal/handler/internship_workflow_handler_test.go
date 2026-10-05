@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -124,3 +125,56 @@ func TestProfessorCompletionRejectsNumericJSONResult(t *testing.T) {
 }
 
 func timePointerForTest() *time.Time { now := time.Now(); return &now }
+
+func TestStudentEvaluationResponseVisibility(t *testing.T) {
+	for _, status := range []model.InternshipCaseStatus{
+		model.InternshipCaseStatusDraft, model.InternshipCaseStatusRevisionRequested,
+		model.InternshipCaseStatusPendingUniversityReview, model.InternshipCaseStatusPendingCompanyDetails,
+		model.InternshipCaseStatusPendingFinalApproval, model.InternshipCaseStatusActive,
+		model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled,
+	} {
+		t.Run(string(status), func(t *testing.T) {
+			item := &model.InternshipCase{Status: status, CompanyEvaluation: &model.CompanyEvaluation{ID: 1}}
+			data, err := json.Marshal(studentCaseResponse(item))
+			if err != nil {
+				t.Fatal(err)
+			}
+			visible := status == model.InternshipCaseStatusPassed || status == model.InternshipCaseStatusFailed
+			if bytes.Contains(data, []byte(`"companyEvaluation"`)) != visible {
+				t.Fatalf("unexpected student evaluation visibility: %s", data)
+			}
+			if caseResponse(item).CompanyEvaluation == nil || professorDetailResponse(item).CompanyEvaluation == nil {
+				t.Fatal("student redaction modified reviewer response")
+			}
+		})
+	}
+}
+
+func TestCompanyRegistrationErrorWritesOneJSONResponse(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	(&InternshipHandler{}).writeError(ctx, service.ErrCompanyRegistrationRequired)
+	var response struct {
+		Code  string `json:"code"`
+		Error string `json:"error"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("invalid error JSON: %s / %v", recorder.Body.String(), err)
+	}
+	if recorder.Code != http.StatusForbidden || response.Code != "COMPANY_REGISTRATION_NOT_APPROVED" || response.Error == "" {
+		t.Fatalf("incorrect permission response: %+v", response)
+	}
+}
+
+func TestProfessorResponsesUseSelectedPlacementCompany(t *testing.T) {
+	selected := model.InternshipPreference{OpportunityApplication: model.OpportunityApplication{Opportunity: model.InternshipOpportunity{Company: model.Company{Name: "selected company"}}}}
+	item := &model.InternshipCase{Preferences: []model.InternshipPreference{{OpportunityApplication: model.OpportunityApplication{Opportunity: model.InternshipOpportunity{Company: model.Company{Name: "first unselected company"}}}}}, SelectedPreference: &selected}
+	if professorListResponse(item).Company != "selected company" || professorDetailResponse(item).Internship.Company != "selected company" {
+		t.Fatal("professor response must display the selected placement company")
+	}
+	item.SelectedPreference = nil
+	if professorListResponse(item).Company != "" || professorDetailResponse(item).Internship.Company != "" {
+		t.Fatal("unselected preferences must not become professor placement display")
+	}
+}

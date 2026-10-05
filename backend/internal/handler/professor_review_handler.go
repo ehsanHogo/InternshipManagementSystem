@@ -222,7 +222,9 @@ func professorReadiness(internshipCase *model.InternshipCase) (int, int, bool, b
 	return reportCount, approvedCount, hasEvaluation, hasFinalReport, canComplete
 }
 
-// Company resolution is deferred until opportunity/application relations are added.
 func professorCompanyName(internshipCase *model.InternshipCase) string {
-	return ""
+	if internshipCase.SelectedPreference == nil {
+		return ""
+	}
+	return internshipCase.SelectedPreference.OpportunityApplication.Opportunity.Company.Name
 }

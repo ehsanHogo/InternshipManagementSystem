@@ -44,14 +44,6 @@ func finalReportUploadError(item *model.InternshipCase) error {
 
 func (service *InternshipService) GetStudentFinalReport(studentID uint) (*model.FinalReport, error) {
 	item, err := service.GetCurrentCase(studentID)
-	// Keep the existing final-report read endpoint usable after finalization.
-	// History detail selects a specific case once a newer draft exists.
-	if errors.Is(err, ErrCaseNotFound) {
-		item, err = service.findOwnedCase(service.db, studentID)
-		if err == nil {
-			item, err = service.getCaseByID(item.ID)
-		}
-	}
 	if err != nil {
 		return nil, err
 	}

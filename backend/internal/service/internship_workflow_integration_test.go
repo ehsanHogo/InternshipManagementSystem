@@ -439,9 +439,12 @@ func TestWorkflow(t *testing.T) {
 				}); !errors.Is(err, service.ErrInvalidCaseStatus) {
 					t.Fatalf("company evaluation mutation after completion error = %v", err)
 				}
-				studentReports, err := workflow.ListStudentWeeklyReports(readyCase.StudentID)
-				if err != nil || len(studentReports) != 8 {
-					t.Fatalf("student completed report visibility: count=%d err=%v", len(studentReports), err)
+				if _, err := workflow.ListStudentWeeklyReports(readyCase.StudentID); !errors.Is(err, service.ErrInvalidCaseStatus) {
+					t.Fatalf("current report API must reject completed case: %v", err)
+				}
+				history, err := workflow.GetStudentHistoricalCase(readyCase.StudentID, readyCase.ID)
+				if err != nil || len(history.WeeklyReports) != 8 {
+					t.Fatalf("student historical report visibility: case=%+v err=%v", history, err)
 				}
 				companyCase, err := workflow.GetCompanyCase(supervisor.ID, readyCase.ID)
 				if err != nil || companyCase.Status != model.InternshipCaseStatusPassed {

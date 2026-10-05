@@ -116,7 +116,7 @@ func (handler *InternshipHandler) ListStudentHistoricalCases(ctx *gin.Context) {
 	}
 	response := make([]internshipCaseResponse, 0, len(cases))
 	for i := range cases {
-		response = append(response, caseResponse(&cases[i]))
+		response = append(response, studentCaseResponse(&cases[i]))
 	}
 	ctx.JSON(http.StatusOK, response)
 }
@@ -131,7 +131,7 @@ func (handler *InternshipHandler) GetCurrentCase(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
+	ctx.JSON(http.StatusOK, studentCaseResponse(internshipCase))
 }
 
 func (handler *InternshipHandler) GetStudentHistoricalCase(ctx *gin.Context) {
@@ -148,7 +148,7 @@ func (handler *InternshipHandler) GetStudentHistoricalCase(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, caseResponse(item))
+	ctx.JSON(http.StatusOK, studentCaseResponse(item))
 }
 
 func (handler *InternshipHandler) CreateOrGetCase(ctx *gin.Context) {
@@ -172,7 +172,7 @@ func (handler *InternshipHandler) CreateOrGetCase(ctx *gin.Context) {
 	if created {
 		status = http.StatusCreated
 	}
-	ctx.JSON(status, caseResponse(internshipCase))
+	ctx.JSON(status, studentCaseResponse(internshipCase))
 }
 
 func (handler *InternshipHandler) UpdateCase(ctx *gin.Context) {
@@ -190,7 +190,7 @@ func (handler *InternshipHandler) UpdateCase(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
+	ctx.JSON(http.StatusOK, studentCaseResponse(internshipCase))
 }
 
 func (handler *InternshipHandler) AddPreference(ctx *gin.Context) {
@@ -239,7 +239,7 @@ func (handler *InternshipHandler) ReplacePreferences(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
+	ctx.JSON(http.StatusOK, studentCaseResponse(internshipCase))
 }
 
 func (handler *InternshipHandler) DeletePreference(ctx *gin.Context) {
@@ -269,7 +269,7 @@ func (handler *InternshipHandler) SubmitCase(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
+	ctx.JSON(http.StatusOK, studentCaseResponse(internshipCase))
 }
 
 func (handler *InternshipHandler) preferenceRequest(ctx *gin.Context) (uint, preferenceRequest, bool) {
@@ -296,6 +296,7 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 	switch {
 	case errors.Is(err, service.ErrCompanyRegistrationRequired):
 		ctx.JSON(http.StatusForbidden, gin.H{"code": "COMPANY_REGISTRATION_NOT_APPROVED", "error": "ثبت شرکت باید توسط مدیر سیستم تأیید شود."})
+		return
 	case errors.Is(err, service.ErrCaseNotFound), errors.Is(err, service.ErrPreferenceNotFound),
 		errors.Is(err, service.ErrWeeklyReportNotFound), errors.Is(err, service.ErrEvaluationNotFound),
 		errors.Is(err, service.ErrFileNotFound):
@@ -561,6 +562,15 @@ func parseID(value string) (uint, error) {
 		return 0, errors.New("invalid id")
 	}
 	return uint(id), nil
+}
+
+// Student outcome data becomes visible only after professor finalization.
+func studentCaseResponse(item *model.InternshipCase) internshipCaseResponse {
+	response := caseResponse(item)
+	if item.Status != model.InternshipCaseStatusPassed && item.Status != model.InternshipCaseStatusFailed {
+		response.CompanyEvaluation = nil
+	}
+	return response
 }
 
 func caseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {

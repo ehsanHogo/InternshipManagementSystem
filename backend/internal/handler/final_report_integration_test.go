@@ -67,6 +67,7 @@ func TestFinalReportV2API(t *testing.T) {
 	handler.RegisterStudentFinalReportRoutes(students)
 	students.GET("/internship-case", handler.GetCurrentCase)
 	students.GET("/internship-cases/history", handler.ListStudentHistoricalCases)
+	students.GET("/internship-cases/history/:id", handler.GetStudentHistoricalCase)
 	professors := api.Group("/professor", appmiddleware.RequireRole(model.RoleProfessor))
 	handler.RegisterProfessorFinalReportRoutes(professors)
 	professors.GET("/internship-cases/:id", handler.GetProfessorCase)
@@ -446,6 +447,26 @@ func TestFinalReportV2API(t *testing.T) {
 		if manipulated.InternshipCaseID != otherCase.ID || stored(t, report.ID).CurrentFileID != report.CurrentFileID {
 			t.Fatal("student replaced another case's report")
 		}
+		// Valid company file access requires the same selected placement as case access.
+		placement := model.InternshipOpportunity{CompanyID: companyA.ID, CreatedBy: supervisor.ID, Title: "selected final report placement", Description: "test", WorkField: "software", Location: "Tehran", Status: model.OpportunityStatusOpen}
+		if err := tx.Create(&placement).Error; err != nil {
+			t.Fatal(err)
+		}
+		placementResume := model.File{OriginalName: "resume.pdf", StoredName: fmt.Sprintf("placement-resume-%d.pdf", item.ID), Path: uploadDir + "/placement-resume.pdf", MimeType: "application/pdf", SizeBytes: 20, UploadedBy: student.ID, UploadedAt: time.Now()}
+		if err := tx.Create(&placementResume).Error; err != nil {
+			t.Fatal(err)
+		}
+		placementApplication := model.OpportunityApplication{StudentID: student.ID, OpportunityID: placement.ID, ResumeFileID: placementResume.ID, Status: model.ApplicationStatusAccepted, AppliedAt: time.Now()}
+		if err := tx.Create(&placementApplication).Error; err != nil {
+			t.Fatal(err)
+		}
+		selected := model.InternshipPreference{InternshipCaseID: item.ID, OpportunityApplicationID: placementApplication.ID, Priority: 1}
+		if err := tx.Create(&selected).Error; err != nil {
+			t.Fatal(err)
+		}
+		if err := tx.Model(&item).Update("selected_preference_id", selected.ID).Error; err != nil {
+			t.Fatal(err)
+		}
 		path := fmt.Sprintf("/api/files/%d/download", report.CurrentFileID)
 		for _, owner := range []model.User{student, professor, supervisor, university} {
 			request(t, "GET", path, owner, nil, 200)
@@ -501,7 +522,12 @@ func TestFinalReportV2API(t *testing.T) {
 			}
 			noOrphans(t, func() { upload(t, student, "corrected.pdf", "application/pdf", validPDF, nil, 400) })
 			if status == model.InternshipCaseStatusPassed || status == model.InternshipCaseStatusFailed {
-				decode(t, request(t, "GET", studentPath, student, nil, 200), model.FinalReportRevisionRequested)
+				request(t, "GET", studentPath, student, nil, 404)
+				history := request(t, "GET", fmt.Sprintf("/api/student/internship-cases/history/%d", item.ID), student, nil, 200)
+				var view internshipCaseResponse
+				if err := json.Unmarshal(history.Body.Bytes(), &view); err != nil || view.FinalReport == nil || view.FinalReport.ID != report.ID {
+					t.Fatalf("historical final report missing: %s / %v", history.Body.String(), err)
+				}
 				decode(t, request(t, "GET", professorPath(item), professor, nil, 200), model.FinalReportRevisionRequested)
 				request(t, "GET", fmt.Sprintf("/api/files/%d/download", report.CurrentFileID), student, nil, 200)
 				request(t, "GET", fmt.Sprintf("/api/files/%d/download", report.CurrentFileID), professor, nil, 200)
