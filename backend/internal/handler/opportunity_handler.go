@@ -52,6 +52,7 @@ type existingApplicationResponse struct {
 }
 
 type studentOpportunityResponse struct {
+	service.CompanyRating
 	ID                   uint                         `json:"id"`
 	Title                string                       `json:"title"`
 	Description          string                       `json:"description"`
@@ -159,6 +160,15 @@ func (handler *OpportunityHandler) ListStudent(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
+	companyIDs := make([]uint, 0, len(opportunities))
+	for _, opportunity := range opportunities {
+		companyIDs = append(companyIDs, opportunity.CompanyID)
+	}
+	ratings, err := handler.service.CompanyRatings(companyIDs)
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
 	response := make([]studentOpportunityResponse, 0, len(opportunities))
 	for _, opportunity := range opportunities {
 		view, err := handler.studentOpportunityWithEligibility(studentID, opportunity)
@@ -166,6 +176,7 @@ func (handler *OpportunityHandler) ListStudent(ctx *gin.Context) {
 			handler.writeError(ctx, err)
 			return
 		}
+		view.CompanyRating = ratings[opportunity.CompanyID]
 		response = append(response, view)
 	}
 	ctx.JSON(http.StatusOK, response)
@@ -191,6 +202,12 @@ func (handler *OpportunityHandler) GetStudent(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
+	ratings, err := handler.service.CompanyRatings([]uint{opportunity.CompanyID})
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	response.CompanyRating = ratings[opportunity.CompanyID]
 	ctx.JSON(http.StatusOK, response)
 }
 

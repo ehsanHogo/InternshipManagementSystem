@@ -1,10 +1,11 @@
+import { CompanyRating } from '../shared/company-rating.models';
 import { Company } from '../internship/internship.models';
 
 export interface EligibleCompany extends Company {
   passedInternshipCount: number;
 }
 
-export interface ApprovalCompanyDetail extends EligibleCompany {
+export interface ApprovalCompanyDetail extends EligibleCompany, CompanyRating {
   successfulInternships: {
     caseId: number;
     studentName: string;

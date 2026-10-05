@@ -26,6 +26,7 @@
   </p-card>
 
   <p-card header="اطلاعات شرکت">
+    <app-company-rating [average]="item.companyAverageRating" [count]="item.companyRatingCount" />
     <div class="approval" [class.approved]="item.company.isApproved">
       <i [class]="item.company.isApproved ? 'pi pi-check-circle' : 'pi pi-info-circle'"></i>
       <div>

@@ -1,3 +1,4 @@
+import { CompanyRatingComponent } from '../../shared/company-rating.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -40,6 +41,7 @@ type EvaluationField =
 @Component({
   selector: 'app-professor-case',
   imports: [
+    CompanyRatingComponent,
     WeeklyReportReviewComponent, DialogModule, JalaliDatePipe, PersianDigitsPipe, ReactiveFormsModule, RouterLink, ButtonModule, CardModule,
     ConfirmDialogModule, SelectModule, TableModule, TagModule, TextareaModule
   ],

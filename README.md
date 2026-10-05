@@ -107,6 +107,14 @@ If none of the submitted preferences is suitable, the university can request stu
 
 There is no separate manual activation action. On startup or `cmd/migrate`, existing **READY_TO_START** records are converted to **ACTIVE** without changing unrelated case data.
 
+## Student Company Ratings \
+
+After successful completion, a student can open a **PASSED** case in their case history and submit a final company rating from 1 to 5 stars. This also works for older cases and closed academic terms. **FAILED**, **CANCELLED**, and unfinished cases cannot be rated. Each case allows one rating; there are no edit/delete actions or comments.
+
+`POST /api/student/internship-cases/:id/rating` accepts only `{"rating": 4}`. The server verifies ownership and resolves the company through the case's selected preference and accepted opportunity application. The database enforces a unique case, the 1–5 range, foreign keys, and a company index. Startup or `cmd/migrate` adds the ratings table without backfilling ratings.
+
+Student opportunity list/detail show `companyAverageRating` and `companyRatingCount`. These are company-wide aggregates, so all opportunities from one company show the same result. A company without ratings returns `null`/`0` and displays «هنوز ارزیابی‌ای ثبت نشده است». University company details and case review, and assigned professor case details, show the aggregate read-only. Company responses and Admin registration review contain no rating fields. Ratings do not change application eligibility, completion, term handling, registration status, or manual university approval.
+
 ## Company Registration Governance
 
 Self-registration creates one company and its linked company supervisor with `RegistrationStatus=PENDING` and `IsApproved=false`. Pending and rejected supervisors can log in, edit registration data, and view status/rejection reasons at `/company/profile`. Rejected companies explicitly resubmit the same record for review; editing alone does not change status. Operational routes require Admin registration approval on the server and in frontend navigation/guards.

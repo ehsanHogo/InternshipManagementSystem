@@ -8,6 +8,8 @@ import {
   CompanyEvaluationPayload,
   PlacementDetailsPayload,
   InternshipCase,
+  StudentInternshipCase,
+  UniversityInternshipCase,
   CompanyInternshipCase,
   InternshipCaseStatus,
   UniversityPlacementApprovalPayload,
@@ -28,12 +30,16 @@ export class InternshipService {
     return this.http.get<InternshipCase>('/api/student/internship-case');
   }
 
-  listStudentHistoricalCases(): Observable<InternshipCase[]> {
-    return this.http.get<InternshipCase[]>('/api/student/internship-cases/history');
+  listStudentHistoricalCases(): Observable<StudentInternshipCase[]> {
+    return this.http.get<StudentInternshipCase[]>('/api/student/internship-cases/history');
   }
 
-  getStudentHistoricalCase(id: number): Observable<InternshipCase> {
-    return this.http.get<InternshipCase>(`/api/student/internship-cases/history/${id}`);
+  getStudentHistoricalCase(id: number): Observable<StudentInternshipCase> {
+    return this.http.get<StudentInternshipCase>(`/api/student/internship-cases/history/${id}`);
+  }
+
+  rateCompany(caseID: number, rating: number): Observable<StudentInternshipCase> {
+    return this.http.post<StudentInternshipCase>(`/api/student/internship-cases/${caseID}/rating`, { rating });
   }
 
   createCase(): Observable<InternshipCase> {
@@ -61,8 +67,8 @@ export class InternshipService {
     return this.http.get<InternshipCase[]>('/api/university/internship-cases', options);
   }
 
-  getUniversityCase(id: number): Observable<InternshipCase> {
-    return this.http.get<InternshipCase>(`/api/university/internship-cases/${id}`);
+  getUniversityCase(id: number): Observable<UniversityInternshipCase> {
+    return this.http.get<UniversityInternshipCase>(`/api/university/internship-cases/${id}`);
   }
 
   approveUniversityPlacement(id: number, payload: UniversityPlacementApprovalPayload): Observable<InternshipCase> {

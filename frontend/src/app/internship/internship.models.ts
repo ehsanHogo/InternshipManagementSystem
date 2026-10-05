@@ -1,3 +1,4 @@
+import { CompanyRating } from '../shared/company-rating.models';
 import { User } from '../auth/auth.models';
 import { InternshipTerm } from './internship-term.models';
 
@@ -98,6 +99,16 @@ export interface InternshipCase {
   finalResult?: ProfessorFinalResult;
   professorComment?: string;
   completedAt?: string;
+}
+
+// These fields are available only through the authorized student/university views.
+export interface StudentInternshipCase extends InternshipCase, Partial<CompanyRating> {
+  studentRating?: number | null;
+  canRateInternship?: boolean;
+}
+
+export interface UniversityInternshipCase extends InternshipCase, Partial<CompanyRating> {
+  preferences: (InternshipPreference & Partial<CompanyRating>)[];
 }
 
 export interface FileMetadata {
@@ -266,7 +277,7 @@ export interface ProfessorStudentInformation {
   mobile?: string;
 }
 
-export interface ProfessorInternshipInformation {
+export interface ProfessorInternshipInformation extends CompanyRating {
   company: string;
   internshipSubject?: string | null;
   startDate?: string | null;

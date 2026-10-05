@@ -279,6 +279,32 @@
     </p-card>
   }
 
+  @if (currentCase.status === 'PASSED') {
+    <p-card header="ارزیابی شرکت محل کارآموزی">
+      @if (currentCase.selectedPreference; as selected) {
+        <strong>{{ selected.application.opportunity.company.name }}</strong>
+        <app-company-rating [average]="currentCase.companyAverageRating" [count]="currentCase.companyRatingCount" />
+      }
+      @if (currentCase.studentRating != null) {
+        <p>امتیاز شما به این شرکت</p>
+        <div class="rating-stars" dir="ltr" aria-hidden="true">
+          @for (star of ratingStars; track star) { <span>{{ star <= currentCase.studentRating ? '★' : '☆' }}</span> }
+        </div>
+        <p>{{ currentCase.studentRating | persianDigits }} از ۵ · امتیاز ثبت‌شده نهایی است.</p>
+      } @else if (currentCase.canRateInternship) {
+        <p>تجربه کلی خود از این شرکت را ارزیابی کنید. امتیاز پس از ثبت قابل تغییر نیست.</p>
+        <div class="rating-stars" role="group" aria-label="امتیاز شرکت از یک تا پنج" dir="ltr">
+          @for (star of ratingStars; track star) {
+            <button type="button" [attr.aria-label]="(star | persianDigits) + ' از ۵'"
+              [attr.aria-pressed]="selectedRating() === star" [disabled]="ratingSaving()"
+              (click)="selectedRating.set(star)">{{ star <= selectedRating() ? '★' : '☆' }}</button>
+          }
+        </div>
+        <p-button label="ثبت امتیاز" [loading]="ratingSaving()" [disabled]="selectedRating() === 0 || ratingSaving()" (onClick)="submitCompanyRating()" />
+      }
+    </p-card>
+  }
+
   @if (currentCase.status === "CANCELLED") {
     <p-card header="پرونده لغو شده">
       <div class="card-status-line status-line">

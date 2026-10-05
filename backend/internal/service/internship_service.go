@@ -420,7 +420,7 @@ func (service *InternshipService) SubmitCase(studentID uint) (*model.InternshipC
 }
 
 func (service *InternshipService) caseQuery(db *gorm.DB) *gorm.DB {
-	return db.Preload("Term").Preload("Student").Preload("Professor").
+	return db.Preload("StudentRating").Preload("Term").Preload("Student").Preload("Professor").
 		Preload("Preferences", func(query *gorm.DB) *gorm.DB { return query.Order("priority ASC") }).
 		Preload("Preferences.OpportunityApplication.Opportunity.Company").
 		Preload("SelectedPreference.OpportunityApplication.Opportunity.Company").Preload("CompanySupervisor").

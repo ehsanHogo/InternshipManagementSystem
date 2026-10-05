@@ -34,6 +34,7 @@ type professorStudentResponse struct {
 }
 
 type professorInternshipResponse struct {
+	service.CompanyRating
 	Company           string                     `json:"company"`
 	InternshipSubject *string                    `json:"internshipSubject"`
 	StartDate         *time.Time                 `json:"startDate"`
@@ -115,7 +116,14 @@ func (handler *InternshipHandler) GetProfessorCase(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, professorDetailResponse(internshipCase))
+	ratings, err := handler.service.CompanyRatings([]uint{selectedCaseCompanyID(internshipCase)})
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	view := professorDetailResponse(internshipCase)
+	view.Internship.CompanyRating = ratings[selectedCaseCompanyID(internshipCase)]
+	ctx.JSON(http.StatusOK, view)
 }
 
 func (handler *InternshipHandler) CompleteProfessorCase(ctx *gin.Context) {
@@ -135,7 +143,14 @@ func (handler *InternshipHandler) CompleteProfessorCase(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, professorDetailResponse(internshipCase))
+	ratings, err := handler.service.CompanyRatings([]uint{selectedCaseCompanyID(internshipCase)})
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	view := professorDetailResponse(internshipCase)
+	view.Internship.CompanyRating = ratings[selectedCaseCompanyID(internshipCase)]
+	ctx.JSON(http.StatusOK, view)
 }
 
 func professorCaseRequest(ctx *gin.Context) (uint, uint, bool) {

@@ -28,6 +28,7 @@
             [severity]="opportunity.company.isApproved ? 'success' : 'secondary'"
           />
         </div>
+        <app-company-rating [average]="opportunity.companyAverageRating" [count]="opportunity.companyRatingCount" />
         <div class="summary-grid">
           <div><i class="pi pi-sitemap"></i><span>زمینه کاری</span><strong>{{ opportunity.workField }}</strong></div>
           <div><i class="pi pi-map-marker"></i><span>محل</span><strong>{{ opportunity.location }}</strong></div>

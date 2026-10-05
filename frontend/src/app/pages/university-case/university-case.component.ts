@@ -1,3 +1,4 @@
+import { CompanyRatingComponent } from '../../shared/company-rating.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -13,7 +14,7 @@ import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 
 import {
-  InternshipCase,
+  UniversityInternshipCase,
   InternshipCaseStatus,
   InternshipPreference,
   internshipStatusLabels,
@@ -33,6 +34,7 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 @Component({
   selector: 'app-university-case',
   imports: [
+    CompanyRatingComponent,
     CaseReportsComponent,
     JalaliDatePipe,
     PersianDigitsPipe,
@@ -60,7 +62,7 @@ export class UniversityCaseComponent {
   private readonly confirmation = inject(ConfirmationService);
   private readonly caseID = Number(this.route.snapshot.paramMap.get('id'));
 
-  readonly internshipCase = signal<InternshipCase | null>(null);
+  readonly internshipCase = signal<UniversityInternshipCase | null>(null);
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
   readonly saving = signal(false);
@@ -302,7 +304,7 @@ export class UniversityCaseComponent {
       });
   }
 
-  private syncReviewForm(internshipCase: InternshipCase): void {
+  private syncReviewForm(internshipCase: UniversityInternshipCase): void {
     this.reviewForm.reset({
       preferenceId: internshipCase.selectedPreferenceId ?? null,
       letterNumber: internshipCase.letterNumber ?? '',

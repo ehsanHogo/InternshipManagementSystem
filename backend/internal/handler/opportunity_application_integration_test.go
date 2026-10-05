@@ -33,7 +33,7 @@ func TestOpportunityApplicationHTTPFlowAndResumeIsolation(t *testing.T) {
 	}
 	if err := db.AutoMigrate(
 		&model.Company{}, &model.User{}, &model.InternshipOpportunity{}, &model.File{},
-		&model.OpportunityApplication{}, &model.InternshipCase{}, &model.FinalReport{},
+		&model.OpportunityApplication{}, &model.InternshipCase{}, &model.StudentInternshipRating{}, &model.FinalReport{},
 	); err != nil {
 		t.Fatalf("migrate integration database: %v", err)
 	}

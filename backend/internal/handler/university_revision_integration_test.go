@@ -26,7 +26,7 @@ func TestUniversityRevisionAPIAndRecruitmentEligibility(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.AutoMigrate(&model.Company{}, &model.User{}, &model.InternshipTerm{}, &model.ProfessorAssignment{}, &model.InternshipOpportunity{}, &model.File{}, &model.OpportunityApplication{}, &model.InternshipCase{}, &model.InternshipPreference{}, &model.FinalReport{}, &model.WeeklyReport{}, &model.CompanyEvaluation{}); err != nil {
+	if err := db.AutoMigrate(&model.Company{}, &model.User{}, &model.InternshipTerm{}, &model.ProfessorAssignment{}, &model.InternshipOpportunity{}, &model.File{}, &model.OpportunityApplication{}, &model.InternshipCase{}, &model.StudentInternshipRating{}, &model.InternshipPreference{}, &model.FinalReport{}, &model.WeeklyReport{}, &model.CompanyEvaluation{}); err != nil {
 		t.Fatal(err)
 	}
 	tx := db.Begin()

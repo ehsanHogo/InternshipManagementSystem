@@ -33,6 +33,7 @@ type SuccessfulInternshipView struct {
 }
 
 type ApprovalCompanyDetail struct {
+	CompanyRating
 	ApprovalCompanyView
 	SuccessfulInternships []SuccessfulInternshipView `json:"successfulInternships"`
 }
@@ -100,13 +101,18 @@ func (service *CompanyApprovalService) GetCompany(id uint) (*ApprovalCompanyDeta
 	} else if err != nil {
 		return nil, fmt.Errorf("get approval company: %w", err)
 	}
+	ratings, err := companyRatings(service.db, []uint{id})
+	if err != nil {
+		return nil, err
+	}
+	detail.CompanyRating = ratings[id]
 	detail.SuccessfulInternships = make([]SuccessfulInternshipView, 0)
 	query := selectedPassedInternships(service.db).Where("opportunity.company_id = ?", id)
 	if err := query.Distinct("cases.id").Count(&detail.PassedInternshipCount).Error; err != nil {
 		return nil, fmt.Errorf("count successful internships: %w", err)
 	}
 	// Keep the approval view concise; the count above still includes all passed cases.
-	err := selectedPassedInternships(service.db).Where("opportunity.company_id = ?", id).
+	err = selectedPassedInternships(service.db).Where("opportunity.company_id = ?", id).
 		Joins("JOIN users AS student ON student.id = cases.student_id").
 		Select("cases.id AS case_id, student.full_name AS student_name, opportunity.title AS opportunity_title, cases.final_result, cases.completed_at").
 		Order("cases.completed_at DESC NULLS LAST, cases.id DESC").Limit(10).Scan(&detail.SuccessfulInternships).Error

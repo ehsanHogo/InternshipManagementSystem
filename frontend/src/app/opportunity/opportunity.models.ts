@@ -1,3 +1,4 @@
+import { CompanyRating } from '../shared/company-rating.models';
 import type { StatusTagSeverity } from '../internship/internship.models';
 
 export type OpportunityStatus = 'OPEN' | 'CLOSED';
@@ -32,7 +33,7 @@ export interface ExistingOpportunityApplication {
   status: ApplicationStatus;
 }
 
-export interface StudentOpportunity extends OpportunityPayload {
+export interface StudentOpportunity extends OpportunityPayload, CompanyRating {
   id: number;
   createdAt: string;
   company: OpportunityCompany;

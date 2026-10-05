@@ -116,14 +116,15 @@ type InternshipCase struct {
 	UniversityRevisionRequester   *User   `gorm:"foreignKey:UniversityRevisionRequestedBy"`
 	CompanyDetailsRevisionComment *string `gorm:"type:text"`
 
-	Student            User                   `gorm:"foreignKey:StudentID"`
-	Professor          User                   `gorm:"foreignKey:ProfessorID"`
-	Preferences        []InternshipPreference `gorm:"foreignKey:InternshipCaseID"`
-	SelectedPreference *InternshipPreference  `gorm:"foreignKey:SelectedPreferenceID;-:migration"`
-	CompanySupervisor  *User                  `gorm:"foreignKey:CompanySupervisorID"`
-	FinalReport        *FinalReport           `gorm:"foreignKey:InternshipCaseID"`
-	WeeklyReports      []WeeklyReport         `gorm:"foreignKey:InternshipCaseID"`
-	CompanyEvaluation  *CompanyEvaluation     `gorm:"foreignKey:InternshipCaseID"`
+	Student            User                     `gorm:"foreignKey:StudentID"`
+	Professor          User                     `gorm:"foreignKey:ProfessorID"`
+	Preferences        []InternshipPreference   `gorm:"foreignKey:InternshipCaseID"`
+	SelectedPreference *InternshipPreference    `gorm:"foreignKey:SelectedPreferenceID;-:migration"`
+	CompanySupervisor  *User                    `gorm:"foreignKey:CompanySupervisorID"`
+	StudentRating      *StudentInternshipRating `gorm:"foreignKey:InternshipCaseID" json:"-"`
+	FinalReport        *FinalReport             `gorm:"foreignKey:InternshipCaseID"`
+	WeeklyReports      []WeeklyReport           `gorm:"foreignKey:InternshipCaseID"`
+	CompanyEvaluation  *CompanyEvaluation       `gorm:"foreignKey:InternshipCaseID"`
 
 	CreatedAt   time.Time
 	UpdatedAt   time.Time

@@ -53,6 +53,7 @@
       <div class="detail"><span>آدرس</span><strong>{{ company.address || '—' }}</strong></div>
       <div class="detail full-width"><span>تعداد کارآموزی موفق</span><strong>{{ company.passedInternshipCount | persianDigits }}</strong></div>
     </div>
+    <app-company-rating [average]="company.companyAverageRating" [count]="company.companyRatingCount" />
     <h2>آخرین کارآموزی‌های موفق</h2>
     <p-table [value]="company.successfulInternships" responsiveLayout="scroll">
       <ng-template #header><tr><th>دانشجو</th><th>فرصت</th><th>نتیجه</th><th>تاریخ پایان</th></tr></ng-template>

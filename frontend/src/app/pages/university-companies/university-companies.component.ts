@@ -1,3 +1,4 @@
+import { CompanyRatingComponent } from '../../shared/company-rating.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { finalize, forkJoin } from 'rxjs';
@@ -18,7 +19,7 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 @Component({
   selector: 'app-university-companies',
-  imports: [ButtonModule, DialogModule, TableModule, TagModule, ConfirmDialogModule, JalaliDatePipe, PersianDigitsPipe],
+  imports: [CompanyRatingComponent, ButtonModule, DialogModule, TableModule, TagModule, ConfirmDialogModule, JalaliDatePipe, PersianDigitsPipe],
   providers: [ConfirmationService],
   templateUrl: './university-companies.component.html',
   styleUrl: '../workflow-page.scss'

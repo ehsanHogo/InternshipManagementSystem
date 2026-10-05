@@ -114,9 +114,10 @@ func (handler *InternshipHandler) ListStudentHistoricalCases(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	response := make([]internshipCaseResponse, 0, len(cases))
-	for i := range cases {
-		response = append(response, studentCaseResponse(&cases[i]))
+	response, err := handler.ratedCaseViews(cases)
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
 	}
 	ctx.JSON(http.StatusOK, response)
 }
@@ -148,7 +149,7 @@ func (handler *InternshipHandler) GetStudentHistoricalCase(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, studentCaseResponse(item))
+	handler.writeRatedCase(ctx, http.StatusOK, item)
 }
 
 func (handler *InternshipHandler) CreateOrGetCase(ctx *gin.Context) {

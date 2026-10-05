@@ -1,3 +1,4 @@
+import { CompanyRatingComponent } from '../../shared/company-rating.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -12,7 +13,7 @@ import { userErrorMessage } from '../../shared/http-error-message';
 
 @Component({
   selector: 'app-student-opportunities',
-  imports: [RouterLink, ButtonModule, CardModule, TagModule],
+  imports: [CompanyRatingComponent, RouterLink, ButtonModule, CardModule, TagModule],
   templateUrl: './student-opportunities.component.html',
   styleUrl: './student-opportunities.component.scss'
 })

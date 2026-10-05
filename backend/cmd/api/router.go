@@ -46,6 +46,7 @@ func newRouter(cfg config.Config, db *gorm.DB) *gin.Engine {
 	student.Use(appmiddleware.RequireRole(model.RoleStudent))
 	student.GET("/internship-term", termHandler.Current)
 	approvalHandler.RegisterStudentRoutes(student)
+	internshipHandler.RegisterStudentRatingRoutes(student)
 	student.GET("/internship-cases/history", internshipHandler.ListStudentHistoricalCases)
 	student.GET("/internship-cases/history/:id", internshipHandler.GetStudentHistoricalCase)
 	student.GET("/internship-case", internshipHandler.GetCurrentCase)

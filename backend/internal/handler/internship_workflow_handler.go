@@ -63,7 +63,7 @@ func (handler *InternshipHandler) GetUniversityCase(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
+	handler.writeUniversityRatedCase(ctx, internshipCase)
 }
 
 func (handler *InternshipHandler) ListPendingFinalApprovalCases(ctx *gin.Context) {
@@ -102,7 +102,7 @@ func (handler *InternshipHandler) RequestPlacementCorrection(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, caseResponse(item))
+	handler.writeUniversityRatedCase(ctx, item)
 }
 
 func (handler *InternshipHandler) ApproveUniversityPlacement(ctx *gin.Context) {
@@ -133,7 +133,7 @@ func (handler *InternshipHandler) ApproveUniversityPlacement(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
+	handler.writeUniversityRatedCase(ctx, internshipCase)
 }
 
 func (handler *InternshipHandler) CancelUniversityReview(ctx *gin.Context) {
@@ -151,7 +151,7 @@ func (handler *InternshipHandler) CancelUniversityReview(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
+	handler.writeUniversityRatedCase(ctx, internshipCase)
 }
 
 func (handler *InternshipHandler) RequestUniversityRevision(ctx *gin.Context) {
@@ -181,7 +181,7 @@ func (handler *InternshipHandler) RequestUniversityRevision(ctx *gin.Context) {
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, caseResponse(item))
+	handler.writeUniversityRatedCase(ctx, item)
 }
 
 func (handler *InternshipHandler) performUniversityAction(ctx *gin.Context, action func(uint) (*model.InternshipCase, error)) {
@@ -194,7 +194,7 @@ func (handler *InternshipHandler) performUniversityAction(ctx *gin.Context, acti
 		handler.writeError(ctx, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, caseResponse(internshipCase))
+	handler.writeUniversityRatedCase(ctx, internshipCase)
 }
 
 func (handler *InternshipHandler) ListCompanyCases(ctx *gin.Context) {

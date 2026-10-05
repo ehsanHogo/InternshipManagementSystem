@@ -68,6 +68,7 @@
   </p-card>
 
   <p-card header="اطلاعات کارآموزی">
+    <app-company-rating [average]="item.internship.companyAverageRating" [count]="item.internship.companyRatingCount" />
     <div class="detail-grid">
       <div class="detail">
         <span>شرکت</span><strong>{{ item.internship.company || "—" }}</strong>

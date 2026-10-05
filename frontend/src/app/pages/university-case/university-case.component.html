@@ -139,6 +139,7 @@
                 [severity]="applicationStatusSeverity(preference.application.status)"
               />
             </div>
+            <app-company-rating [average]="preference.companyAverageRating" [count]="preference.companyRatingCount" />
             <div class="detail-grid">
               <div class="detail full-width">
                 <span>عنوان فرصت</span><strong>{{ preference.application.opportunity.title }}</strong>
@@ -220,6 +221,7 @@
 
   @if (item.selectedPreference) {
     <p-card header="نتیجه بررسی آموزش">
+      <app-company-rating [average]="item.companyAverageRating" [count]="item.companyRatingCount" />
       <div class="card-status-line status-line">
         <span class="status-label">وضعیت</span>
         <p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" />

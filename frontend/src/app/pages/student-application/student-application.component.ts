@@ -1,3 +1,4 @@
+import { CompanyRatingComponent } from '../../shared/company-rating.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -13,7 +14,7 @@ import { TagModule } from 'primeng/tag';
 
 import {
   AcceptedOpportunityApplication,
-  InternshipCase,
+  StudentInternshipCase,
   InternshipCaseStatus,
   InternshipPreference,
   internshipStatusLabels,
@@ -31,6 +32,7 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 @Component({
   selector: 'app-student-application',
   imports: [
+    CompanyRatingComponent,
     CaseReportsComponent,
     ReactiveFormsModule,
     RouterLink,
@@ -56,16 +58,19 @@ export class StudentApplicationComponent {
   private readonly messages = inject(MessageService);
   private readonly confirmation = inject(ConfirmationService);
 
-  readonly internshipCase = signal<InternshipCase | null>(null);
-  readonly historicalCases = signal<InternshipCase[]>([]);
+  readonly internshipCase = signal<StudentInternshipCase | null>(null);
+  readonly historicalCases = signal<StudentInternshipCase[]>([]);
   readonly viewingHistory = signal(false);
   readonly historyLoading = signal(false);
-  private latestCase: InternshipCase | null = null;
+  private latestCase: StudentInternshipCase | null = null;
   readonly acceptedApplications = signal<AcceptedOpportunityApplication[]>([]);
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
   readonly creating = signal(false);
   readonly saving = signal(false);
+  readonly ratingSaving = signal(false);
+  readonly selectedRating = signal(0);
+  readonly ratingStars = [1, 2, 3, 4, 5];
   readonly preferenceSaving = signal(false);
 
   readonly applicationForm = this.formBuilder.group({
@@ -90,8 +95,8 @@ export class StudentApplicationComponent {
       !this.loading() && !this.loadFailed() && !this.historyLoading();
   }
 
-  viewHistoricalCase(item: InternshipCase): void {
-    if (this.historyLoading() || this.saving() || this.preferenceSaving() || this.creating()) return;
+  viewHistoricalCase(item: StudentInternshipCase): void {
+    if (this.ratingSaving() || this.historyLoading() || this.saving() || this.preferenceSaving() || this.creating()) return;
     this.historyLoading.set(true);
     this.internshipService.getStudentHistoricalCase(item.id)
       .pipe(finalize(() => this.historyLoading.set(false)))
@@ -105,6 +110,7 @@ export class StudentApplicationComponent {
   }
 
   returnToCurrentCase(): void {
+    if (this.ratingSaving()) return;
     this.viewingHistory.set(false);
     if (this.latestCase) this.setCase(this.latestCase);
     else this.internshipCase.set(null);
@@ -137,7 +143,7 @@ export class StudentApplicationComponent {
     return internshipStatusLabels[status];
   }
 
-  finalResultLabel(internshipCase: InternshipCase): string {
+  finalResultLabel(internshipCase: StudentInternshipCase): string {
     return internshipCase.finalResult ? professorFinalResultLabels[internshipCase.finalResult] : '—';
   }
 
@@ -246,6 +252,31 @@ export class StudentApplicationComponent {
     });
   }
 
+  submitCompanyRating(): void {
+    const item = this.internshipCase();
+    const rating = this.selectedRating();
+    if (!item?.canRateInternship || item.status !== 'PASSED' || rating < 1 || rating > 5 || this.ratingSaving()) return;
+    this.ratingSaving.set(true);
+    this.internshipService.rateCompany(item.id, rating)
+      .pipe(finalize(() => this.ratingSaving.set(false)))
+      .subscribe({
+        next: detail => {
+          this.setCase(detail);
+          this.historicalCases.update(items => items.map(past => past.id === detail.id ? detail : past));
+          this.messages.add({ severity: 'success', summary: 'ثبت شد', detail: 'امتیاز شما به شرکت ثبت شد و قابل تغییر نیست.' });
+        },
+        error: (error: HttpErrorResponse) => {
+          this.showError(error);
+          if (error.error?.code === 'STUDENT_RATING_ALREADY_EXISTS') {
+            this.internshipService.getStudentHistoricalCase(item.id).subscribe({
+              next: detail => this.setCase(detail),
+              error: (refreshError: HttpErrorResponse) => this.showError(refreshError)
+            });
+          }
+        }
+      });
+  }
+
   private loadPage(): void {
     this.loading.set(true);
     this.loadFailed.set(false);
@@ -302,7 +333,8 @@ export class StudentApplicationComponent {
       .map((preference) => preference.opportunityApplicationId);
   }
 
-  private setCase(internshipCase: InternshipCase, syncApplicationForm = true): void {
+  private setCase(internshipCase: StudentInternshipCase, syncApplicationForm = true): void {
+    this.selectedRating.set(0);
     this.internshipCase.set(internshipCase);
     if (!this.viewingHistory()) this.latestCase = internshipCase;
     if (syncApplicationForm) {

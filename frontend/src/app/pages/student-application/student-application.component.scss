@@ -337,3 +337,15 @@ p-card {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+.rating-stars {
+  display: flex;
+  justify-content: flex-end;
+  gap: .35rem;
+  margin-block: .75rem;
+  color: var(--p-orange-500);
+  font-size: 2rem;
+  button { color: inherit; font: inherit; background: transparent; border: 1px solid transparent; border-radius: .4rem; cursor: pointer; padding: .2rem .4rem; }
+  button:focus-visible { outline: 2px solid var(--p-primary-color); }
+  button:disabled { cursor: wait; opacity: .65; }
+}

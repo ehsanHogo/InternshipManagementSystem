@@ -24,7 +24,7 @@ func TestOfficialInternshipApplicationFlow(t *testing.T) {
 	}
 	if err := db.AutoMigrate(
 		&model.Company{}, &model.User{}, &model.InternshipOpportunity{}, &model.ProfessorAssignment{},
-		&model.File{}, &model.OpportunityApplication{}, &model.InternshipCase{}, &model.FinalReport{}, &model.InternshipPreference{},
+		&model.File{}, &model.OpportunityApplication{}, &model.InternshipCase{}, &model.StudentInternshipRating{}, &model.FinalReport{}, &model.InternshipPreference{},
 	); err != nil {
 		t.Fatalf("migrate official application schema: %v", err)
 	}
