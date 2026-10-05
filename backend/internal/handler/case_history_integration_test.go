@@ -42,6 +42,7 @@ func TestCaseHistoryAPI(t *testing.T) {
 	}
 	defer tx.Rollback()
 	suffix := time.Now().UnixNano()
+	createOpenTermFixture(t, tx, suffix)
 	company := createOpportunityTestCompany(t, tx, suffix, "ha", false)
 	otherCompany := createOpportunityTestCompany(t, tx, suffix, "hb", false)
 	unrelatedCompany := createOpportunityTestCompany(t, tx, suffix, "hc", false)

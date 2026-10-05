@@ -49,6 +49,7 @@ func main() {
 	authHandler := handler.NewAuthHandler(db, cfg.JWT.Secret, time.Duration(cfg.JWT.ExpiresHours)*time.Hour)
 	internshipService := service.NewInternshipService(db)
 	internshipHandler := handler.NewInternshipHandler(internshipService, cfg.UploadDir)
+	termHandler := handler.NewInternshipTermHandler(service.NewInternshipTermService(db))
 	managementService := service.NewUniversityManagementService(db)
 	managementHandler := handler.NewUniversityManagementHandler(managementService)
 	approvalHandler := handler.NewCompanyApprovalHandler(service.NewCompanyApprovalService(db))
@@ -75,6 +76,7 @@ func main() {
 
 	student := authenticated.Group("/student")
 	student.Use(appmiddleware.RequireRole(model.RoleStudent))
+	student.GET("/internship-term", termHandler.Current)
 	approvalHandler.RegisterStudentRoutes(student)
 	student.GET("/internship-cases/history", internshipHandler.ListStudentHistoricalCases)
 	student.GET("/internship-cases/history/:id", internshipHandler.GetStudentHistoricalCase)
@@ -97,6 +99,7 @@ func main() {
 
 	university := authenticated.Group("/university")
 	university.Use(appmiddleware.RequireRole(model.RoleUniversitySupervisor))
+	termHandler.RegisterUniversityRoutes(university)
 	approvalHandler.RegisterUniversityRoutes(university)
 	university.GET("/internship-cases", internshipHandler.ListUniversityCases)
 	university.GET("/internship-cases/pending-review", internshipHandler.ListPendingUniversityReviewCases)

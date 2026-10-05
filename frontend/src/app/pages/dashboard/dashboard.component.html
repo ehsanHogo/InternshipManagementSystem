@@ -40,6 +40,7 @@
       </div>
     </p-card>
     @if (internshipCase(); as item) {
+      <p>ترم کارآموزی: {{ termLabel(item.term) | persianDigits }}</p>
       @if (item.status === "ACTIVE") {
         <p-card header="پیشرفت کارآموزی">
           <div class="progress-grid">
@@ -66,11 +67,14 @@
     @if (!statusLoading() && !statusLoadFailed()) {
       @if (hasPassedCase()) {
         <p>دوره کارآموزی را با موفقیت گذرانده‌اید و امکان ثبت درخواست یا پرونده جدید ندارید.</p>
+      } @else if (!internshipCase() && !openTerm()) {
+        <p>در حال حاضر ترم کارآموزی بازی وجود ندارد؛ ایجاد پرونده جدید پس از باز شدن ترم توسط مسئول آموزش امکان‌پذیر خواهد بود.</p>
       } @else if (!internshipCase() && historicalCase()) {
         <p>پرونده فعالی ندارید. پس از پرونده مردود یا لغو شده می‌توانید فرایند کارآموزی جدیدی آغاز کنید.</p>
       }
       @if (historicalCase(); as past) {
         <p-card header="آخرین پرونده تاریخی (فقط خواندنی)">
+          <p>ترم کارآموزی: {{ termLabel(past.term) | persianDigits }}</p>
           <p-tag [value]="statusLabel(past.status)" [severity]="internshipStatusSeverity(past.status)" />
           @if (past.status !== 'CANCELLED') {
             <p>نتیجه نهایی: {{ finalResultLabel(past) }}</p>

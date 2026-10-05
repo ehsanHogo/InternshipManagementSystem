@@ -59,6 +59,7 @@ func (service *InternshipService) ListPendingCompanyDetailsCases(supervisorID ui
 func (service *InternshipService) listCompanyCases(supervisorID uint, statuses []model.InternshipCaseStatus) ([]model.InternshipCase, error) {
 	var cases []model.InternshipCase
 	if err := service.companyCaseQuery(service.db, supervisorID).
+		Where("internship_cases.status <> ? OR (internship_cases.term_id IS NOT NULL AND internship_cases.cancellation_comment = ?)", model.InternshipCaseStatusCancelled, TermClosureCancellationComment).
 		Where("internship_cases.status IN ?", statuses).Order("updated_at DESC").Find(&cases).Error; err != nil {
 		return nil, fmt.Errorf("list company internship cases: %w", err)
 	}
@@ -68,6 +69,7 @@ func (service *InternshipService) listCompanyCases(supervisorID uint, statuses [
 func (service *InternshipService) GetCompanyCase(supervisorID, caseID uint) (*model.InternshipCase, error) {
 	var internshipCase model.InternshipCase
 	err := service.companyCaseQuery(service.db, supervisorID).
+		Where("internship_cases.status <> ? OR (internship_cases.term_id IS NOT NULL AND internship_cases.cancellation_comment = ?)", model.InternshipCaseStatusCancelled, TermClosureCancellationComment).
 		Where("internship_cases.status IN ?", companyVisibleStatuses()).First(&internshipCase, caseID).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrCaseNotAssignedToCompany

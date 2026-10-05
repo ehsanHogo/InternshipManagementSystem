@@ -47,6 +47,7 @@ func TestFinalReportV2API(t *testing.T) {
 	}
 	defer tx.Rollback()
 	suffix := time.Now().UnixNano()
+	createOpenTermFixture(t, tx, suffix)
 	companyA := createOpportunityTestCompany(t, tx, suffix, "fra", true)
 	companyB := createOpportunityTestCompany(t, tx, suffix, "frb", true)
 	supervisor := createOpportunityTestUser(t, tx, suffix, "frsupervisor", model.RoleCompanySupervisor, &companyA.ID)

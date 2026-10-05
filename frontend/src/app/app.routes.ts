@@ -109,6 +109,12 @@ export const routes: Routes = [
           )
       },
       {
+        path: 'university/internship-terms',
+        canActivate: [universitySupervisorGuard],
+        loadComponent: () => import('./pages/university-internship-terms/university-internship-terms.component')
+          .then(module => module.UniversityInternshipTermsComponent)
+      },
+      {
         path: 'university/applications/:id',
         canActivate: [universitySupervisorGuard],
         loadComponent: () =>

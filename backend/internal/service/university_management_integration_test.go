@@ -36,6 +36,7 @@ func TestUniversityManagement(t *testing.T) {
 	management := service.NewUniversityManagementService(tx)
 	workflow := service.NewInternshipService(tx)
 	suffix := time.Now().UnixNano()
+	createOpenTermFixture(t, tx, suffix)
 	studentNumber := fmt.Sprintf("m7-%d", suffix)
 	studentEmail := fmt.Sprintf("m7-student-%d@example.test", suffix)
 	student, studentPassword, err := management.CreateManagedUser(model.RoleStudent, service.ManagedUserInput{

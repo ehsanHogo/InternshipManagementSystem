@@ -1,4 +1,5 @@
 import { User } from '../auth/auth.models';
+import { InternshipTerm } from './internship-term.models';
 
 export type InternshipCaseStatus =
   | 'DRAFT'
@@ -48,6 +49,8 @@ export interface InternshipPreference {
 
 export interface InternshipCase {
   id: number;
+  termId: number | null;
+  term?: InternshipTerm;
   status: InternshipCaseStatus;
   passedCredits: number | null;
   mobile: string | null;
@@ -227,6 +230,7 @@ export const professorFinalResultLabels: Record<ProfessorFinalResult, string> = 
 };
 
 export interface ProfessorCaseListItem {
+  term?: InternshipTerm;
   caseId: number;
   student: User;
   company: string;
@@ -263,6 +267,9 @@ export interface ProfessorCompanyEvaluation extends CompanyEvaluation {
 }
 
 export interface ProfessorCaseDetail {
+  term?: InternshipTerm;
+  cancellationComment?: string;
+  cancelledAt?: string;
   caseId: number;
   student: ProfessorStudentInformation;
   internship: ProfessorInternshipInformation;

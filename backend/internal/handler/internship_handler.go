@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -20,8 +22,9 @@ type InternshipHandler struct {
 }
 
 type updateCaseRequest struct {
-	PassedCredits *int    `json:"passedCredits"`
-	Mobile        *string `json:"mobile"`
+	TermID        json.RawMessage `json:"termId"`
+	PassedCredits *int            `json:"passedCredits"`
+	Mobile        *string         `json:"mobile"`
 }
 
 type preferenceRequest struct {
@@ -34,6 +37,8 @@ type replacePreferencesRequest struct {
 }
 
 type internshipCaseResponse struct {
+	TermID                        *uint                          `json:"termId"`
+	Term                          *model.InternshipTerm          `json:"term,omitempty"`
 	ID                            uint                           `json:"id"`
 	Status                        model.InternshipCaseStatus     `json:"status"`
 	PassedCredits                 *int                           `json:"passedCredits"`
@@ -146,6 +151,13 @@ func (handler *InternshipHandler) CreateOrGetCase(ctx *gin.Context) {
 	if !ok {
 		return
 	}
+	var request struct {
+		TermID json.RawMessage `json:"termId"`
+	}
+	if err := ctx.ShouldBindJSON(&request); (err != nil && !errors.Is(err, io.EOF)) || request.TermID != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_CASE_REQUEST", "error": "ترم پرونده به‌صورت خودکار تعیین می‌شود و قابل انتخاب نیست."})
+		return
+	}
 	internshipCase, created, err := handler.service.CreateOrGetCase(studentID)
 	if err != nil {
 		handler.writeError(ctx, err)
@@ -164,7 +176,7 @@ func (handler *InternshipHandler) UpdateCase(ctx *gin.Context) {
 		return
 	}
 	var request updateCaseRequest
-	if err := ctx.ShouldBindJSON(&request); err != nil {
+	if err := ctx.ShouldBindJSON(&request); err != nil || request.TermID != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اطلاعات درخواست معتبر نیست."})
 		return
 	}
@@ -294,6 +306,7 @@ func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 		errors.Is(err, service.ErrCompanyDetailsRevisionCommentRequired), errors.Is(err, service.ErrFinalReportCommentRequired), errors.Is(err, service.ErrInvalidFinalReportFile):
 		status = http.StatusBadRequest
 	case errors.Is(err, service.ErrCaseNotEditable), errors.Is(err, service.ErrPreferenceLimit),
+		errors.Is(err, service.ErrNoOpenInternshipTerm),
 		errors.Is(err, service.ErrDuplicatePriority), errors.Is(err, service.ErrPreferenceAlreadyExists),
 		errors.Is(err, service.ErrDuplicateWeeklyReport), errors.Is(err, service.ErrWeeklyReportState), errors.Is(err, service.ErrFinalReportState),
 		errors.Is(err, service.ErrDuplicateEvaluation), errors.Is(err, service.ErrWeeklyReportsIncomplete),
@@ -328,6 +341,8 @@ func currentUserID(ctx *gin.Context) (uint, bool) {
 
 func internshipErrorCode(err error) string {
 	switch {
+	case errors.Is(err, service.ErrNoOpenInternshipTerm):
+		return "NO_OPEN_INTERNSHIP_TERM"
 	case errors.Is(err, service.ErrCaseNotAssignedToProfessor):
 		return "INTERNSHIP_CASE_NOT_ASSIGNED_TO_PROFESSOR"
 	case errors.Is(err, service.ErrInvalidProfessorResult):
@@ -419,6 +434,8 @@ func internshipErrorCode(err error) string {
 
 func publicInternshipError(err error) string {
 	switch {
+	case errors.Is(err, service.ErrNoOpenInternshipTerm):
+		return "در حال حاضر ترم کارآموزی بازی وجود ندارد. پس از باز شدن ترم توسط مسئول آموزش می‌توانید پرونده جدید ایجاد کنید."
 	case errors.Is(err, service.ErrFinalReportState):
 		return "ارسال مجدد فقط پس از درخواست اصلاح استاد و بررسی فقط برای گزارش در انتظار بررسی مجاز است."
 	case errors.Is(err, service.ErrFinalReportCommentRequired):
@@ -544,6 +561,7 @@ func caseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 		preferences = append(preferences, preferenceResponse(preference))
 	}
 	response := internshipCaseResponse{
+		TermID: internshipCase.TermID, Term: internshipCase.Term,
 		ID: internshipCase.ID, Status: internshipCase.Status,
 		PassedCredits: internshipCase.PassedCredits, Mobile: internshipCase.Mobile,
 		Student: internshipCase.Student.Public(), Professor: internshipCase.Professor.Public(),

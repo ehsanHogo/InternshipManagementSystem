@@ -92,6 +92,8 @@ PENDING_UNIVERSITY_REVIEW → CANCELLED (university cancellation)
 
 Recommended demonstration order:
 
+Before creating an official case, sign in as the university supervisor and open an academic internship term at `/university/internship-terms`.
+
 1. Register a company, publish an opportunity, and accept the student's opportunity application.
 2. As the student, create the official case, enter credits/mobile, select one to three accepted applications in priority order, and submit.
 3. As the university supervisor, select one preference and enter introduction-letter number/date. The selected opportunity determines the company supervisor automatically.

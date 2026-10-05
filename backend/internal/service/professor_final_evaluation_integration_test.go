@@ -68,6 +68,7 @@ func TestProfessorFinalEvaluation(t *testing.T) {
 	if err := db.AutoMigrate(&model.Company{}, &model.User{}, &model.InternshipOpportunity{}, &model.ProfessorAssignment{}, &model.File{}, &model.OpportunityApplication{}, &model.InternshipCase{}, &model.InternshipPreference{}, &model.WeeklyReport{}, &model.CompanyEvaluation{}, &model.FinalReport{}); err != nil {
 		t.Fatal(err)
 	}
+	createOpenTermFixture(t, db, suffix)
 	professor := createTestUser(t, db, suffix, "final-professor", model.RoleProfessor)
 	otherProfessor := createTestUser(t, db, suffix, "final-other-professor", model.RoleProfessor)
 	supervisor := createTestUser(t, db, suffix, "final-supervisor", model.RoleCompanySupervisor)

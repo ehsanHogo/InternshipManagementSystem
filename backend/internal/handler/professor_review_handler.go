@@ -11,6 +11,7 @@ import (
 )
 
 type professorCaseListResponse struct {
+	Term                      *model.InternshipTerm       `json:"term,omitempty"`
 	CaseID                    uint                        `json:"caseId"`
 	Student                   model.PublicUser            `json:"student"`
 	Company                   string                      `json:"company"`
@@ -63,6 +64,9 @@ type professorCompanyEvaluationResponse struct {
 }
 
 type professorCaseDetailResponse struct {
+	Term                      *model.InternshipTerm               `json:"term,omitempty"`
+	CancellationComment       *string                             `json:"cancellationComment,omitempty"`
+	CancelledAt               *time.Time                          `json:"cancelledAt,omitempty"`
 	CaseID                    uint                                `json:"caseId"`
 	Student                   professorStudentResponse            `json:"student"`
 	Internship                professorInternshipResponse         `json:"internship"`
@@ -150,6 +154,7 @@ func professorCaseRequest(ctx *gin.Context) (uint, uint, bool) {
 func professorListResponse(internshipCase *model.InternshipCase) professorCaseListResponse {
 	reportCount, approvedCount, hasEvaluation, hasFinalReport, canComplete := professorReadiness(internshipCase)
 	return professorCaseListResponse{
+		Term:   internshipCase.Term,
 		CaseID: internshipCase.ID, Student: internshipCase.Student.Public(), Company: professorCompanyName(internshipCase),
 		InternshipSubject: internshipCase.InternshipSubject, Status: internshipCase.Status,
 		WeeklyReportCount: reportCount, ApprovedWeeklyReportCount: approvedCount,
@@ -161,6 +166,7 @@ func professorListResponse(internshipCase *model.InternshipCase) professorCaseLi
 func professorDetailResponse(internshipCase *model.InternshipCase) professorCaseDetailResponse {
 	reportCount, approvedCount, hasEvaluation, hasFinalReport, canComplete := professorReadiness(internshipCase)
 	response := professorCaseDetailResponse{
+		Term: internshipCase.Term, CancellationComment: internshipCase.CancellationComment, CancelledAt: internshipCase.CancelledAt,
 		CaseID: internshipCase.ID,
 		Student: professorStudentResponse{
 			FullName: internshipCase.Student.FullName, StudentNumber: internshipCase.Student.StudentNumber,

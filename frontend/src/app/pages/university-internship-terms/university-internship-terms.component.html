@@ -1,0 +1,61 @@
+<p-confirmDialog [baseZIndex]="1400" [style]="{ width: 'min(92vw, 36rem)' }" />
+<section class="page-heading">
+  <div><span class="eyebrow">مدیریت دانشگاه</span><h1>ترم‌های کارآموزی</h1><p>ترم جاری و پرونده‌های هر ترم، از جمله پیش‌نویس‌ها، را مدیریت و بررسی کنید.</p></div>
+  <p-button label="ایجاد و باز کردن ترم" icon="pi pi-plus" [disabled]="loading() || loadFailed() || saving() || !!currentTerm()" (onClick)="openCreate()" />
+</section>
+@if (loading()) {
+  <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت ترم‌ها...</span></div>
+} @else if (loadFailed()) {
+  <div class="state-card error-state"><p>دریافت ترم‌ها ناموفق بود.</p><p-button label="تلاش دوباره" (onClick)="load()" /></div>
+} @else {
+  @if (currentTerm(); as current) {
+    <div class="state-card"><p>ترم جاری کارآموزی: <strong>{{ termLabel(current) | persianDigits }}</strong> — پرونده‌های جدید به‌صورت خودکار در این ترم ایجاد می‌شوند.</p></div>
+  } @else {
+    <div class="state-card"><p>ترم کارآموزی بازی وجود ندارد. برای ایجاد پرونده جدید توسط دانشجویان، یک ترم باز کنید.</p></div>
+  }
+  <p-table [value]="terms()" [rowHover]="true" responsiveLayout="scroll">
+    <ng-template #header><tr><th>ترم / سال تحصیلی</th><th>وضعیت</th><th>تاریخ باز شدن</th><th>تاریخ بسته شدن</th><th>عملیات</th></tr></ng-template>
+    <ng-template #body let-term><tr>
+      <td>{{ termLabel(term) | persianDigits }}</td>
+      <td><p-tag [value]="term.status === 'OPEN' ? 'باز — ترم جاری' : 'بسته'" [severity]="term.status === 'OPEN' ? 'success' : 'secondary'" /></td>
+      <td>{{ term.openedAt | jalaliDate }}</td><td>{{ term.closedAt | jalaliDate }}</td>
+      <td><p-button label="پرونده‌های ترم" icon="pi pi-eye" [text]="true" [disabled]="detailLoading()" (onClick)="inspect(term.id)" />
+        @if (term.status === 'OPEN') { <p-button label="بستن ترم" icon="pi pi-lock" severity="danger" [text]="true" [disabled]="saving()" (onClick)="confirmClose(term)" /> }
+      </td>
+    </tr></ng-template>
+    <ng-template #emptymessage><tr><td colspan="5" class="muted">هنوز ترمی ثبت نشده است.</td></tr></ng-template>
+  </p-table>
+}
+
+<p-dialog header="ایجاد و باز کردن ترم کارآموزی" [visible]="createVisible()" (visibleChange)="createVisible.set($event)" [modal]="true" appendTo="body" [style]="{ width: 'min(92vw, 36rem)' }">
+  <form class="form-grid" [formGroup]="form" (ngSubmit)="create()">
+    <label class="field">سال تحصیلی<p-inputNumber inputId="academic-year" formControlName="academicYear" [useGrouping]="false" [min]="1" [max]="9999" [maxFractionDigits]="0" placeholder="۱۴۰۵" /></label>
+    <label class="field">نوع ترم<p-select formControlName="termType" [options]="types" optionLabel="label" optionValue="value" placeholder="انتخاب نوع ترم" appendTo="body" /></label>
+    @if (form.invalid && form.touched) { <p class="full-width error-state">سال تحصیلی و نوع ترم معتبر وارد کنید.</p> }
+    <p class="full-width muted">ترم بلافاصله باز می‌شود. هر پرونده جدید به این ترم اختصاص خواهد یافت.</p>
+    <div class="dialog-actions full-width"><p-button label="انصراف" severity="secondary" [outlined]="true" [disabled]="saving()" (onClick)="createVisible.set(false)" /><p-button label="ایجاد و باز کردن" type="submit" [loading]="saving()" /></div>
+  </form>
+</p-dialog>
+
+<p-dialog header="پرونده‌های ترم کارآموزی" [visible]="detailVisible()" (visibleChange)="detailVisible.set($event)" [modal]="true" appendTo="body" [style]="{ width: 'min(96vw, 76rem)' }">
+  @if (detailLoading()) { <p>در حال دریافت پرونده‌ها...</p> }
+  @else if (detailFailed()) { <p>دریافت پرونده‌های ترم ناموفق بود.</p><p-button label="تلاش دوباره" (onClick)="inspect(detailID()!)" /> }
+  @else if (detail(); as item) {
+    <h2>{{ termLabel(item.term) | persianDigits }}</h2>
+    <p-tag [value]="item.term.status === 'OPEN' ? 'باز — ترم جاری' : 'بسته'" [severity]="item.term.status === 'OPEN' ? 'success' : 'secondary'" />
+    <p>باز شدن: {{ item.term.openedAt | jalaliDate }} · بسته شدن: {{ item.term.closedAt | jalaliDate }}</p>
+    <p-table [value]="item.cases" responsiveLayout="scroll" [paginator]="item.cases.length > 10" [rows]="10">
+      <ng-template #header><tr><th>پرونده</th><th>دانشجو</th><th>وضعیت</th><th>شرکت انتخاب‌شده</th><th>استاد</th><th>تاریخ ایجاد</th><th>تاریخ ارسال</th><th>تاریخ لغو / پایان</th><th>بررسی</th></tr></ng-template>
+      <ng-template #body let-case><tr>
+        <td>{{ case.id | persianDigits }}</td><td>{{ case.student.fullName }}<br /><span class="muted">{{ case.student.studentNumber | persianDigits }}</span></td>
+        <td><p-tag [value]="statusLabel(case.status)" [severity]="statusSeverity(case.status)" /></td>
+        <td>{{ case.selectedPreference?.application?.opportunity?.company?.name || 'هنوز انتخاب نشده' }}</td><td>{{ case.professor.fullName || '—' }}</td>
+        <td>{{ case.createdAt | jalaliDate }}</td><td>{{ case.submittedAt | jalaliDate }}</td><td>{{ (case.cancelledAt || case.completedAt) | jalaliDate }}</td>
+        <td>@if (case.status !== 'DRAFT') { <p-button label="جزئیات" [text]="true" [routerLink]="['/university/applications', case.id]" /> } @else { <span class="muted">ارسال نشده</span> }</td>
+      </tr>
+      @if (case.cancellationComment) { <tr><td colspan="9">دلیل لغو: {{ case.cancellationComment }}</td></tr> }
+      </ng-template>
+      <ng-template #emptymessage><tr><td colspan="9" class="muted">پرونده‌ای برای این ترم ایجاد نشده است.</td></tr></ng-template>
+    </p-table>
+  }
+</p-dialog>

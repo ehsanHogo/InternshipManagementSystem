@@ -35,6 +35,7 @@ func TestUniversityReviewWorkflow(t *testing.T) {
 	defer tx.Rollback()
 
 	suffix := time.Now().UnixNano()
+	createOpenTermFixture(t, tx, suffix)
 	company := applicationTestCompany(t, tx, suffix, "r")
 	otherCompany := applicationTestCompany(t, tx, suffix, "o")
 	supervisor := applicationTestUser(t, tx, suffix, "review-supervisor", model.RoleCompanySupervisor, &company.ID)

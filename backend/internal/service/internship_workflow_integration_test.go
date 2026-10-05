@@ -38,6 +38,7 @@ func TestWorkflow(t *testing.T) {
 	defer tx.Rollback()
 	workflow := service.NewInternshipService(tx)
 	suffix := time.Now().UnixNano()
+	createOpenTermFixture(t, tx, suffix)
 
 	t.Run("company identifiers are required and unique", func(t *testing.T) {
 		tests := []struct {
@@ -464,6 +465,15 @@ func TestWorkflow(t *testing.T) {
 			t.Fatalf("other professor list: count=%d err=%v", len(otherCases), err)
 		}
 	})
+}
+
+// Case-creation fixtures explicitly open a term; legacy raw case fixtures stay nullable.
+func createOpenTermFixture(t *testing.T, db *gorm.DB, suffix int64) {
+	t.Helper()
+	university := createTestUser(t, db, suffix, "term-university", model.RoleUniversitySupervisor)
+	if _, err := service.NewInternshipTermService(db).Create(university.ID, 1405, model.InternshipTermTypeSummer); err != nil {
+		t.Fatalf("create open internship term fixture: %v", err)
+	}
 }
 
 func createProfessorReviewCase(

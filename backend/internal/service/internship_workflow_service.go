@@ -185,6 +185,7 @@ func companyVisibleStatuses() []model.InternshipCaseStatus {
 		model.InternshipCaseStatusActive,
 		model.InternshipCaseStatusPassed,
 		model.InternshipCaseStatusFailed,
+		model.InternshipCaseStatusCancelled,
 	}
 }
 

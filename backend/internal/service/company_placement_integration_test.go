@@ -33,6 +33,7 @@ func TestCompanyPlacementDetails(t *testing.T) {
 	}
 	defer tx.Rollback()
 	suffix := time.Now().UnixNano()
+	createOpenTermFixture(t, tx, suffix)
 	companyA := applicationTestCompany(t, tx, suffix, "pa")
 	companyB := applicationTestCompany(t, tx, suffix, "pb")
 	supervisorA := applicationTestUser(t, tx, suffix, "pa", model.RoleCompanySupervisor, &companyA.ID)

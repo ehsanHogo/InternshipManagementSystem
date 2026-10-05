@@ -81,7 +81,10 @@ type ProfessorAssignment struct {
 }
 
 type InternshipCase struct {
-	ID          uint                 `gorm:"primaryKey"`
+	ID uint `gorm:"primaryKey"`
+	// Nullable only for legacy cases. New cases receive the currently open term.
+	TermID      *uint                `gorm:"index"`
+	Term        *InternshipTerm      `gorm:"foreignKey:TermID;constraint:OnDelete:RESTRICT"`
 	StudentID   uint                 `gorm:"not null;index"`
 	ProfessorID uint                 `gorm:"not null;index"`
 	Status      InternshipCaseStatus `gorm:"type:varchar(32);not null;index;check:chk_internship_case_status,status IN ('DRAFT','PENDING_UNIVERSITY_REVIEW','PENDING_COMPANY_DETAILS','PENDING_FINAL_APPROVAL','READY_TO_START','ACTIVE','PASSED','FAILED','CANCELLED')"`

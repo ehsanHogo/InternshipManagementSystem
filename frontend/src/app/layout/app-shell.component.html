@@ -80,6 +80,10 @@
           </a>
         }
         @if (user()?.role === 'UNIVERSITY_SUPERVISOR') {
+          <a routerLink="/university/internship-terms" routerLinkActive="active">
+            <i class="pi pi-calendar" aria-hidden="true"></i>
+            ترم‌های کارآموزی
+          </a>
           <a routerLink="/university/applications" routerLinkActive="active">
             <i class="pi pi-file-check" aria-hidden="true"></i>
             پرونده‌های کارآموزی

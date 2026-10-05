@@ -20,6 +20,7 @@
         <p-button label="مشاهده پرونده و گزارش‌ها" severity="secondary" [text]="true" [disabled]="historyLoading() || saving() || preferenceSaving() || creating()" (onClick)="viewHistoricalCase(past)" />
       </div>
       <div class="detail-grid">
+        <div class="detail"><span>ترم کارآموزی</span><strong>{{ termLabel(past.term) | persianDigits }}</strong></div>
         @if (past.selectedPreference; as selected) {
           <div class="detail"><span>شرکت</span><strong>{{ selected.application.opportunity.company.name }}</strong></div>
           <div class="detail"><span>فرصت</span><strong>{{ selected.application.opportunity.title }}</strong></div>
@@ -62,6 +63,12 @@
         <h2>دوره کارآموزی را با موفقیت گذرانده‌اید</h2>
         <p>امکان ثبت درخواست جدید یا ایجاد پرونده جدید ندارید. پرونده‌های پیشین و فرصت‌های کارآموزی همچنان قابل مشاهده هستند.</p>
         <p-button label="مشاهده فرصت‌های کارآموزی" routerLink="/student/opportunities" severity="secondary" />
+      } @else if (!openTerm()) {
+        <span class="empty-icon"><i class="pi pi-calendar" aria-hidden="true"></i></span>
+        <h2>در حال حاضر ترم کارآموزی بازی وجود ندارد</h2>
+        <p>ایجاد پرونده جدید پس از باز شدن ترم توسط مسئول آموزش امکان‌پذیر خواهد بود. می‌توانید فرصت‌ها و درخواست‌های پذیرش خود را همچنان مشاهده کنید.</p>
+        <p-button label="مشاهده فرصت‌های کارآموزی" routerLink="/student/opportunities" severity="secondary" />
+        <p-button label="بررسی دوباره وضعیت ترم" icon="pi pi-refresh" [text]="true" (onClick)="reloadPage()" />
       } @else if (acceptedApplications().length === 0) {
         <span class="empty-icon"><i class="pi pi-briefcase" aria-hidden="true"></i></span>
         <h2>فرصت پذیرفته‌شده‌ای ندارید</h2>
@@ -70,6 +77,7 @@
       } @else {
         <span class="empty-icon"><i class="pi pi-file-plus" aria-hidden="true"></i></span>
         <h2>پرونده فعالی ندارید؛ می‌توانید درخواست رسمی جدیدی آغاز کنید</h2>
+        <p>ترم جاری کارآموزی: {{ termLabel(openTerm()) | persianDigits }} — به‌صورت خودکار در پرونده ثبت می‌شود.</p>
         <p>استاد راهنمای تعیین‌شده به‌صورت خودکار در پرونده ثبت می‌شود و فرصت‌های پذیرفته‌شده شما قابل انتخاب خواهند بود.</p>
         <p-button label="ثبت درخواست رسمی کارآموزی" icon="pi pi-plus" [loading]="creating()" [disabled]="creating() || !canCreateCase" (onClick)="createCase()" />
       }
@@ -77,6 +85,7 @@
   </p-card>
 } @else if (internshipCase(); as currentCase) {
   <h2>{{ viewingHistory() ? "جزئیات پرونده تاریخی" : "پرونده فعلی" }} · {{ currentCase.id | persianDigits }}</h2>
+  <p>ترم کارآموزی: <strong>{{ termLabel(currentCase.term) | persianDigits }}</strong></p>
   @if (!isDraft) {
     <div class="review-notice">
       <i class="pi pi-lock" aria-hidden="true"></i>

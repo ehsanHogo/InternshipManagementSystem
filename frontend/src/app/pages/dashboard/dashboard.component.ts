@@ -17,6 +17,8 @@ import {
   professorFinalResultLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
+import { InternshipTermService } from '../../internship/internship-term.service';
+import { InternshipTerm, internshipTermLabel } from '../../internship/internship-term.models';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
@@ -29,6 +31,9 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 export class DashboardComponent {
   private readonly auth = inject(AuthService);
   private readonly internshipService = inject(InternshipService);
+  private readonly termService = inject(InternshipTermService);
+  readonly openTerm = signal<InternshipTerm | null>(null);
+  readonly termLabel = internshipTermLabel;
 
   readonly user = this.auth.user;
   readonly internshipStatus = signal<InternshipCaseStatus | null>(null);
@@ -48,13 +53,15 @@ export class DashboardComponent {
     this.statusLoading.set(true);
     this.statusLoadFailed.set(false);
     forkJoin({
+      openTerm: this.termService.current(),
       current: this.internshipService.getCurrentCase().pipe(catchError((error: HttpErrorResponse) => {
         if (error.status === 404) return of(null);
         throw error;
       })),
       history: this.internshipService.listStudentHistoricalCases()
     }).subscribe({
-      next: ({ current: internshipCase, history }) => {
+      next: ({ openTerm, current: internshipCase, history }) => {
+        this.openTerm.set(openTerm);
         this.historicalCase.set(history[0] ?? null);
         this.hasPassedCase.set(history.some(item => item.status === 'PASSED'));
         this.internshipCase.set(internshipCase);

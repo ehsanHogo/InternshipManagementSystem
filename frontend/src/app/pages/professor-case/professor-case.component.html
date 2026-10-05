@@ -28,6 +28,11 @@
     </div>
   </section>
 
+  <p>ترم کارآموزی: {{ termLabel(item.term) | persianDigits }}</p>
+  @if (item.internship.status === 'CANCELLED') {
+    <div class="state-card"><p>این پرونده لغو شده و فقط خواندنی است. دلیل لغو: {{ item.cancellationComment || '—' }} · {{ item.cancelledAt | jalaliDate }}</p></div>
+  }
+
   @if (item.internship.status === "PASSED" || item.internship.status === "FAILED") {
     <div class="submit-panel">
       <div>

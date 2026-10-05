@@ -27,6 +27,7 @@ import {
 } from '../../internship/internship.models';
 import { WeeklyReportReviewComponent } from '../../shared/weekly-report-review.component';
 import { InternshipService } from '../../internship/internship.service';
+import { internshipTermLabel } from '../../internship/internship-term.models';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 import { userErrorMessage } from '../../shared/http-error-message';
 import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
@@ -47,6 +48,7 @@ type EvaluationField =
   styleUrl: '../workflow-page.scss'
 })
 export class ProfessorCaseComponent {
+  readonly termLabel = internshipTermLabel;
   private readonly route = inject(ActivatedRoute);
   private readonly formBuilder = inject(FormBuilder);
   private readonly internshipService = inject(InternshipService);

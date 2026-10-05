@@ -28,7 +28,8 @@ type ProfessorCompletionInput struct {
 func (service *InternshipService) ListProfessorCases(professorID uint) ([]model.InternshipCase, error) {
 	var cases []model.InternshipCase
 	err := service.caseQuery(service.db).
-		Where("professor_id = ? AND status IN ?", professorID, professorVisibleStatuses()).
+		Where("professor_id = ?", professorID).
+		Where("status IN ? OR (status = ? AND term_id IS NOT NULL AND activated_at IS NOT NULL AND cancellation_comment = ?)", professorVisibleStatuses(), model.InternshipCaseStatusCancelled, TermClosureCancellationComment).
 		Order("updated_at DESC").
 		Find(&cases).Error
 	if err != nil {
@@ -40,7 +41,8 @@ func (service *InternshipService) ListProfessorCases(professorID uint) ([]model.
 func (service *InternshipService) GetProfessorCase(professorID, caseID uint) (*model.InternshipCase, error) {
 	var internshipCase model.InternshipCase
 	err := service.caseQuery(service.db).
-		Where("id = ? AND professor_id = ? AND status IN ?", caseID, professorID, professorVisibleStatuses()).
+		Where("id = ? AND professor_id = ?", caseID, professorID).
+		Where("status IN ? OR (status = ? AND term_id IS NOT NULL AND activated_at IS NOT NULL AND cancellation_comment = ?)", professorVisibleStatuses(), model.InternshipCaseStatusCancelled, TermClosureCancellationComment).
 		First(&internshipCase).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrCaseAccessDenied

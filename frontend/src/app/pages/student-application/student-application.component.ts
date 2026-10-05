@@ -22,6 +22,8 @@ import {
 } from '../../internship/internship.models';
 import { CaseReportsComponent } from '../../shared/case-reports.component';
 import { InternshipService } from '../../internship/internship.service';
+import { InternshipTermService } from '../../internship/internship-term.service';
+import { InternshipTerm, internshipTermLabel } from '../../internship/internship-term.models';
 import { userErrorMessage } from '../../shared/http-error-message';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
@@ -48,6 +50,9 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 export class StudentApplicationComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly internshipService = inject(InternshipService);
+  private readonly termService = inject(InternshipTermService);
+  readonly openTerm = signal<InternshipTerm | null>(null);
+  readonly termLabel = internshipTermLabel;
   private readonly messages = inject(MessageService);
   private readonly confirmation = inject(ConfirmationService);
 
@@ -81,7 +86,7 @@ export class StudentApplicationComponent {
   }
 
   get canCreateCase(): boolean {
-    return !this.latestCase && !this.hasPassedCase && !this.viewingHistory() &&
+    return !!this.openTerm() && !this.latestCase && !this.hasPassedCase && !this.viewingHistory() &&
       !this.loading() && !this.loadFailed() && !this.historyLoading();
   }
 
@@ -145,7 +150,10 @@ export class StudentApplicationComponent {
           this.setCase(internshipCase);
           this.messages.add({ severity: 'success', summary: 'ایجاد شد', detail: 'پیش‌نویس درخواست رسمی ایجاد شد.' });
         },
-        error: (error: HttpErrorResponse) => this.showError(error)
+        error: (error: HttpErrorResponse) => {
+          this.showError(error);
+          if (error.error?.code === 'NO_OPEN_INTERNSHIP_TERM') this.loadPage();
+        }
       });
   }
 
@@ -230,6 +238,7 @@ export class StudentApplicationComponent {
     this.loading.set(true);
     this.loadFailed.set(false);
     forkJoin({
+      openTerm: this.termService.current(),
       historicalCases: this.internshipService.listStudentHistoricalCases(),
       acceptedApplications: this.internshipService.listAcceptedOpportunityApplications(),
       internshipCase: this.internshipService.getCurrentCase().pipe(
@@ -241,7 +250,8 @@ export class StudentApplicationComponent {
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: ({ acceptedApplications, internshipCase, historicalCases }) => {
+        next: ({ openTerm, acceptedApplications, internshipCase, historicalCases }) => {
+          this.openTerm.set(openTerm);
           this.historicalCases.set(historicalCases);
           this.viewingHistory.set(false);
           this.latestCase = internshipCase;

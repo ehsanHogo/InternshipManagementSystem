@@ -60,6 +60,7 @@
       <span class="eyebrow">بررسی پرونده شماره {{ item.id | persianDigits }}</span>
       <h1>{{ item.student.fullName }}</h1>
       <p>درخواست رسمی و اولویت‌های محل کارآموزی</p>
+      <p>ترم کارآموزی: {{ termLabel(item.term) | persianDigits }}</p>
     </div>
     <div class="heading-actions">
       <p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" />

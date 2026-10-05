@@ -124,6 +124,18 @@ func (service *InternshipService) CreateOrGetCase(studentID uint) (*model.Intern
 			return fmt.Errorf("look up current internship case: %w", err)
 		}
 
+		// SHARE coordinates with term closure's UPDATE lock and remains held
+		// until insertion commits. A closed term can never receive a new case.
+		var term model.InternshipTerm
+		err = tx.Clauses(clause.Locking{Strength: "SHARE"}).
+			Where("status = ?", model.InternshipTermStatusOpen).First(&term).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ErrNoOpenInternshipTerm
+		}
+		if err != nil {
+			return fmt.Errorf("lock open internship term: %w", err)
+		}
+
 		var assignment model.ProfessorAssignment
 		err = tx.Where("student_id = ?", studentID).
 			First(&assignment).Error
@@ -135,6 +147,7 @@ func (service *InternshipService) CreateOrGetCase(studentID uint) (*model.Intern
 		}
 
 		internshipCase := model.InternshipCase{
+			TermID:    &term.ID,
 			StudentID: studentID, ProfessorID: assignment.ProfessorID,
 			Status: model.InternshipCaseStatusDraft,
 		}
@@ -410,7 +423,7 @@ func (service *InternshipService) SubmitCase(studentID uint) (*model.InternshipC
 }
 
 func (service *InternshipService) caseQuery(db *gorm.DB) *gorm.DB {
-	return db.Preload("Student").Preload("Professor").
+	return db.Preload("Term").Preload("Student").Preload("Professor").
 		Preload("Preferences", func(query *gorm.DB) *gorm.DB { return query.Order("priority ASC") }).
 		Preload("Preferences.OpportunityApplication.Opportunity.Company").
 		Preload("SelectedPreference.OpportunityApplication.Opportunity.Company").Preload("CompanySupervisor").

@@ -35,6 +35,7 @@ func TestOfficialInternshipApplicationFlow(t *testing.T) {
 	defer tx.Rollback()
 
 	suffix := time.Now().UnixNano()
+	createOpenTermFixture(t, tx, suffix)
 	company := applicationTestCompany(t, tx, suffix, "official")
 	supervisor := applicationTestUser(t, tx, suffix, "official-supervisor", model.RoleCompanySupervisor, &company.ID)
 	professor := applicationTestUser(t, tx, suffix, "official-professor", model.RoleProfessor, nil)

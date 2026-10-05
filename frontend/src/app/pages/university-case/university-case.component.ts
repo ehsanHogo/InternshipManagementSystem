@@ -22,6 +22,7 @@ import {
 } from '../../internship/internship.models';
 import { CaseReportsComponent } from '../../shared/case-reports.component';
 import { InternshipService } from '../../internship/internship.service';
+import { internshipTermLabel } from '../../internship/internship-term.models';
 import { applicationStatusLabels, applicationStatusSeverity } from '../../opportunity/opportunity.models';
 import { JalaliDatePickerComponent } from '../../shared/jalali-date/jalali-date-picker.component';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
@@ -51,6 +52,7 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
   styleUrl: '../workflow-page.scss'
 })
 export class UniversityCaseComponent {
+  readonly termLabel = internshipTermLabel;
   private readonly route = inject(ActivatedRoute);
   private readonly formBuilder = inject(FormBuilder);
   private readonly internshipService = inject(InternshipService);
