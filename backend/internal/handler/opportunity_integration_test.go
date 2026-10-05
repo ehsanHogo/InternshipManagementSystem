@@ -234,7 +234,7 @@ func opportunityTestRouter(db *gorm.DB, jwtSecret string) *gin.Engine {
 
 func createOpportunityTestCompany(t *testing.T, db *gorm.DB, suffix int64, label string, approved bool) model.Company {
 	t.Helper()
-	company := model.Company{
+	company := model.Company{RegistrationStatus: model.CompanyRegistrationStatusApproved,
 		Name: fmt.Sprintf("opportunity-company-%d-%s", suffix, label), NationalID: fmt.Sprintf("opp-national-%d-%s", suffix, label),
 		EconomicCode: fmt.Sprintf("opp-economic-%d-%s", suffix, label), IsApproved: approved,
 	}

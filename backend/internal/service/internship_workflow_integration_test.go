@@ -605,7 +605,7 @@ func testDate(t *testing.T, value string) time.Time {
 
 func createWorkflowOpportunityApplication(t *testing.T, db *gorm.DB, suffix int64, studentID, creatorID uint, label string, status model.ApplicationStatus, opportunityStatus model.OpportunityStatus) model.OpportunityApplication {
 	t.Helper()
-	company := model.Company{
+	company := model.Company{RegistrationStatus: model.CompanyRegistrationStatusApproved,
 		Name:         fmt.Sprintf("workflow-company-%d-%s", suffix, label),
 		NationalID:   fmt.Sprintf("wn-%d-%s", suffix, label),
 		EconomicCode: fmt.Sprintf("we-%d-%s", suffix, label),

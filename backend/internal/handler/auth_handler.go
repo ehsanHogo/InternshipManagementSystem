@@ -38,7 +38,7 @@ func (handler *AuthHandler) Login(ctx *gin.Context) {
 	}
 
 	var user model.User
-	result := handler.db.Where("email = ?", strings.ToLower(strings.TrimSpace(request.Email))).First(&user)
+	result := handler.db.Preload("Company").Where("email = ?", strings.ToLower(strings.TrimSpace(request.Email))).First(&user)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) || (result.Error == nil && !auth.CheckPassword(user.PasswordHash, request.Password)) {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "ایمیل یا رمز عبور نادرست است."})
 		return
@@ -67,7 +67,7 @@ func (handler *AuthHandler) Me(ctx *gin.Context) {
 	}
 
 	var user model.User
-	if err := handler.db.First(&user, userID).Error; err != nil {
+	if err := handler.db.Preload("Company").First(&user, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "ورود به سامانه الزامی است."})
 			return

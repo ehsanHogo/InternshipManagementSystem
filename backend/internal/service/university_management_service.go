@@ -18,9 +18,7 @@ var (
 	ErrInvalidManagementInput = errors.New("invalid management input")
 	ErrEmailAlreadyExists     = errors.New("email already exists")
 	ErrStudentNumberExists    = errors.New("student number already exists")
-	ErrCompanyAlreadyExists   = errors.New("company already exists")
 	ErrManagedUserNotFound    = errors.New("managed user not found")
-	ErrCompanyNotFound        = errors.New("approved company not found")
 	ErrAssignmentNotFoundMgmt = errors.New("professor assignment not found")
 )
 
@@ -33,19 +31,6 @@ type ManagedUserInput struct {
 	Email         string
 	StudentNumber string
 	Major         string
-	CompanyID     uint
-	Phone         string
-	JobTitle      string
-}
-
-type CompanyInput struct {
-	Name         string
-	NationalID   string
-	EconomicCode string
-	Website      string
-	Phone        string
-	Email        string
-	Address      string
 }
 
 type ProfessorAssignmentView struct {
@@ -71,7 +56,7 @@ func (service *UniversityManagementService) ListUsers(role model.Role) ([]model.
 }
 
 func (service *UniversityManagementService) CreateManagedUser(role model.Role, input ManagedUserInput) (*model.User, string, error) {
-	if role != model.RoleStudent && role != model.RoleProfessor && role != model.RoleCompanySupervisor {
+	if role != model.RoleStudent && role != model.RoleProfessor {
 		return nil, "", ErrInvalidManagementInput
 	}
 	fullName := strings.TrimSpace(input.FullName)
@@ -89,20 +74,6 @@ func (service *UniversityManagementService) CreateManagedUser(role model.Role, i
 		}
 		user.StudentNumber = &studentNumber
 		user.Major = &major
-	}
-	if role == model.RoleCompanySupervisor {
-		if input.CompanyID == 0 {
-			return nil, "", ErrInvalidManagementInput
-		}
-		var company model.Company
-		if err := service.db.Where("id = ? AND is_approved = ?", input.CompanyID, true).First(&company).Error; errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, "", ErrCompanyNotFound
-		} else if err != nil {
-			return nil, "", fmt.Errorf("validate company: %w", err)
-		}
-		user.CompanyID = &input.CompanyID
-		user.Phone = optionalString(input.Phone)
-		user.JobTitle = optionalString(input.JobTitle)
 	}
 
 	if err := service.ensureUserUnique(email, user.StudentNumber); err != nil {
@@ -146,37 +117,10 @@ func (service *UniversityManagementService) ensureUserUnique(email string, stude
 
 func (service *UniversityManagementService) ListCompanies() ([]model.Company, error) {
 	var companies []model.Company
-	if err := service.db.Where("is_approved = ?", true).Order("name ASC").Find(&companies).Error; err != nil {
+	if err := service.db.Order("name ASC").Find(&companies).Error; err != nil {
 		return nil, fmt.Errorf("list managed companies: %w", err)
 	}
 	return companies, nil
-}
-
-func (service *UniversityManagementService) CreateCompany(input CompanyInput) (*model.Company, error) {
-	name := strings.TrimSpace(input.Name)
-	nationalID := strings.TrimSpace(input.NationalID)
-	economicCode := strings.TrimSpace(input.EconomicCode)
-	if name == "" || nationalID == "" || economicCode == "" {
-		return nil, ErrInvalidManagementInput
-	}
-	var count int64
-	if err := service.db.Model(&model.Company{}).
-		Where("LOWER(name) = LOWER(?) OR national_id = ? OR economic_code = ?", name, nationalID, economicCode).
-		Count(&count).Error; err != nil {
-		return nil, fmt.Errorf("check duplicate company: %w", err)
-	}
-	if count > 0 {
-		return nil, ErrCompanyAlreadyExists
-	}
-	company := model.Company{
-		Name: name, NationalID: nationalID, EconomicCode: economicCode,
-		Website: optionalString(input.Website), Phone: optionalString(input.Phone),
-		Email: optionalString(strings.ToLower(input.Email)), Address: optionalString(input.Address), IsApproved: true,
-	}
-	if err := service.db.Create(&company).Error; err != nil {
-		return nil, fmt.Errorf("create company: %w", err)
-	}
-	return &company, nil
 }
 
 func (service *UniversityManagementService) ListProfessorAssignments() ([]ProfessorAssignmentView, error) {

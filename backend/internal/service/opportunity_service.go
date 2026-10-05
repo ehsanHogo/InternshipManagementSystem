@@ -121,7 +121,7 @@ func (service *OpportunityService) Close(supervisorID, opportunityID uint) (*mod
 
 func (service *OpportunityService) ListStudent() ([]model.InternshipOpportunity, error) {
 	var opportunities []model.InternshipOpportunity
-	if err := service.db.Preload("Company").Where("status = ?", model.OpportunityStatusOpen).
+	if err := service.db.Preload("Company").Where("company_id IN (SELECT id FROM companies WHERE registration_status = ?)", model.CompanyRegistrationStatusApproved).Where("status = ?", model.OpportunityStatusOpen).
 		Order("created_at DESC").Find(&opportunities).Error; err != nil {
 		return nil, fmt.Errorf("list student opportunities: %w", err)
 	}
@@ -130,7 +130,7 @@ func (service *OpportunityService) ListStudent() ([]model.InternshipOpportunity,
 
 func (service *OpportunityService) GetStudent(opportunityID uint) (*model.InternshipOpportunity, error) {
 	var opportunity model.InternshipOpportunity
-	result := service.db.Preload("Company").Where("id = ? AND status = ?", opportunityID, model.OpportunityStatusOpen).First(&opportunity)
+	result := service.db.Preload("Company").Where("company_id IN (SELECT id FROM companies WHERE registration_status = ?)", model.CompanyRegistrationStatusApproved).Where("id = ? AND status = ?", opportunityID, model.OpportunityStatusOpen).First(&opportunity)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return nil, ErrOpportunityNotFound
 	}
@@ -141,25 +141,7 @@ func (service *OpportunityService) GetStudent(opportunityID uint) (*model.Intern
 }
 
 func (service *OpportunityService) supervisorCompanyID(supervisorID uint) (uint, error) {
-	var supervisor model.User
-	result := service.db.Select("id", "company_id").Where("id = ? AND role = ?", supervisorID, model.RoleCompanySupervisor).First(&supervisor)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return 0, ErrOpportunityCompanyMissing
-	}
-	if result.Error != nil {
-		return 0, fmt.Errorf("find opportunity supervisor: %w", result.Error)
-	}
-	if supervisor.CompanyID == nil || *supervisor.CompanyID == 0 {
-		return 0, ErrOpportunityCompanyMissing
-	}
-	var count int64
-	if err := service.db.Model(&model.Company{}).Where("id = ?", *supervisor.CompanyID).Count(&count).Error; err != nil {
-		return 0, fmt.Errorf("validate opportunity company: %w", err)
-	}
-	if count == 0 {
-		return 0, ErrOpportunityCompanyMissing
-	}
-	return *supervisor.CompanyID, nil
+	return ApprovedCompanyID(service.db, supervisorID)
 }
 
 func (service *OpportunityService) findCompanyOpportunity(companyID, opportunityID uint) (*model.InternshipOpportunity, error) {

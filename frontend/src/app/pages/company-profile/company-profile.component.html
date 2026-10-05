@@ -1,9 +1,10 @@
 <section class="page-heading">
   <div>
     <span class="eyebrow">سرپرست شرکت</span>
-    <h1>پروفایل شرکت</h1>
+    <h1>ثبت / پروفایل شرکت</h1>
     <p>اطلاعات ثبت‌شده شرکت و سرپرست را مشاهده کنید.</p>
   </div>
+  <p-button label="به‌روزرسانی وضعیت" icon="pi pi-refresh" [disabled]="loading() || busy()" (onClick)="load()" />
 </section>
 
 @if (loading()) {
@@ -17,6 +18,49 @@
     <p-button label="تلاش دوباره" icon="pi pi-refresh" (onClick)="load()" />
   </div>
 } @else if (profile(); as account) {
+  <p-card header="وضعیت ثبت شرکت">
+    <p-tag [value]="labels[account.company.registrationStatus]" [severity]="account.company.registrationStatus === 'APPROVED' ? 'success' : account.company.registrationStatus === 'REJECTED' ? 'danger' : 'warn'" />
+    @if (account.company.registrationStatus === 'PENDING') {
+      <p>وضعیت ثبت شرکت: در انتظار بررسی مدیر سیستم</p>
+      <p>اطلاعات ثبت‌شده شرکت را می‌توانید تا زمان بررسی ویرایش کنید.</p>
+    } @else if (account.company.registrationStatus === 'REJECTED') {
+      <p>وضعیت ثبت شرکت: رد شده</p>
+      <p><strong>دلیل:</strong> {{ account.company.registrationRejectionReason }}</p>
+      <p>پس از اصلاح و ذخیره اطلاعات، آن را دوباره برای بررسی ارسال کنید.</p>
+    } @else {
+      <p>ثبت شرکت توسط مدیر سیستم تأیید شده است و امکانات شرکت در دسترس است.</p>
+    }
+  </p-card>
+
+  @if (account.company.registrationStatus !== 'APPROVED') {
+    <p-card header="ویرایش اطلاعات ثبت شرکت">
+      <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
+        <div formGroupName="company" class="form-grid full-width">
+          <label class="field">نام شرکت<input pInputText formControlName="name" /></label>
+          <label class="field">شناسه ملی<input pInputText dir="ltr" formControlName="nationalId" /></label>
+          <label class="field">کد اقتصادی<input pInputText dir="ltr" formControlName="economicCode" /></label>
+          <label class="field">وب‌سایت<input pInputText dir="ltr" formControlName="website" /></label>
+          <label class="field">تلفن شرکت<input pInputText dir="ltr" formControlName="phone" /></label>
+          <label class="field">ایمیل شرکت<input pInputText dir="ltr" formControlName="email" /></label>
+          <label class="field full-width">آدرس<textarea pTextarea formControlName="address" rows="3"></textarea></label>
+        </div>
+        <div formGroupName="supervisor" class="form-grid full-width">
+          <label class="field">نام نماینده<input pInputText formControlName="fullName" /></label>
+          <label class="field">ایمیل ورود نماینده<input pInputText dir="ltr" formControlName="email" /></label>
+          <label class="field">تلفن نماینده<input pInputText dir="ltr" formControlName="phone" /></label>
+          <label class="field">سمت نماینده<input pInputText formControlName="jobTitle" /></label>
+        </div>
+        @if (form.touched && form.invalid) { <p class="notice full-width">همه فیلدهای الزامی و ایمیل‌ها را به‌درستی تکمیل کنید.</p> }
+        <div class="card-actions full-width">
+          <p-button type="submit" label="ذخیره اطلاعات شرکت" [loading]="busy()" [disabled]="busy() || !form.dirty" />
+          @if (account.company.registrationStatus === 'REJECTED') {
+            <p-button type="button" label="ارسال مجدد برای بررسی" [disabled]="busy() || form.dirty || form.invalid" (onClick)="resubmit()" />
+          }
+        </div>
+        @if (form.dirty && account.company.registrationStatus === 'REJECTED') { <p class="notice full-width">پیش از ارسال مجدد، تغییرات را ذخیره کنید.</p> }
+      </form>
+    </p-card>
+  }
   <p-card header="اطلاعات شرکت">
     <div class="detail-grid">
       <div class="detail"><span>نام شرکت</span><strong>{{ account.company.name }}</strong></div>
@@ -51,7 +95,7 @@
         @if (account.company.isApproved) {
           شرکت در فهرست شرکت‌های مورد تأیید دانشکده قرار دارد.
         } @else {
-          هنوز در فهرست شرکت‌های مورد تأیید دانشکده قرار نگرفته است؛ حساب شما فعال است و می‌توانید از سامانه استفاده کنید.
+          هنوز در فهرست شرکت‌های مورد تأیید دانشکده قرار نگرفته است. تأیید دانشکده مستقل از تأیید ثبت شرکت توسط مدیر سیستم است.
         }
       </p>
     </div>

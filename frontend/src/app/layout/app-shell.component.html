@@ -12,7 +12,7 @@
           (onClick)="openNav()"
         />
       }
-      <a class="brand" routerLink="/dashboard" aria-label="سامانه مدیریت کارآموزی">
+      <a class="brand" [routerLink]="restrictedCompany() ? '/company/profile' : '/dashboard'" aria-label="سامانه مدیریت کارآموزی">
         <i class="pi pi-graduation-cap" aria-hidden="true"></i>
         <span>سامانه مدیریت کارآموزی دانشجویان</span>
       </a>
@@ -49,10 +49,12 @@
       [closeOnEscape]="true"
     >
       <nav class="navigation navigation--drawer" aria-label="منوی اصلی">
-        <a routerLink="/dashboard" routerLinkActive="active">
-          <i class="pi pi-home" aria-hidden="true"></i>
-          داشبورد
-        </a>
+        @if (!restrictedCompany()) {
+          <a routerLink="/dashboard" routerLinkActive="active"><i class="pi pi-home" aria-hidden="true"></i>داشبورد</a>
+        }
+        @if (user()?.role === 'ADMIN') {
+          <a routerLink="/admin/company-registrations" routerLinkActive="active"><i class="pi pi-building" aria-hidden="true"></i>بررسی ثبت شرکت‌ها</a>
+        }
         @if (user()?.role === 'STUDENT') {
           <a routerLink="/student/approved-companies" routerLinkActive="active">
             <i class="pi pi-building" aria-hidden="true"></i>
@@ -110,13 +112,12 @@
           </a>
         }
         @if (user()?.role === 'COMPANY_SUPERVISOR') {
+          <a routerLink="/company/profile" routerLinkActive="active"><i class="pi pi-building" aria-hidden="true"></i>ثبت / پروفایل شرکت</a>
+        }
+        @if (user()?.role === 'COMPANY_SUPERVISOR' && !restrictedCompany()) {
           <a routerLink="/company/opportunities" routerLinkActive="active">
             <i class="pi pi-megaphone" aria-hidden="true"></i>
             فرصت‌های کارآموزی
-          </a>
-          <a routerLink="/company/profile" routerLinkActive="active">
-            <i class="pi pi-building" aria-hidden="true"></i>
-            پروفایل شرکت
           </a>
           <a routerLink="/company/internships" routerLinkActive="active">
             <i class="pi pi-briefcase" aria-hidden="true"></i>

@@ -93,6 +93,9 @@ func (service *InternshipService) ApproveUniversityPlacement(caseID uint, input 
 			return ErrPreferenceNotAccepted
 		}
 		opportunity := application.Opportunity
+		if err := RequireApprovedRegistration(tx, opportunity.CompanyID); err != nil {
+			return err
+		}
 		creator := opportunity.Creator
 		if creator.ID == 0 || creator.Role != model.RoleCompanySupervisor || creator.CompanyID == nil ||
 			*creator.CompanyID != opportunity.CompanyID {

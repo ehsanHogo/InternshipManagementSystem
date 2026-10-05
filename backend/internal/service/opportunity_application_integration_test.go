@@ -205,7 +205,7 @@ func TestOpportunityApplicationEligibilityReviewAndAuthorization(t *testing.T) {
 
 func applicationTestCompany(t *testing.T, db *gorm.DB, suffix int64, label string) model.Company {
 	t.Helper()
-	company := model.Company{Name: fmt.Sprintf("application-company-%d-%s", suffix, label), NationalID: fmt.Sprintf("application-national-%d-%s", suffix, label), EconomicCode: fmt.Sprintf("application-economic-%d-%s", suffix, label)}
+	company := model.Company{RegistrationStatus: model.CompanyRegistrationStatusApproved, Name: fmt.Sprintf("application-company-%d-%s", suffix, label), NationalID: fmt.Sprintf("application-national-%d-%s", suffix, label), EconomicCode: fmt.Sprintf("application-economic-%d-%s", suffix, label)}
 	if err := db.Create(&company).Error; err != nil {
 		t.Fatalf("create company: %v", err)
 	}

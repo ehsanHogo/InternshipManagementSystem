@@ -101,14 +101,7 @@ func TestUniversityManagement(t *testing.T) {
 		t.Fatalf("new case did not use current professor: case=%+v err=%v", newCase, err)
 	}
 
-	company, err := management.CreateCompany(service.CompanyInput{Name: fmt.Sprintf("شرکت آزمون %d", suffix), NationalID: fmt.Sprintf("national-%d", suffix), EconomicCode: fmt.Sprintf("economic-%d", suffix), Email: "company@example.test"})
-	if err != nil || !company.IsApproved {
-		t.Fatalf("create approved company: company=%+v err=%v", company, err)
-	}
-	supervisor, supervisorPassword, err := management.CreateManagedUser(model.RoleCompanySupervisor, service.ManagedUserInput{
-		FullName: "سرپرست آزمون", Email: fmt.Sprintf("m7-supervisor-%d@example.test", suffix), CompanyID: company.ID,
-	})
-	if err != nil || supervisor.CompanyID == nil || *supervisor.CompanyID != company.ID || !auth.CheckPassword(supervisor.PasswordHash, supervisorPassword) {
-		t.Fatalf("create linked company supervisor: supervisor=%+v err=%v", supervisor, err)
+	if _, _, err := management.CreateManagedUser(model.RoleCompanySupervisor, service.ManagedUserInput{FullName: "سرپرست", Email: fmt.Sprintf("m17-supervisor-%d@example.test", suffix)}); !errors.Is(err, service.ErrInvalidManagementInput) {
+		t.Fatalf("university company-supervisor provisioning must be rejected: %v", err)
 	}
 }

@@ -54,12 +54,15 @@ func (service *OpportunityApplicationService) CheckEligibility(studentID, opport
 		return ApplicationEligibility{}, err
 	}
 	var opportunity model.InternshipOpportunity
-	result := service.db.Select("id", "status").First(&opportunity, opportunityID)
+	result := service.db.Select("id", "status", "company_id").First(&opportunity, opportunityID)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return ApplicationEligibility{}, ErrOpportunityNotFound
 	}
 	if result.Error != nil {
 		return ApplicationEligibility{}, fmt.Errorf("find opportunity for eligibility: %w", result.Error)
+	}
+	if err := RequireApprovedRegistration(service.db, opportunity.CompanyID); err != nil {
+		return ApplicationEligibility{}, err
 	}
 	if opportunity.Status != model.OpportunityStatusOpen && eligibility.RestrictionCode == "" {
 		eligibility.CanApply = false
@@ -109,12 +112,15 @@ func (service *OpportunityApplicationService) Apply(studentID, opportunityID uin
 			return eligibilityError(eligibility.RestrictionCode)
 		}
 		var opportunity model.InternshipOpportunity
-		result = tx.Select("id", "status").Clauses(clause.Locking{Strength: "UPDATE"}).First(&opportunity, opportunityID)
+		result = tx.Select("id", "status", "company_id").Clauses(clause.Locking{Strength: "UPDATE"}).First(&opportunity, opportunityID)
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return ErrOpportunityNotFound
 		}
 		if result.Error != nil {
 			return fmt.Errorf("lock opportunity for application: %w", result.Error)
+		}
+		if err := RequireApprovedRegistration(tx, opportunity.CompanyID); err != nil {
+			return err
 		}
 		if opportunity.Status != model.OpportunityStatusOpen {
 			return ErrOpportunityNotOpen
@@ -326,18 +332,7 @@ func (service *OpportunityApplicationService) getCompanyApplication(companyID, a
 }
 
 func (service *OpportunityApplicationService) supervisorCompanyID(supervisorID uint) (uint, error) {
-	var supervisor model.User
-	result := service.db.Select("id", "company_id").Where("id = ? AND role = ?", supervisorID, model.RoleCompanySupervisor).First(&supervisor)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return 0, ErrOpportunityCompanyMissing
-	}
-	if result.Error != nil {
-		return 0, fmt.Errorf("find application supervisor: %w", result.Error)
-	}
-	if supervisor.CompanyID == nil || *supervisor.CompanyID == 0 {
-		return 0, ErrOpportunityCompanyMissing
-	}
-	return *supervisor.CompanyID, nil
+	return ApprovedCompanyID(service.db, supervisorID)
 }
 
 func normalizeCompanyComment(comment *string) *string {

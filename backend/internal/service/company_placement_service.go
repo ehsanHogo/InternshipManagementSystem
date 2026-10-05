@@ -57,6 +57,9 @@ func (service *InternshipService) ListPendingCompanyDetailsCases(supervisorID ui
 }
 
 func (service *InternshipService) listCompanyCases(supervisorID uint, statuses []model.InternshipCaseStatus) ([]model.InternshipCase, error) {
+	if err := requireCompanyCaseAccess(service.db, supervisorID); err != nil {
+		return nil, err
+	}
 	var cases []model.InternshipCase
 	if err := service.companyCaseQuery(service.db, supervisorID).
 		Where("internship_cases.status <> ? OR (internship_cases.term_id IS NOT NULL AND internship_cases.cancellation_comment = ?)", model.InternshipCaseStatusCancelled, TermClosureCancellationComment).
@@ -77,12 +80,20 @@ func (service *InternshipService) GetCompanyCase(supervisorID, caseID uint) (*mo
 	if err != nil {
 		return nil, fmt.Errorf("get company internship case: %w", err)
 	}
+	if !internshipCase.Status.Terminal() {
+		if err := requireCompanyCaseAccess(service.db, supervisorID); err != nil {
+			return nil, err
+		}
+	}
 	return &internshipCase, nil
 }
 
 // SubmitPlacementDetails is the only company placement action. Recruitment has
 // already accepted the student. Locking serializes submissions and future edits.
 func (service *InternshipService) SubmitPlacementDetails(supervisorID, caseID uint, input PlacementDetailsInput) (*model.InternshipCase, error) {
+	if err := requireCompanyCaseAccess(service.db, supervisorID); err != nil {
+		return nil, err
+	}
 	var resultCase *model.InternshipCase
 	err := service.db.Transaction(func(tx *gorm.DB) error {
 		var internshipCase model.InternshipCase
@@ -173,4 +184,25 @@ func (service *InternshipService) SubmitPlacementDetails(supervisorID, caseID ui
 		return nil
 	})
 	return resultCase, err
+}
+
+// Historical reads retain the original placement and supervisor ownership checks.
+func (service *InternshipService) ListCompanyHistoricalCases(supervisorID uint) ([]model.InternshipCase, error) {
+	cases := []model.InternshipCase{}
+	err := service.companyCaseQuery(service.db, supervisorID).
+		Where("internship_cases.status IN ?", []model.InternshipCaseStatus{model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled}).
+		Order("updated_at DESC").Find(&cases).Error
+	return cases, err
+}
+func (service *InternshipService) GetCompanyHistoricalCase(supervisorID, caseID uint) (*model.InternshipCase, error) {
+	var item model.InternshipCase
+	err := service.companyCaseQuery(service.db, supervisorID).
+		Where("internship_cases.status IN ?", []model.InternshipCaseStatus{model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled}).First(&item, caseID).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrCaseNotAssignedToCompany
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &item, nil
 }

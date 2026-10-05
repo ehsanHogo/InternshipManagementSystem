@@ -18,26 +18,8 @@ export interface ProfessorPayload {
   email: string;
 }
 
-export interface CompanyPayload {
-  name: string;
-  nationalId: string;
-  economicCode: string;
-  website: string;
-  phone: string;
-  email: string;
-  address: string;
-}
-
 export interface CompanySupervisor extends User {
   company?: Company;
-}
-
-export interface CompanySupervisorPayload {
-  fullName: string;
-  email: string;
-  companyId: number;
-  phone?: string;
-  jobTitle?: string;
 }
 
 export interface ImportRowResult {

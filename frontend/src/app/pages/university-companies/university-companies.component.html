@@ -1,10 +1,10 @@
 <p-confirmDialog [baseZIndex]="1400" [style]="{ width: 'min(92vw, 34rem)' }" />
 <section class="page-heading">
   <div><span class="eyebrow">مدیریت محل کارآموزی</span><h1>شرکت‌ها</h1><p>سابقه کارآموزی موفق شرکت‌ها را بررسی و شرکت‌های واجد شرایط را تأیید کنید.</p></div>
-  <p-button label="افزودن شرکت" icon="pi pi-plus" (onClick)="openDialog()" />
 </section>
 
 <div class="filter-row" role="group" aria-label="فهرست شرکت‌ها">
+  <p-button label="همه شرکت‌ها" [outlined]="tab() !== 'all'" (onClick)="tab.set('all')" />
   <p-button label="واجد شرایط تأیید" [outlined]="tab() !== 'eligible'" [attr.aria-pressed]="tab() === 'eligible'" (onClick)="tab.set('eligible')" />
   <p-button label="تأیید شده" [outlined]="tab() !== 'approved'" [attr.aria-pressed]="tab() === 'approved'" (onClick)="tab.set('approved')" />
 </div>
@@ -63,20 +63,4 @@
       <div class="card-actions"><p-button label="تأیید شرکت" icon="pi pi-check" [disabled]="approvingId() !== null" [loading]="approvingId() === company.id" (onClick)="confirmApproval(company)" /></div>
     }
   }
-</p-dialog>
-
-<p-dialog header="افزودن شرکت" [visible]="dialogVisible()" (visibleChange)="dialogVisible.set($event)" [modal]="true" appendTo="body" [baseZIndex]="1200" [style]="{ width: 'min(92vw, 42rem)' }">
-  <form class="form-grid" [formGroup]="form" (ngSubmit)="submit()">
-    <label class="field full-width">نام شرکت<input pInputText formControlName="name" /></label>
-    <label class="field">شناسه ملی<input pInputText dir="ltr" formControlName="nationalId" /></label>
-    <label class="field">کد اقتصادی<input pInputText dir="ltr" formControlName="economicCode" /></label>
-    <label class="field">وب‌سایت<input pInputText dir="ltr" formControlName="website" /></label>
-    <label class="field">تلفن<input pInputText dir="ltr" formControlName="phone" /></label>
-    <label class="field full-width">ایمیل<input pInputText dir="ltr" formControlName="email" /></label>
-    <label class="field full-width">آدرس<textarea pTextarea rows="3" formControlName="address"></textarea></label>
-    <div class="dialog-actions full-width">
-      <p-button label="انصراف" severity="secondary" [outlined]="true" type="button" (onClick)="dialogVisible.set(false)" />
-      <p-button label="ثبت شرکت" type="submit" [loading]="submitting" />
-    </div>
-  </form>
 </p-dialog>

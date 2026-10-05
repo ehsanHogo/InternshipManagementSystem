@@ -62,7 +62,7 @@ func TestCompanySelfRegistrationEndToEnd(t *testing.T) {
 	if err := tx.Where("national_id = ?", strings.TrimSpace(request.Company.NationalID)).First(&registeredCompany).Error; err != nil {
 		t.Fatalf("load registered company: %v", err)
 	}
-	if registeredCompany.IsApproved {
+	if registeredCompany.IsApproved || registeredCompany.RegistrationStatus != model.CompanyRegistrationStatusPending {
 		t.Fatal("self-registered company must not be faculty-approved")
 	}
 	if registeredCompany.EconomicCode != strings.TrimSpace(request.Company.EconomicCode) || registeredCompany.Phone == nil ||

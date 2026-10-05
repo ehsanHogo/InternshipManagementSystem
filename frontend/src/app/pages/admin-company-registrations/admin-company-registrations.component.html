@@ -1,0 +1,49 @@
+<section class="page-heading">
+ <div><span class="eyebrow">مدیر سیستم</span><h1>بررسی ثبت شرکت‌ها</h1><p>ثبت شرکت برای دسترسی به امکانات سامانه بررسی می‌شود. تأیید دانشکده فرایندی مستقل است.</p></div>
+ <p-button label="به‌روزرسانی" icon="pi pi-refresh" [disabled]="loading()" (onClick)="load()" />
+</section>
+<label class="field">وضعیت ثبت<p-select [options]="filters" optionLabel="label" optionValue="value" [(ngModel)]="status" (ngModelChange)="load()" /></label>
+@if (loading()) { <div class="state-card">در حال دریافت ثبت شرکت‌ها...</div> }
+@else if (failed()) { <div class="state-card"><p>دریافت اطلاعات ناموفق بود.</p><p-button label="تلاش دوباره" (onClick)="load()" /></div> }
+@else {
+ <p-table [value]="companies()" responsiveLayout="scroll">
+  <ng-template #header><tr><th>نام شرکت</th><th>شناسه ملی</th><th>کد اقتصادی</th><th>تلفن</th><th>ایمیل</th><th>تاریخ ثبت</th><th>وضعیت</th><th>بررسی</th></tr></ng-template>
+  <ng-template #body let-company><tr><td>{{ company.name }}</td><td dir="ltr">{{ company.nationalId }}</td><td dir="ltr">{{ company.economicCode }}</td><td dir="ltr">{{ company.phone || '—' }}</td><td dir="ltr">{{ company.email || '—' }}</td><td>{{ company.createdAt | jalaliDate }}</td><td>{{ statusLabel(company.registrationStatus) }}</td><td><p-button label="مشاهده" [text]="true" (onClick)="inspect(company.id)" /></td></tr></ng-template>
+  <ng-template #emptymessage><tr><td colspan="8">ثبت شرکتی در این وضعیت وجود ندارد.</td></tr></ng-template>
+ </p-table>
+}
+<p-dialog header="جزئیات ثبت شرکت" [visible]="visible()" (visibleChange)="visible.set($event)" [modal]="true" appendTo="body" [style]="{ width: 'min(92vw, 52rem)' }">
+ @if (detailLoading()) { <p>در حال دریافت جزئیات...</p> }
+ @else if (detailFailed()) { <p-button label="تلاش دوباره" (onClick)="inspect(detailId()!)" /> }
+ @else if (detail(); as registration) {
+  <p-tag [value]="labels[registration.company.registrationStatus]" />
+  <div class="detail-grid">
+   <div class="detail"><span>نام شرکت</span><strong>{{ registration.company.name }}</strong></div>
+   <div class="detail"><span>شناسه ملی</span><strong dir="ltr">{{ registration.company.nationalId }}</strong></div>
+   <div class="detail"><span>کد اقتصادی</span><strong dir="ltr">{{ registration.company.economicCode }}</strong></div>
+   <div class="detail"><span>وب‌سایت</span><strong dir="ltr">{{ registration.company.website || '—' }}</strong></div>
+   <div class="detail"><span>تلفن</span><strong dir="ltr">{{ registration.company.phone || '—' }}</strong></div>
+   <div class="detail"><span>ایمیل</span><strong dir="ltr">{{ registration.company.email || '—' }}</strong></div>
+   <div class="detail full-width"><span>آدرس</span><strong>{{ registration.company.address || '—' }}</strong></div>
+   <div class="detail"><span>تاریخ ثبت</span><strong>{{ registration.company.createdAt | jalaliDate }}</strong></div>
+   <div class="detail"><span>تأیید دانشکده</span><strong>{{ registration.company.isApproved ? 'مورد تأیید دانشکده' : 'شرکت جدید' }}</strong></div>
+  </div>
+  <h2>نمایندگان شرکت</h2>
+  @for (supervisor of registration.supervisors; track supervisor.id) {
+   <div class="detail-grid">
+    <div class="detail"><span>نام</span><strong>{{ supervisor.fullName }}</strong></div>
+    <div class="detail"><span>ایمیل</span><strong dir="ltr">{{ supervisor.email }}</strong></div>
+    <div class="detail"><span>تلفن</span><strong dir="ltr">{{ supervisor.phone || '—' }}</strong></div>
+    <div class="detail"><span>سمت</span><strong>{{ supervisor.jobTitle || '—' }}</strong></div>
+   </div>
+  }
+  @if (registration.company.registrationReviewedAt) {
+   <p>آخرین بررسی: {{ registration.company.registrationReviewedAt | jalaliDate }} — {{ registration.reviewer?.fullName || '—' }}</p>
+  }
+  @if (registration.company.registrationRejectionReason) { <p>دلیل رد: {{ registration.company.registrationRejectionReason }}</p> }
+  @if (registration.company.registrationStatus === 'PENDING') {
+   <label class="field">دلیل عدم تایید<textarea pTextarea rows="3" maxlength="5000" [(ngModel)]="reason"></textarea></label>
+   <div class="card-actions"><p-button label="تأیید ثبت شرکت" icon="pi pi-check" [disabled]="busy()" [loading]="busy()" (onClick)="review(true)" /><p-button label="رد ثبت شرکت" severity="danger" [disabled]="busy() || !reason.trim()" (onClick)="review(false)" /></div>
+  }
+ }
+</p-dialog>

@@ -141,6 +141,9 @@
             />
           </div>
         </div>
+      } @else if (currentUser.role === "ADMIN") {
+        <p>ثبت‌نام شرکت‌ها را بررسی و تأیید یا رد کنید.</p>
+        <p-button label="بررسی ثبت شرکت‌ها" icon="pi pi-building" routerLink="/admin/company-registrations" />
       } @else {
         <div class="placeholder">
           <i class="pi pi-shield" aria-hidden="true"></i>

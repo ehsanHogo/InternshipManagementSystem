@@ -39,6 +39,10 @@ export class AuthService {
     await firstValueFrom(this.restoreSession());
   }
 
+  refreshUser(): Observable<User> {
+    return this.http.get<User>('/api/auth/me').pipe(tap(user => this.currentUser.set(user)));
+  }
+
   private restoreSession(): Observable<User | null> {
     if (!getStoredToken()) {
       this.currentUser.set(null);

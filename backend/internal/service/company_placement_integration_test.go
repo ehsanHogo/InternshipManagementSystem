@@ -281,7 +281,11 @@ func TestCompanyPlacementDetails(t *testing.T) {
 						t.Fatalf("malformed detail not isolated: %v", err)
 					}
 					list, err := workflow.ListCompanyCases(supervisorA.ID)
-					if err != nil {
+					if name == "supervisor role changed" {
+						if !errors.Is(err, ErrCaseAccessDenied) {
+							t.Fatalf("invalid company role did not deny operational access: %v", err)
+						}
+					} else if err != nil {
 						t.Fatal(err)
 					}
 					for _, item := range list {

@@ -5,9 +5,7 @@ import { Observable } from 'rxjs';
 import { User } from '../auth/auth.models';
 import { Company } from '../internship/internship.models';
 import {
-  CompanyPayload,
   CompanySupervisor,
-  CompanySupervisorPayload,
   CreatedAccount,
   ImportResult,
   ProfessorAssignment,
@@ -47,16 +45,8 @@ export class UniversityManagementService {
     return this.http.get<Company[]>('/api/university/companies');
   }
 
-  createCompany(payload: CompanyPayload): Observable<Company> {
-    return this.http.post<Company>('/api/university/companies', payload);
-  }
-
   listCompanySupervisors(): Observable<CompanySupervisor[]> {
     return this.http.get<CompanySupervisor[]>('/api/university/company-supervisors');
-  }
-
-  createCompanySupervisor(payload: CompanySupervisorPayload): Observable<CreatedAccount> {
-    return this.http.post<CreatedAccount>('/api/university/company-supervisors', payload);
   }
 
   listProfessorAssignments(): Observable<ProfessorAssignment[]> {

@@ -335,3 +335,36 @@ func (handler *InternshipHandler) RegisterUniversityCaseRoutes(university *gin.R
 	university.POST("/internship-cases/:id/request-placement-correction", handler.RequestPlacementCorrection)
 	university.POST("/internship-cases/:id/cancel", handler.CancelUniversityReview)
 }
+
+func (handler *InternshipHandler) ListCompanyHistoricalCases(ctx *gin.Context) {
+	id, ok := currentUserID(ctx)
+	if !ok {
+		return
+	}
+	cases, err := handler.service.ListCompanyHistoricalCases(id)
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	response := make([]internshipCaseResponse, 0, len(cases))
+	for i := range cases {
+		response = append(response, companyCaseResponse(&cases[i]))
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+func (handler *InternshipHandler) GetCompanyHistoricalCase(ctx *gin.Context) {
+	userID, ok := currentUserID(ctx)
+	if !ok {
+		return
+	}
+	caseID, ok := caseIDFromContext(ctx)
+	if !ok {
+		return
+	}
+	item, err := handler.service.GetCompanyHistoricalCase(userID, caseID)
+	if err != nil {
+		handler.writeError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, companyCaseResponse(item))
+}

@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 
 import {
   authGuard,
+  adminGuard,
+  companyAccessGuard,
   companySupervisorGuard,
   guestGuard,
   professorGuard,
@@ -24,6 +26,7 @@ export const routes: Routes = [
   {
     path: '',
     canActivate: [authGuard],
+    canActivateChild: [companyAccessGuard],
     loadComponent: () => import('./layout/app-shell.component').then((module) => module.AppShellComponent),
     children: [
       {
@@ -35,6 +38,11 @@ export const routes: Routes = [
         path: 'dashboard',
         loadComponent: () =>
           import('./pages/dashboard/dashboard.component').then((module) => module.DashboardComponent)
+      },
+      {
+        path: 'admin/company-registrations',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./pages/admin-company-registrations/admin-company-registrations.component').then(module => module.AdminCompanyRegistrationsComponent)
       },
       {
         path: 'student/opportunities',

@@ -38,27 +38,34 @@ type User struct {
 }
 
 type PublicUser struct {
-	ID            uint    `json:"id"`
-	FullName      string  `json:"fullName"`
-	Email         string  `json:"email"`
-	Role          Role    `json:"role"`
-	StudentNumber *string `json:"studentNumber,omitempty"`
-	Major         *string `json:"major,omitempty"`
-	Phone         *string `json:"phone,omitempty"`
-	JobTitle      *string `json:"jobTitle,omitempty"`
-	CompanyID     *uint   `json:"companyId,omitempty"`
+	ID                        uint                       `json:"id"`
+	FullName                  string                     `json:"fullName"`
+	Email                     string                     `json:"email"`
+	Role                      Role                       `json:"role"`
+	StudentNumber             *string                    `json:"studentNumber,omitempty"`
+	Major                     *string                    `json:"major,omitempty"`
+	Phone                     *string                    `json:"phone,omitempty"`
+	JobTitle                  *string                    `json:"jobTitle,omitempty"`
+	CompanyID                 *uint                      `json:"companyId,omitempty"`
+	CompanyRegistrationStatus *CompanyRegistrationStatus `json:"companyRegistrationStatus,omitempty"`
 }
 
 func (user User) Public() PublicUser {
+	var status *CompanyRegistrationStatus
+	if user.Role == RoleCompanySupervisor && user.Company != nil {
+		value := user.Company.RegistrationStatus
+		status = &value
+	}
 	return PublicUser{
-		ID:            user.ID,
-		FullName:      user.FullName,
-		Email:         user.Email,
-		Role:          user.Role,
-		StudentNumber: user.StudentNumber,
-		Major:         user.Major,
-		Phone:         user.Phone,
-		JobTitle:      user.JobTitle,
-		CompanyID:     user.CompanyID,
+		CompanyRegistrationStatus: status,
+		ID:                        user.ID,
+		FullName:                  user.FullName,
+		Email:                     user.Email,
+		Role:                      user.Role,
+		StudentNumber:             user.StudentNumber,
+		Major:                     user.Major,
+		Phone:                     user.Phone,
+		JobTitle:                  user.JobTitle,
+		CompanyID:                 user.CompanyID,
 	}
 }

@@ -10,14 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
-
 	"internship-management-system/backend/internal/config"
 	"internship-management-system/backend/internal/database"
-	"internship-management-system/backend/internal/handler"
-	appmiddleware "internship-management-system/backend/internal/middleware"
-	"internship-management-system/backend/internal/model"
-	"internship-management-system/backend/internal/service"
 )
 
 func main() {
@@ -44,111 +38,7 @@ func main() {
 		}
 	}()
 
-	healthService := service.NewHealthService(db)
-	healthHandler := handler.NewHealthHandler(healthService)
-	authHandler := handler.NewAuthHandler(db, cfg.JWT.Secret, time.Duration(cfg.JWT.ExpiresHours)*time.Hour)
-	internshipService := service.NewInternshipService(db)
-	internshipHandler := handler.NewInternshipHandler(internshipService, cfg.UploadDir)
-	termHandler := handler.NewInternshipTermHandler(service.NewInternshipTermService(db))
-	managementService := service.NewUniversityManagementService(db)
-	managementHandler := handler.NewUniversityManagementHandler(managementService)
-	approvalHandler := handler.NewCompanyApprovalHandler(service.NewCompanyApprovalService(db))
-	companyAccountService := service.NewCompanyAccountService(db)
-	companyAccountHandler := handler.NewCompanyAccountHandler(companyAccountService)
-	opportunityService := service.NewOpportunityService(db)
-	applicationService := service.NewOpportunityApplicationService(db)
-	opportunityHandler := handler.NewOpportunityHandler(opportunityService, applicationService)
-	applicationHandler := handler.NewOpportunityApplicationHandler(applicationService, cfg.UploadDir)
-
-	router := gin.New()
-	router.Use(gin.Logger(), gin.Recovery(), appmiddleware.CORS(cfg.FrontendOrigin))
-
-	api := router.Group("/api")
-	api.GET("/health", healthHandler.Get)
-	api.POST("/auth/login", authHandler.Login)
-	api.POST("/auth/company-register", companyAccountHandler.Register)
-	api.GET("/auth/me", appmiddleware.RequireAuth(cfg.JWT.Secret), authHandler.Me)
-	api.GET("/protected", appmiddleware.RequireAuth(cfg.JWT.Secret), authHandler.Protected)
-
-	authenticated := api.Group("")
-	authenticated.Use(appmiddleware.RequireAuth(cfg.JWT.Secret))
-	authenticated.GET("/companies", internshipHandler.ListCompanies)
-
-	student := authenticated.Group("/student")
-	student.Use(appmiddleware.RequireRole(model.RoleStudent))
-	student.GET("/internship-term", termHandler.Current)
-	approvalHandler.RegisterStudentRoutes(student)
-	student.GET("/internship-cases/history", internshipHandler.ListStudentHistoricalCases)
-	student.GET("/internship-cases/history/:id", internshipHandler.GetStudentHistoricalCase)
-	student.GET("/internship-case", internshipHandler.GetCurrentCase)
-	student.POST("/internship-case", internshipHandler.CreateOrGetCase)
-	student.PUT("/internship-case", internshipHandler.UpdateCase)
-	student.POST("/internship-case/preferences", internshipHandler.AddPreference)
-	student.PUT("/internship-case/preferences", internshipHandler.ReplacePreferences)
-	student.PUT("/internship-case/preferences/:id", internshipHandler.UpdatePreference)
-	student.DELETE("/internship-case/preferences/:id", internshipHandler.DeletePreference)
-	student.POST("/internship-case/submit", internshipHandler.SubmitCase)
-	internshipHandler.RegisterStudentWeeklyReportRoutes(student)
-	internshipHandler.RegisterStudentFinalReportRoutes(student)
-	student.GET("/opportunities", opportunityHandler.ListStudent)
-	student.GET("/opportunities/:id", opportunityHandler.GetStudent)
-	student.POST("/opportunities/:id/apply", applicationHandler.Apply)
-	student.GET("/opportunity-applications", applicationHandler.ListStudent)
-	student.GET("/accepted-opportunity-applications", applicationHandler.ListAcceptedStudent)
-	student.GET("/opportunity-applications/:id", applicationHandler.GetStudent)
-
-	university := authenticated.Group("/university")
-	university.Use(appmiddleware.RequireRole(model.RoleUniversitySupervisor))
-	termHandler.RegisterUniversityRoutes(university)
-	approvalHandler.RegisterUniversityRoutes(university)
-	university.GET("/internship-cases", internshipHandler.ListUniversityCases)
-	university.GET("/internship-cases/pending-review", internshipHandler.ListPendingUniversityReviewCases)
-	university.GET("/internship-cases/pending-final-approval", internshipHandler.ListPendingFinalApprovalCases)
-	university.GET("/internship-cases/:id", internshipHandler.GetUniversityCase)
-	internshipHandler.RegisterUniversityCaseRoutes(university)
-	university.GET("/students", managementHandler.ListStudents)
-	university.POST("/students", managementHandler.CreateStudent)
-	university.POST("/students/import", managementHandler.ImportStudents)
-	university.GET("/professors", managementHandler.ListProfessors)
-	university.POST("/professors", managementHandler.CreateProfessor)
-	university.POST("/professors/import", managementHandler.ImportProfessors)
-	university.GET("/companies", managementHandler.ListCompanies)
-	university.POST("/companies", managementHandler.CreateCompany)
-	university.GET("/company-supervisors", managementHandler.ListCompanySupervisors)
-	university.POST("/company-supervisors", managementHandler.CreateCompanySupervisor)
-	university.GET("/professor-assignments", managementHandler.ListProfessorAssignments)
-	university.POST("/professor-assignments", managementHandler.CreateProfessorAssignment)
-	university.PUT("/professor-assignments/:id", managementHandler.UpdateProfessorAssignment)
-
-	company := authenticated.Group("/company")
-	company.Use(appmiddleware.RequireRole(model.RoleCompanySupervisor))
-	company.GET("/profile", companyAccountHandler.Profile)
-	company.GET("/internship-cases", internshipHandler.ListCompanyCases)
-	company.GET("/internship-cases/pending-details", internshipHandler.ListPendingCompanyDetailsCases)
-	company.GET("/internship-cases/:id", internshipHandler.GetCompanyCase)
-	company.POST("/internship-cases/:id/placement-details", internshipHandler.SubmitPlacementDetails)
-	internshipHandler.RegisterCompanyWeeklyReportRoutes(company)
-	company.GET("/internship-cases/:id/evaluation", internshipHandler.GetCompanyEvaluation)
-	company.POST("/internship-cases/:id/evaluation", internshipHandler.CreateCompanyEvaluation)
-	company.POST("/opportunities", opportunityHandler.Create)
-	company.GET("/opportunities", opportunityHandler.ListCompany)
-	company.GET("/opportunities/:id", opportunityHandler.GetCompany)
-	company.PUT("/opportunities/:id", opportunityHandler.Update)
-	company.POST("/opportunities/:id/close", opportunityHandler.Close)
-	company.GET("/opportunities/:id/applications", applicationHandler.ListCompany)
-	company.GET("/opportunity-applications/:id", applicationHandler.GetCompany)
-	company.POST("/opportunity-applications/:id/accept", applicationHandler.Accept)
-	company.POST("/opportunity-applications/:id/reject", applicationHandler.Reject)
-
-	professor := authenticated.Group("/professor")
-	professor.Use(appmiddleware.RequireRole(model.RoleProfessor))
-	internshipHandler.RegisterProfessorWeeklyReportRoutes(professor)
-	internshipHandler.RegisterProfessorFinalReportRoutes(professor)
-	professor.GET("/internship-cases", internshipHandler.ListProfessorCases)
-	professor.GET("/internship-cases/:id", internshipHandler.GetProfessorCase)
-	professor.POST("/internship-cases/:id/complete", internshipHandler.CompleteProfessorCase)
-
-	authenticated.GET("/files/:id/download", internshipHandler.DownloadFile)
+	router := newRouter(cfg, db)
 
 	server := &http.Server{
 		Addr:              ":" + cfg.AppPort,

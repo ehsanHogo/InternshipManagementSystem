@@ -111,6 +111,12 @@ func (handler *CompanyAccountHandler) Profile(ctx *gin.Context) {
 
 func writeCompanyAccountError(ctx *gin.Context, err error) {
 	switch {
+	case errors.Is(err, service.ErrRegistrationTransition):
+		ctx.JSON(http.StatusConflict, gin.H{"code": "INVALID_REGISTRATION_TRANSITION", "error": "این اقدام در وضعیت فعلی ثبت شرکت امکان‌پذیر نیست."})
+	case errors.Is(err, service.ErrRegistrationReviewReason):
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "REJECTION_REASON_REQUIRED", "error": "دلیل رد باید بین ۱ تا ۵۰۰۰ نویسه باشد."})
+	case errors.Is(err, service.ErrRegistrationReviewer):
+		ctx.JSON(http.StatusForbidden, gin.H{"code": "ADMIN_REQUIRED", "error": "فقط مدیر سیستم اجازه بررسی ثبت شرکت را دارد."})
 	case errors.Is(err, service.ErrInvalidCompanyRegistration):
 		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_REGISTRATION", "error": "اطلاعات واردشده کامل یا معتبر نیست."})
 	case errors.Is(err, service.ErrEmailAlreadyExists):

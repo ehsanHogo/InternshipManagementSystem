@@ -1,15 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { TextareaModule } from 'primeng/textarea';
 
 import { Company } from '../../internship/internship.models';
 import { UniversityManagementService } from '../../university-management/university-management.service';
@@ -21,7 +18,7 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 @Component({
   selector: 'app-university-companies',
-  imports: [ReactiveFormsModule, ButtonModule, DialogModule, InputTextModule, TableModule, TagModule, TextareaModule, ConfirmDialogModule, JalaliDatePipe, PersianDigitsPipe],
+  imports: [ButtonModule, DialogModule, TableModule, TagModule, ConfirmDialogModule, JalaliDatePipe, PersianDigitsPipe],
   providers: [ConfirmationService],
   templateUrl: './university-companies.component.html',
   styleUrl: '../workflow-page.scss'
@@ -29,14 +26,14 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 export class UniversityCompaniesComponent {
   private readonly management = inject(UniversityManagementService);
   private readonly messages = inject(MessageService);
-  private readonly formBuilder = inject(FormBuilder);
   private readonly approval = inject(CompanyApprovalService);
   private readonly confirmation = inject(ConfirmationService);
 
   readonly companies = signal<Company[]>([]);
   readonly eligible = signal<EligibleCompany[]>([]);
-  readonly tab = signal<'eligible' | 'approved'>('eligible');
-  readonly visibleCompanies = computed(() => this.tab() === 'eligible' ? this.eligible() : this.companies());
+  readonly allCompanies = signal<Company[]>([]);
+  readonly tab = signal<'eligible' | 'approved' | 'all'>('eligible');
+  readonly visibleCompanies = computed(() => this.tab() === 'eligible' ? this.eligible() : this.tab() === 'all' ? this.allCompanies() : this.companies());
   readonly detail = signal<ApprovalCompanyDetail | null>(null);
   readonly detailVisible = signal(false);
   readonly detailLoading = signal(false);
@@ -45,45 +42,16 @@ export class UniversityCompaniesComponent {
   readonly approvingId = signal<number | null>(null);
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
-  readonly dialogVisible = signal(false);
-  submitting = false;
-  readonly form = this.formBuilder.nonNullable.group({
-    name: ['', Validators.required], nationalId: ['', Validators.required], economicCode: ['', Validators.required],
-    website: [''], phone: [''],
-    email: ['', Validators.email], address: ['']
-  });
-
   constructor() { this.load(); }
-
-  openDialog(): void {
-    this.form.reset();
-    this.dialogVisible.set(true);
-  }
-
-  submit(): void {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
-    this.submitting = true;
-    const raw = this.form.getRawValue();
-    this.management.createCompany({
-      name: raw.name.trim(), nationalId: raw.nationalId.trim(), economicCode: raw.economicCode.trim(), website: raw.website.trim(), phone: raw.phone.trim(),
-      email: raw.email.trim(), address: raw.address.trim()
-    }).pipe(finalize(() => (this.submitting = false))).subscribe({
-      next: () => {
-        this.dialogVisible.set(false);
-        this.messages.add({ severity: 'success', summary: 'ثبت شد', detail: 'شرکت موردنظر به فهرست شرکت‌های تأییدشده اضافه شد.' });
-        this.load();
-      },
-      error: (error: HttpErrorResponse) => this.showError(error, 'ایجاد شرکت ناموفق بود.')
-    });
-  }
 
   load(): void {
     this.loading.set(true);
     this.loadFailed.set(false);
-    forkJoin({ eligible: this.approval.listEligible(), approved: this.approval.listApproved() }).subscribe({
-      next: ({ eligible, approved }) => {
+    forkJoin({ eligible: this.approval.listEligible(), approved: this.approval.listApproved(), all: this.management.listCompanies() }).subscribe({
+      next: ({ eligible, approved, all }) => {
         this.eligible.set(eligible);
         this.companies.set(approved);
+        this.allCompanies.set(all);
         this.loading.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -125,6 +93,7 @@ export class UniversityCompaniesComponent {
             this.eligible.update((companies) => companies.filter((item) => item.id !== approved.id));
             this.companies.update((companies) => [...companies.filter((item) => item.id !== approved.id), approved]
               .sort((a, b) => a.name.localeCompare(b.name, 'fa')));
+            this.allCompanies.update(items => items.map(item => item.id === approved.id ? approved : item));
             this.detailVisible.set(false);
             this.messages.add({ severity: 'success', summary: 'تأیید شد', detail: 'شرکت به فهرست شرکت‌های مورد تأیید دانشکده اضافه شد.' });
           },

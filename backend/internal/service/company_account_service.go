@@ -23,6 +23,16 @@ type CompanyAccountService struct {
 	db *gorm.DB
 }
 
+type CompanyInput struct {
+	Name         string
+	NationalID   string
+	EconomicCode string
+	Website      string
+	Phone        string
+	Email        string
+	Address      string
+}
+
 type CompanySupervisorRegistrationInput struct {
 	FullName string
 	Email    string
@@ -63,14 +73,15 @@ func (service *CompanyAccountService) Register(input CompanyRegistrationInput) (
 		}
 
 		company := model.Company{
-			Name:         normalized.Company.Name,
-			NationalID:   normalized.Company.NationalID,
-			EconomicCode: normalized.Company.EconomicCode,
-			Website:      optionalString(normalized.Company.Website),
-			Phone:        optionalString(normalized.Company.Phone),
-			Email:        optionalString(normalized.Company.Email),
-			Address:      optionalString(normalized.Company.Address),
-			IsApproved:   false,
+			Name:               normalized.Company.Name,
+			NationalID:         normalized.Company.NationalID,
+			EconomicCode:       normalized.Company.EconomicCode,
+			Website:            optionalString(normalized.Company.Website),
+			Phone:              optionalString(normalized.Company.Phone),
+			Email:              optionalString(normalized.Company.Email),
+			Address:            optionalString(normalized.Company.Address),
+			IsApproved:         false,
+			RegistrationStatus: model.CompanyRegistrationStatusPending,
 		}
 		if err := tx.Create(&company).Error; err != nil {
 			return classifyRegistrationConstraint(err)
@@ -125,6 +136,13 @@ func (service *CompanyAccountService) GetProfile(userID uint) (*CompanyAccount, 
 }
 
 func normalizeCompanyRegistration(input CompanyRegistrationInput) (CompanyRegistrationInput, error) {
+	if strings.TrimSpace(input.Supervisor.Password) == "" || len([]byte(input.Supervisor.Password)) > 72 {
+		return CompanyRegistrationInput{}, ErrInvalidCompanyRegistration
+	}
+	return normalizeCompanyRegistrationDetails(input)
+}
+
+func normalizeCompanyRegistrationDetails(input CompanyRegistrationInput) (CompanyRegistrationInput, error) {
 	input.Supervisor.FullName = strings.TrimSpace(input.Supervisor.FullName)
 	input.Supervisor.Email = strings.ToLower(strings.TrimSpace(input.Supervisor.Email))
 	input.Supervisor.Phone = strings.TrimSpace(input.Supervisor.Phone)
@@ -138,10 +156,13 @@ func normalizeCompanyRegistration(input CompanyRegistrationInput) (CompanyRegist
 	input.Company.Address = strings.TrimSpace(input.Company.Address)
 
 	if input.Supervisor.FullName == "" || !validEmail(input.Supervisor.Email) ||
-		strings.TrimSpace(input.Supervisor.Password) == "" || len([]byte(input.Supervisor.Password)) > 72 ||
 		input.Supervisor.Phone == "" || input.Supervisor.JobTitle == "" ||
 		input.Company.Name == "" || input.Company.NationalID == "" || input.Company.EconomicCode == "" ||
 		input.Company.Phone == "" || !validEmail(input.Company.Email) || input.Company.Address == "" {
+		return CompanyRegistrationInput{}, ErrInvalidCompanyRegistration
+	}
+	if len([]rune(input.Supervisor.FullName)) > 200 || len(input.Supervisor.Email) > 320 || len([]rune(input.Supervisor.Phone)) > 50 || len([]rune(input.Supervisor.JobTitle)) > 200 ||
+		len([]rune(input.Company.Name)) > 250 || len([]rune(input.Company.NationalID)) > 50 || len([]rune(input.Company.EconomicCode)) > 50 || len([]rune(input.Company.Website)) > 500 || len([]rune(input.Company.Phone)) > 50 || len(input.Company.Email) > 320 || len([]rune(input.Company.Address)) > 1000 {
 		return CompanyRegistrationInput{}, ErrInvalidCompanyRegistration
 	}
 	return input, nil

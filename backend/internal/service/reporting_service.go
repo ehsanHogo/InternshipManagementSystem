@@ -346,6 +346,13 @@ func (service *InternshipService) CreateCompanyEvaluation(supervisorID, caseID u
 }
 
 func (service *InternshipService) GetAccessibleFile(userID uint, role model.Role, fileID uint) (*model.File, error) {
+	var companyAccessErr error
+	if role == model.RoleCompanySupervisor {
+		companyAccessErr = requireCompanyCaseAccess(service.db, userID)
+		if companyAccessErr != nil && !errors.Is(companyAccessErr, ErrCompanyRegistrationRequired) {
+			return nil, companyAccessErr
+		}
+	}
 	var file model.File
 	if err := service.db.First(&file, fileID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrFileNotFound
@@ -364,6 +371,9 @@ func (service *InternshipService) GetAccessibleFile(userID uint, role model.Role
 	case model.RoleCompanySupervisor:
 		// The existing company case page grants its assigned supervisor read-only downloads.
 		finalReportQuery = finalReportQuery.Where("company_supervisor_id = ?", userID)
+		if companyAccessErr != nil {
+			finalReportQuery = finalReportQuery.Where("internship_cases.status IN ?", []model.InternshipCaseStatus{model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled})
+		}
 	case model.RoleUniversitySupervisor:
 		// University supervisors retain their existing system-wide final-report access.
 	default:
@@ -377,6 +387,9 @@ func (service *InternshipService) GetAccessibleFile(userID uint, role model.Role
 		return &file, nil
 	}
 
+	if companyAccessErr != nil {
+		return nil, companyAccessErr
+	}
 	var resumeCount int64
 	resumeQuery := service.db.Model(&model.OpportunityApplication{}).
 		Joins("JOIN internship_opportunities ON internship_opportunities.id = opportunity_applications.opportunity_id").
@@ -422,6 +435,9 @@ func (service *InternshipService) findStudentActiveCase(db *gorm.DB, studentID u
 }
 
 func (service *InternshipService) findAssignedActiveCase(db *gorm.DB, supervisorID, caseID uint, lock bool) (*model.InternshipCase, error) {
+	if err := requireCompanyCaseAccess(db, supervisorID); err != nil {
+		return nil, err
+	}
 	query := service.companyCaseQuery(db, supervisorID).Where("internship_cases.id = ?", caseID)
 	if lock {
 		query = query.Clauses(clause.Locking{Strength: "UPDATE"})

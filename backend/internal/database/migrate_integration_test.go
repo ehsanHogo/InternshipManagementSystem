@@ -148,3 +148,125 @@ func TestLegacyReadyCasesMigration(t *testing.T) {
 		t.Fatal("legacy status still accepted for case updates")
 	}
 }
+
+func TestLegacyCompanyRegistrationBackfillAndSeedDecisions(t *testing.T) {
+	dsn := os.Getenv("TEST_DATABASE_DSN")
+	if dsn == "" {
+		t.Skip("TEST_DATABASE_DSN is not set")
+	}
+	root, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	rootSQL, err := root.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rootSQL.Close()
+	schema := fmt.Sprintf("m17_migration_%d", time.Now().UnixNano())
+	if err := root.Exec("CREATE SCHEMA " + schema).Error; err != nil {
+		t.Fatal(err)
+	}
+	defer root.Exec("DROP SCHEMA " + schema + " CASCADE")
+	scoped := dsn + " search_path=" + schema
+	if strings.HasPrefix(dsn, "postgres://") || strings.HasPrefix(dsn, "postgresql://") {
+		parsed, err := url.Parse(dsn)
+		if err != nil {
+			t.Fatal(err)
+		}
+		query := parsed.Query()
+		query.Set("search_path", schema)
+		parsed.RawQuery = query.Encode()
+		scoped = parsed.String()
+	}
+	db, err := gorm.Open(postgres.Open(scoped), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sqlDB.Close()
+	// A pre-M17 table has no registration columns. Both existing trust values must survive.
+	if err := db.Exec(`CREATE TABLE companies (
+ id bigserial PRIMARY KEY, name varchar(250) NOT NULL,
+ national_id varchar(50) NOT NULL, economic_code varchar(50) NOT NULL,
+ website varchar(500), phone varchar(50), email varchar(320), address varchar(1000),
+ is_approved boolean NOT NULL DEFAULT false, created_at timestamptz, updated_at timestamptz)`).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Exec(`INSERT INTO companies (name,national_id,economic_code,is_approved,created_at,updated_at)
+ VALUES ('legacy trusted','legacy-a','economic-a',true,NOW(),NOW()),
+ ('legacy new','legacy-b','economic-b',false,NOW(),NOW())`).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := MigrateAndSeed(db); err != nil {
+		t.Fatal(err)
+	}
+	for _, fixture := range []struct {
+		name    string
+		trusted bool
+	}{{"legacy trusted", true}, {"legacy new", false}} {
+		var company model.Company
+		if err := db.Where("name = ?", fixture.name).First(&company).Error; err != nil {
+			t.Fatal(err)
+		}
+		if company.RegistrationStatus != model.CompanyRegistrationStatusApproved || company.IsApproved != fixture.trusted {
+			t.Fatalf("legacy backfill conflated approval concepts: %+v", company)
+		}
+	}
+	var seeds []model.Company
+	if err := db.Where("national_id IN ?", []string{"14000000001", "14000000002", "14000000003"}).Order("id").Find(&seeds).Error; err != nil {
+		t.Fatal(err)
+	}
+	if len(seeds) != 3 {
+		t.Fatal("demo companies missing")
+	}
+	for _, company := range seeds {
+		if company.RegistrationStatus != model.CompanyRegistrationStatusApproved {
+			t.Fatal("new seed company not operational")
+		}
+	}
+	// Simulate real Admin decisions on known seed records, including university trust false.
+	now := time.Now().UTC()
+	reason := "مدارک ناقص"
+	var admin model.User
+	if err := db.Where("email = ?", "admin@demo.local").First(&admin).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Model(&seeds[0]).Updates(map[string]any{"registration_status": model.CompanyRegistrationStatusPending, "is_approved": false}).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Model(&seeds[1]).Updates(map[string]any{"registration_status": model.CompanyRegistrationStatusRejected, "registration_reviewed_by": admin.ID, "registration_reviewed_at": now, "registration_rejection_reason": reason}).Error; err != nil {
+		t.Fatal(err)
+	}
+	var once []model.Company
+	if err := db.Order("id").Find(&once).Error; err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 2; i++ {
+		if err := MigrateAndSeed(db); err != nil {
+			t.Fatal(err)
+		}
+		var after []model.Company
+		if err := db.Order("id").Find(&after).Error; err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(once, after) {
+			t.Fatal("repeated migration/seed rewrote company registration or trust data")
+		}
+	}
+	// The database default after the one-time legacy backfill is PENDING.
+	company := model.Company{Name: "new after migration", NationalID: "new-national", EconomicCode: "new-economic"}
+	if err := db.Create(&company).Error; err != nil {
+		t.Fatal(err)
+	}
+	if company.RegistrationStatus != model.CompanyRegistrationStatusPending || company.IsApproved {
+		t.Fatal("new company inherited legacy registration default")
+	}
+	// Invalid statuses are rejected by the database, independently of API validation.
+	if err := db.Model(&company).Update("registration_status", "UNKNOWN").Error; err == nil {
+		t.Fatal("invalid registration status accepted")
+	}
+}

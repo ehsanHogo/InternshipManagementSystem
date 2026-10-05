@@ -263,6 +263,8 @@ func studentOpportunityView(opportunity model.InternshipOpportunity) studentOppo
 
 func (handler *OpportunityHandler) writeError(ctx *gin.Context, err error) {
 	switch {
+	case errors.Is(err, service.ErrCompanyRegistrationRequired):
+		ctx.JSON(http.StatusForbidden, gin.H{"code": "COMPANY_REGISTRATION_NOT_APPROVED", "error": "ثبت شرکت باید توسط مدیر سیستم تأیید شود."})
 	case errors.Is(err, service.ErrInvalidOpportunity):
 		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_OPPORTUNITY", "error": "عنوان، توضیحات، زمینه کاری و محل کارآموزی را به‌طور کامل وارد کنید."})
 	case errors.Is(err, service.ErrOpportunityNotFound):

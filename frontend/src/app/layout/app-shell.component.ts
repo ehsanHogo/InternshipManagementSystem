@@ -1,4 +1,4 @@
-import { afterNextRender, Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { afterNextRender, Component, computed, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -31,6 +31,7 @@ export class AppShellComponent {
   readonly shellBodyRef = viewChild.required<ElementRef<HTMLElement>>('shellBody');
 
   readonly user = this.auth.user;
+  readonly restrictedCompany = computed(() => this.user()?.role === 'COMPANY_SUPERVISOR' && this.user()?.companyRegistrationStatus !== 'APPROVED');
   readonly navOpen = signal(false);
   readonly topbarElevated = signal(false);
 

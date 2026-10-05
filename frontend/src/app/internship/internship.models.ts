@@ -15,6 +15,10 @@ export type InternshipCaseStatus =
 /** PrimeNG Tag severities used for status chips across the app. */
 export type StatusTagSeverity = 'secondary' | 'info' | 'success' | 'warn' | 'danger' | 'contrast';
 
+export type CompanyRegistrationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export const registrationStatusLabels: Record<CompanyRegistrationStatus, string> = {
+ PENDING: 'در انتظار بررسی مدیر سیستم', APPROVED: 'ثبت شرکت تأیید شده', REJECTED: 'رد شده'
+};
 export interface Company {
   id: number;
   name: string;
@@ -25,6 +29,11 @@ export interface Company {
   email?: string;
   address?: string;
   isApproved: boolean;
+  registrationStatus: CompanyRegistrationStatus;
+  registrationReviewedAt?: string;
+  registrationReviewedBy?: number;
+  registrationRejectionReason?: string;
+  createdAt: string;
 }
 
 export interface AcceptedOpportunityApplication {

@@ -33,24 +33,11 @@ type managedUserRequest struct {
 	Email         string `json:"email"`
 	StudentNumber string `json:"studentNumber"`
 	Major         string `json:"major"`
-	CompanyID     uint   `json:"companyId"`
-	Phone         string `json:"phone"`
-	JobTitle      string `json:"jobTitle"`
 }
 
 type managedUserCreatedResponse struct {
 	User              model.PublicUser `json:"user"`
 	TemporaryPassword string           `json:"temporaryPassword"`
-}
-
-type managedCompanyRequest struct {
-	Name         string `json:"name"`
-	NationalID   string `json:"nationalId"`
-	EconomicCode string `json:"economicCode"`
-	Website      string `json:"website"`
-	Phone        string `json:"phone"`
-	Email        string `json:"email"`
-	Address      string `json:"address"`
 }
 
 type managedCompanySupervisorResponse struct {
@@ -117,10 +104,6 @@ func (handler *UniversityManagementHandler) ListCompanySupervisors(ctx *gin.Cont
 	ctx.JSON(http.StatusOK, response)
 }
 
-func (handler *UniversityManagementHandler) CreateCompanySupervisor(ctx *gin.Context) {
-	handler.createUser(ctx, model.RoleCompanySupervisor)
-}
-
 func (handler *UniversityManagementHandler) listUsers(ctx *gin.Context, role model.Role) {
 	users, err := handler.service.ListUsers(role)
 	if err != nil {
@@ -142,7 +125,7 @@ func (handler *UniversityManagementHandler) createUser(ctx *gin.Context, role mo
 	}
 	user, password, err := handler.service.CreateManagedUser(role, service.ManagedUserInput{
 		FullName: request.FullName, Email: request.Email, StudentNumber: request.StudentNumber,
-		Major: request.Major, CompanyID: request.CompanyID, Phone: request.Phone, JobTitle: request.JobTitle,
+		Major: request.Major,
 	})
 	if err != nil {
 		handler.writeError(ctx, err)
@@ -258,22 +241,6 @@ func (handler *UniversityManagementHandler) ListCompanies(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, companies)
 }
 
-func (handler *UniversityManagementHandler) CreateCompany(ctx *gin.Context) {
-	var request managedCompanyRequest
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اطلاعات درخواست معتبر نیست."})
-		return
-	}
-	company, err := handler.service.CreateCompany(service.CompanyInput{
-		Name: request.Name, NationalID: request.NationalID, EconomicCode: request.EconomicCode, Website: request.Website, Phone: request.Phone, Email: request.Email, Address: request.Address,
-	})
-	if err != nil {
-		handler.writeError(ctx, err)
-		return
-	}
-	ctx.JSON(http.StatusCreated, company)
-}
-
 func (handler *UniversityManagementHandler) ListProfessorAssignments(ctx *gin.Context) {
 	assignments, err := handler.service.ListProfessorAssignments()
 	if err != nil {
@@ -328,9 +295,9 @@ func (handler *UniversityManagementHandler) writeError(ctx *gin.Context, err err
 	switch {
 	case errors.Is(err, service.ErrInvalidManagementInput):
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": publicManagementError(err)})
-	case errors.Is(err, service.ErrEmailAlreadyExists), errors.Is(err, service.ErrStudentNumberExists), errors.Is(err, service.ErrCompanyAlreadyExists):
+	case errors.Is(err, service.ErrEmailAlreadyExists), errors.Is(err, service.ErrStudentNumberExists):
 		ctx.JSON(http.StatusConflict, gin.H{"error": publicManagementError(err)})
-	case errors.Is(err, service.ErrManagedUserNotFound), errors.Is(err, service.ErrCompanyNotFound), errors.Is(err, service.ErrAssignmentNotFoundMgmt):
+	case errors.Is(err, service.ErrManagedUserNotFound), errors.Is(err, service.ErrAssignmentNotFoundMgmt):
 		ctx.JSON(http.StatusNotFound, gin.H{"error": publicManagementError(err)})
 	default:
 		log.Printf("university management request failed: %v", err)
@@ -424,10 +391,6 @@ func publicManagementError(err error) string {
 		return "کاربری با این ایمیل قبلاً ثبت شده است."
 	case errors.Is(err, service.ErrStudentNumberExists):
 		return "دانشجویی با این شماره دانشجویی قبلاً ثبت شده است."
-	case errors.Is(err, service.ErrCompanyAlreadyExists):
-		return "شرکتی با این نام قبلاً ثبت شده است."
-	case errors.Is(err, service.ErrCompanyNotFound):
-		return "شرکت تأییدشده یافت نشد."
 	case errors.Is(err, service.ErrManagedUserNotFound):
 		return "دانشجو یا استاد یافت نشد."
 	case errors.Is(err, service.ErrAssignmentNotFoundMgmt):

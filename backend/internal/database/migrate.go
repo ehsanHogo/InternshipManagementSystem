@@ -16,6 +16,9 @@ import (
 const demoPassword = "Demo123!"
 
 func MigrateAndSeed(db *gorm.DB) error {
+	if err := migrateCompanyRegistrations(db); err != nil {
+		return err
+	}
 	if err := migrateInternshipCaseStatuses(db); err != nil {
 		return err
 	}
@@ -70,16 +73,13 @@ func MigrateAndSeed(db *gorm.DB) error {
 
 func seedCompanies(db *gorm.DB) error {
 	companies := []model.Company{
-		{Name: "شرکت داده‌پردازان نوین", NationalID: "14000000001", EconomicCode: "411111111111", IsApproved: true},
-		{Name: "شرکت فناوری سپهر", NationalID: "14000000002", EconomicCode: "422222222222", IsApproved: true},
-		{Name: "شرکت راهکارهای هوشمند پارس", NationalID: "14000000003", EconomicCode: "433333333333", IsApproved: true},
+		{Name: "شرکت داده‌پردازان نوین", NationalID: "14000000001", EconomicCode: "411111111111", IsApproved: true, RegistrationStatus: model.CompanyRegistrationStatusApproved},
+		{Name: "شرکت فناوری سپهر", NationalID: "14000000002", EconomicCode: "422222222222", IsApproved: true, RegistrationStatus: model.CompanyRegistrationStatusApproved},
+		{Name: "شرکت راهکارهای هوشمند پارس", NationalID: "14000000003", EconomicCode: "433333333333", IsApproved: true, RegistrationStatus: model.CompanyRegistrationStatusApproved},
 	}
 	for i := range companies {
 		if err := db.Clauses(clause.OnConflict{
-			Columns: []clause.Column{{Name: "name"}},
-			DoUpdates: clause.Assignments(map[string]any{
-				"national_id": companies[i].NationalID, "economic_code": companies[i].EconomicCode, "is_approved": true,
-			}),
+			DoNothing: true,
 		}).Create(&companies[i]).Error; err != nil {
 			return fmt.Errorf("seed company %s: %w", companies[i].Name, err)
 		}
@@ -156,5 +156,24 @@ func migrateInternshipCaseStatuses(db *gorm.DB) error {
 			return fmt.Errorf("create internship status constraint: %w", err)
 		}
 		return nil
+	})
+}
+
+// Only the first addition backfills legacy companies. Subsequent startups never
+// rewrite decisions, including PENDING and REJECTED seed-company records.
+func migrateCompanyRegistrations(db *gorm.DB) error {
+	if !db.Migrator().HasTable(&model.Company{}) {
+		return nil
+	}
+	return db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec("LOCK TABLE companies IN ACCESS EXCLUSIVE MODE").Error; err != nil {
+			return err
+		}
+		if !tx.Migrator().HasColumn(&model.Company{}, "registration_status") {
+			if err := tx.Exec("ALTER TABLE companies ADD COLUMN registration_status varchar(16) NOT NULL DEFAULT 'APPROVED'").Error; err != nil {
+				return fmt.Errorf("backfill company registrations: %w", err)
+			}
+		}
+		return tx.Exec("ALTER TABLE companies ALTER COLUMN registration_status SET DEFAULT 'PENDING'").Error
 	})
 }

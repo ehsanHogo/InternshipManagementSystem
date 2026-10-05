@@ -56,17 +56,21 @@ func (result ProfessorFinalResult) Valid() bool {
 }
 
 type Company struct {
-	ID           uint      `gorm:"primaryKey" json:"id"`
-	Name         string    `gorm:"size:250;uniqueIndex;not null" json:"name"`
-	NationalID   string    `gorm:"size:50;not null;uniqueIndex;check:char_length(btrim(national_id)) > 0" json:"nationalId"`
-	EconomicCode string    `gorm:"size:50;not null;uniqueIndex;check:char_length(btrim(economic_code)) > 0" json:"economicCode"`
-	Website      *string   `gorm:"size:500" json:"website,omitempty"`
-	Phone        *string   `gorm:"size:50" json:"phone,omitempty"`
-	Email        *string   `gorm:"size:320" json:"email,omitempty"`
-	Address      *string   `gorm:"size:1000" json:"address,omitempty"`
-	IsApproved   bool      `gorm:"not null;default:false;index" json:"isApproved"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
+	ID                          uint                      `gorm:"primaryKey" json:"id"`
+	Name                        string                    `gorm:"size:250;uniqueIndex;not null" json:"name"`
+	NationalID                  string                    `gorm:"size:50;not null;uniqueIndex;check:char_length(btrim(national_id)) > 0" json:"nationalId"`
+	EconomicCode                string                    `gorm:"size:50;not null;uniqueIndex;check:char_length(btrim(economic_code)) > 0" json:"economicCode"`
+	Website                     *string                   `gorm:"size:500" json:"website,omitempty"`
+	Phone                       *string                   `gorm:"size:50" json:"phone,omitempty"`
+	Email                       *string                   `gorm:"size:320" json:"email,omitempty"`
+	Address                     *string                   `gorm:"size:1000" json:"address,omitempty"`
+	RegistrationStatus          CompanyRegistrationStatus `gorm:"type:varchar(16);not null;default:PENDING;index;check:chk_company_registration_status,registration_status IN ('PENDING','APPROVED','REJECTED')" json:"registrationStatus"`
+	RegistrationReviewedAt      *time.Time                `json:"registrationReviewedAt,omitempty"`
+	RegistrationReviewedBy      *uint                     `gorm:"index" json:"registrationReviewedBy,omitempty"`
+	RegistrationRejectionReason *string                   `gorm:"type:text" json:"registrationRejectionReason,omitempty"`
+	IsApproved                  bool                      `gorm:"not null;default:false;index" json:"isApproved"`
+	CreatedAt                   time.Time                 `json:"createdAt"`
+	UpdatedAt                   time.Time                 `json:"updatedAt"`
 }
 
 type ProfessorAssignment struct {
@@ -138,4 +142,8 @@ type InternshipPreference struct {
 	OpportunityApplication   OpportunityApplication `gorm:"foreignKey:OpportunityApplicationID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 	CreatedAt                time.Time
 	UpdatedAt                time.Time
+}
+
+func (status InternshipCaseStatus) Terminal() bool {
+	return status == InternshipCaseStatusPassed || status == InternshipCaseStatusFailed || status == InternshipCaseStatusCancelled
 }

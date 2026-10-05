@@ -68,10 +68,10 @@ Open <http://localhost:4200/login>. Restart `go run` after backend changes. Data
 ## Main Roles
 
 - Student: creates and submits an application, maintains unconfirmed weekly reports, uploads/replaces the final PDF while active, and views the completed result.
-- University supervisor: manages users/companies/assignments, selects the placement and records introduction-letter metadata, and views submitted company details.
-- Company supervisor: recruits students through opportunity applications and submits start/placement details for the university-selected official case.
+- University supervisor: manages students, professors, assignments, and manual university company trust approval; selects the placement and records introduction-letter metadata, and views submitted company details.
+- Company supervisor: manages registration information while pending/rejected; after Admin registration approval, recruits students through opportunity applications and submits start/placement details for the university-selected official case.
 - Professor: reviews assigned active/completed cases and records the final qualitative result when every prerequisite is complete.
-- Admin: retains a deliberately minimal dashboard and receives no workflow mutation permissions.
+- Admin: reviews company registrations at `/admin/company-registrations`; approves or rejects pending registrations without changing university trust.
 
 Frontend route guards improve navigation UX; backend role middleware and case-ownership checks remain the authorization boundary.
 
@@ -96,7 +96,7 @@ Recommended demonstration order:
 
 Before creating an official case, sign in as the university supervisor and open an academic internship term at `/university/internship-terms`.
 
-1. Register a company, publish an opportunity, and accept the student's opportunity application.
+1. Register a company, sign in as Admin and approve its registration, then publish an opportunity and accept the student's opportunity application.
 2. As the student, create the official case, enter credits/mobile, select one to three accepted applications in priority order, and submit.
 3. As the university supervisor, select one preference and enter introduction-letter number/date. The selected opportunity determines the company supervisor automatically.
 4. As that company supervisor, open **پرونده‌های کارآموزی**, enter subject, Jalali start date, actual workplace address/phone, and confirm submission to university.
@@ -106,6 +106,14 @@ Before creating an official case, sign in as the university supervisor and open 
 If none of the submitted preferences is suitable, the university can request student preference revision with a required reason. The student edits and resubmits the same case, preserving its term and professor. Students may apply for new opportunities in **DRAFT** or **REVISION_REQUESTED**; successful **PASSED** history still permanently blocks recruitment.
 
 There is no separate manual activation action. On startup or `cmd/migrate`, existing **READY_TO_START** records are converted to **ACTIVE** without changing unrelated case data.
+
+## Company Registration Governance
+
+Self-registration creates one company and its linked company supervisor with `RegistrationStatus=PENDING` and `IsApproved=false`. Pending and rejected supervisors can log in, edit registration data, and view status/rejection reasons at `/company/profile`. Rejected companies explicitly resubmit the same record for review; editing alone does not change status. Operational routes require Admin registration approval on the server and in frontend navigation/guards.
+
+`RegistrationStatus` (`PENDING`, `APPROVED`, `REJECTED`) controls access to company business features. `IsApproved` still means university trust: a passed internship makes a company eligible, and the university manually approves it. Students can apply and the university can select companies with approved registration even when `IsApproved=false`. The student approved-companies directory still uses only university trust.
+
+The university can inspect companies and existing supervisors but cannot create either. Existing companies are backfilled as registration-approved without changing trust. New demo companies are operational; subsequent startup preserves real decisions and existing trust values. Historical cases remain readable.
 
 ## Excel Import Format
 

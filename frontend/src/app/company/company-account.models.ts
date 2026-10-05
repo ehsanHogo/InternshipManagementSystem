@@ -20,6 +20,11 @@ export interface CompanyRegistrationPayload {
   };
 }
 
+export interface CompanyProfileUpdatePayload {
+ company: CompanyRegistrationPayload['company'];
+ supervisor: Omit<CompanyRegistrationPayload['supervisor'], 'password'>;
+}
+
 export interface CompanyAccountProfile {
   company: Company;
   supervisor: User;

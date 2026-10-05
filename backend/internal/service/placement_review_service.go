@@ -124,7 +124,7 @@ func validateFinalPlacement(tx *gorm.DB, item *model.InternshipCase) error {
 		supervisor.CompanyID == nil || *supervisor.CompanyID != opportunity.CompanyID {
 		return ErrPlacementRelationshipInvalid
 	}
-	return nil
+	return RequireApprovedRegistration(tx, opportunity.CompanyID)
 }
 
 func blankPlacementField(value *string) bool {

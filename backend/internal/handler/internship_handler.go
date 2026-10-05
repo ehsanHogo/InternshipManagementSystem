@@ -292,6 +292,8 @@ func (request preferenceRequest) preferenceInput() service.PreferenceInput {
 func (handler *InternshipHandler) writeError(ctx *gin.Context, err error) {
 	status := http.StatusInternalServerError
 	switch {
+	case errors.Is(err, service.ErrCompanyRegistrationRequired):
+		ctx.JSON(http.StatusForbidden, gin.H{"code": "COMPANY_REGISTRATION_NOT_APPROVED", "error": "ثبت شرکت باید توسط مدیر سیستم تأیید شود."})
 	case errors.Is(err, service.ErrCaseNotFound), errors.Is(err, service.ErrPreferenceNotFound),
 		errors.Is(err, service.ErrWeeklyReportNotFound), errors.Is(err, service.ErrEvaluationNotFound),
 		errors.Is(err, service.ErrFileNotFound):

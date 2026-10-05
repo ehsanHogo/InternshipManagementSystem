@@ -322,6 +322,8 @@ func (handler *OpportunityApplicationHandler) writeError(ctx *gin.Context, err e
 	code := "INTERNAL_ERROR"
 	message := "خطایی در سرور رخ داد."
 	switch {
+	case errors.Is(err, service.ErrCompanyRegistrationRequired):
+		ctx.JSON(http.StatusForbidden, gin.H{"code": "COMPANY_REGISTRATION_NOT_APPROVED", "error": "ثبت شرکت باید توسط مدیر سیستم تأیید شود."})
 	case errors.Is(err, service.ErrApplicationAlreadyExists):
 		status, code, message = http.StatusConflict, "APPLICATION_ALREADY_EXISTS", "درخواست شما برای این فرصت قبلاً ثبت شده است."
 	case errors.Is(err, service.ErrOpportunityNotOpen):
