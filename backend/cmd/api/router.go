@@ -40,6 +40,9 @@ func newRouter(cfg config.Config, db *gorm.DB) *gin.Engine {
 
 	authenticated := api.Group("")
 	authenticated.Use(appmiddleware.RequireAuth(cfg.JWT.Secret))
+	profileHandler := handler.NewProfileHandler(service.NewProfileService(db))
+	authenticated.PUT("/profile", profileHandler.Update)
+	authenticated.POST("/profile/change-password", profileHandler.ChangePassword)
 	authenticated.GET("/companies", appmiddleware.RequireApprovedCompanyIfSupervisor(db), internshipHandler.ListCompanies)
 
 	student := authenticated.Group("/student")

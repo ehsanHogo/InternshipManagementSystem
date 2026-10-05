@@ -24,6 +24,9 @@
           <strong>{{ currentUser.fullName }}</strong>
           <p-tag [value]="roleLabel(currentUser.role)" severity="info" />
         </div>
+        <a class="profile-link" routerLink="/profile" routerLinkActive="active" aria-label="پروفایل من">
+          <i class="pi pi-user" aria-hidden="true"></i><span>پروفایل من</span>
+        </a>
         <p-button
           label="خروج"
           icon="pi pi-sign-out"

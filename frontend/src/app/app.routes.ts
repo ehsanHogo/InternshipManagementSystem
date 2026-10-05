@@ -30,6 +30,10 @@ export const routes: Routes = [
     loadComponent: () => import('./layout/app-shell.component').then((module) => module.AppShellComponent),
     children: [
       {
+        path: 'profile',
+        loadComponent: () => import('./pages/profile/profile.component').then(module => module.ProfileComponent)
+      },
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'dashboard'

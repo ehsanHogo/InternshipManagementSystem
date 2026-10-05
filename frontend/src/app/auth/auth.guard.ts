@@ -47,10 +47,11 @@ export const companyAccessGuard: CanActivateChildFn = (_route, state) => {
  const auth = inject(AuthService);
  const router = inject(Router);
  if (auth.getCurrentUser()?.role !== 'COMPANY_SUPERVISOR') return true;
+ const personalOrRegistrationProfile = ['/profile', '/company/profile'].includes(state.url.split('?')[0].split('#')[0]);
  return auth.refreshUser().pipe(
-  map(user => user.companyRegistrationStatus === 'APPROVED' || state.url.split('?')[0] === '/company/profile'
+  map(user => user.companyRegistrationStatus === 'APPROVED' || personalOrRegistrationProfile
     ? true : router.createUrlTree(['/company/profile'])),
-  catchError(() => of(state.url.split('?')[0] === '/company/profile' ? true : router.createUrlTree(['/company/profile'])))
+  catchError(() => of(personalOrRegistrationProfile ? true : router.createUrlTree(['/company/profile'])))
  );
 };
 export const adminGuard: CanActivateFn = () => {

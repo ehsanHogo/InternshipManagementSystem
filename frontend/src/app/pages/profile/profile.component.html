@@ -1,0 +1,62 @@
+<section class="page-heading">
+  <div><h1>پروفایل من</h1><p>اطلاعات شخصی حساب کاربری و رمز عبور خود را مدیریت کنید.</p></div>
+</section>
+
+@if (loading()) {
+  <div class="state-card" role="status">در حال دریافت اطلاعات...</div>
+} @else if (loadFailed()) {
+  <div class="state-card"><p>دریافت اطلاعات حساب کاربری امکان‌پذیر نبود.</p><p-button label="تلاش دوباره" (onClick)="load()" /></div>
+} @else if (user(); as account) {
+  <p-card header="اطلاعات حساب کاربری">
+    <div class="detail-grid">
+      <div class="detail"><span>ایمیل (فقط خواندنی)</span><strong dir="ltr">{{ account.email }}</strong></div>
+      <div class="detail"><span>نقش (فقط خواندنی)</span><strong>{{ roleLabels[account.role] }}</strong></div>
+      @if (account.role === 'STUDENT') {
+        <div class="detail"><span>شماره دانشجویی (فقط خواندنی)</span><strong>{{ account.studentNumber || '—' }}</strong></div>
+        <div class="detail"><span>رشته (فقط خواندنی)</span><strong>{{ account.major || '—' }}</strong></div>
+      }
+      @if (account.role === 'COMPANY_SUPERVISOR') {
+        <div class="detail full-width"><span>شرکت (فقط خواندنی)</span><strong>{{ account.companyName || '—' }}</strong></div>
+      }
+    </div>
+    <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
+      <label class="field" for="profile-name">نام و نام خانوادگی
+        <input id="profile-name" pInputText formControlName="fullName" autocomplete="name" maxlength="200" />
+        @if (form.controls.fullName.touched && form.controls.fullName.invalid) { <small>نام و نام خانوادگی را وارد کنید (حداکثر ۲۰۰ نویسه).</small> }
+      </label>
+      <label class="field" for="profile-phone">شماره تماس (اختیاری)
+        <input id="profile-phone" pInputText formControlName="phone" type="tel" dir="ltr" autocomplete="tel" maxlength="50" />
+        @if (form.controls.phone.touched && form.controls.phone.invalid) { <small>شماره تماس باید حداکثر ۵۰ نویسه باشد.</small> }
+      </label>
+      @if (account.role === 'COMPANY_SUPERVISOR') {
+        <label class="field" for="profile-title">عنوان شغلی
+          <input id="profile-title" pInputText formControlName="jobTitle" maxlength="200" />
+          @if (form.controls.jobTitle.touched && form.controls.jobTitle.invalid) { <small>عنوان شغلی باید حداکثر ۲۰۰ نویسه باشد.</small> }
+        </label>
+      }
+      @if (account.role === 'STUDENT') { <p class="hint full-width">تغییر شماره تماس حساب کاربری، شماره همراه پرونده‌های کارآموزی را تغییر نمی‌دهد.</p> }
+      @if (account.role === 'COMPANY_SUPERVISOR') {
+        <p class="hint full-width">برای مشاهده یا ویرایش اطلاعات ثبت شرکت، به <a routerLink="/company/profile">ثبت / پروفایل شرکت</a> مراجعه کنید.</p>
+      }
+      <div class="card-actions full-width"><p-button type="submit" label="ذخیره اطلاعات" [loading]="saving()" [disabled]="saving() || form.invalid || !form.dirty" /></div>
+    </form>
+  </p-card>
+
+  <p-card header="تغییر رمز عبور">
+    <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="form-grid">
+      <label class="field full-width" for="current-password">رمز عبور فعلی
+        <input id="current-password" pInputText formControlName="currentPassword" type="password" dir="ltr" autocomplete="current-password" />
+        @if (passwordForm.controls.currentPassword.touched && passwordForm.controls.currentPassword.invalid) { <small>رمز عبور فعلی را وارد کنید.</small> }
+      </label>
+      <label class="field" for="new-password">رمز عبور جدید
+        <input id="new-password" pInputText formControlName="newPassword" type="password" dir="ltr" autocomplete="new-password" />
+        @if (passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.invalid) { <small>رمز عبور جدید نباید خالی باشد و باید حداکثر ۷۲ بایت باشد.</small> }
+      </label>
+      <label class="field" for="confirm-password">تکرار رمز عبور جدید
+        <input id="confirm-password" pInputText formControlName="confirmNewPassword" type="password" dir="ltr" autocomplete="new-password" />
+        @if (passwordForm.controls.confirmNewPassword.touched && passwordForm.hasError('passwordMismatch')) { <small>رمز عبور جدید و تکرار آن یکسان نیستند.</small> }
+      </label>
+      <div class="card-actions full-width"><p-button type="submit" label="تغییر رمز عبور" [loading]="changingPassword()" [disabled]="changingPassword() || passwordForm.invalid" /></div>
+    </form>
+  </p-card>
+}

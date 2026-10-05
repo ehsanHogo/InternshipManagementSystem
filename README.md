@@ -145,6 +145,16 @@ Professor import headers:
 
 Each successful row returns a temporary password. It is shown only in that result and cannot be retrieved later, so copy it before leaving the page.
 
+## Personal Profile
+
+Every authenticated role can open `/profile` using **پروفایل من** in the shared header. Users can edit their name and optional account phone; company supervisors can also edit their personal job title. Email, role, student number/major and company affiliation are read-only. Account phone changes never update internship-case Mobile.
+
+Profile reads reuse `GET /api/auth/me`. `PUT /api/profile` accepts only `fullName`, `phone` and the company-supervisor-only `jobTitle`; `POST /api/profile/change-password` accepts only `currentPassword` and `newPassword`. Identity comes from the JWT, and protected/unknown fields are rejected. Saving updates the shared cached user immediately.
+
+Password changes verify the current password and store a bcrypt hash. New passwords follow the existing company-registration rule: nonblank and at most 72 UTF-8 bytes, with a different value from the current password. Existing JWTs remain valid until expiry;
+
+The `/company/profile` registration workflow remains separate. Pending/rejected company supervisors can access both profile screens but remain restricted from operational company features.
+
 ## File Upload Rules
 
 - Final reports must be non-empty PDF files no larger than 10 MB.

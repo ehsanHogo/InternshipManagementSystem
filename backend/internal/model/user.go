@@ -47,17 +47,22 @@ type PublicUser struct {
 	Phone                     *string                    `json:"phone,omitempty"`
 	JobTitle                  *string                    `json:"jobTitle,omitempty"`
 	CompanyID                 *uint                      `json:"companyId,omitempty"`
+	CompanyName               *string                    `json:"companyName,omitempty"`
 	CompanyRegistrationStatus *CompanyRegistrationStatus `json:"companyRegistrationStatus,omitempty"`
 }
 
 func (user User) Public() PublicUser {
 	var status *CompanyRegistrationStatus
+	var companyName *string
 	if user.Role == RoleCompanySupervisor && user.Company != nil {
 		value := user.Company.RegistrationStatus
 		status = &value
+		name := user.Company.Name
+		companyName = &name
 	}
 	return PublicUser{
 		CompanyRegistrationStatus: status,
+		CompanyName:               companyName,
 		ID:                        user.ID,
 		FullName:                  user.FullName,
 		Email:                     user.Email,

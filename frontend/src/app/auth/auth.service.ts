@@ -43,6 +43,10 @@ export class AuthService {
     return this.http.get<User>('/api/auth/me').pipe(tap(user => this.currentUser.set(user)));
   }
 
+  updateCachedUser(user: User): void {
+    this.currentUser.set(user);
+  }
+
   private restoreSession(): Observable<User | null> {
     if (!getStoredToken()) {
       this.currentUser.set(null);

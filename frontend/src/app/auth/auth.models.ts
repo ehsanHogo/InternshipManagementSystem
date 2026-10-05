@@ -15,6 +15,7 @@ export interface User {
   phone?: string;
   jobTitle?: string;
   companyId?: number;
+  companyName?: string;
   companyRegistrationStatus?: import('../internship/internship.models').CompanyRegistrationStatus;
 }
 
