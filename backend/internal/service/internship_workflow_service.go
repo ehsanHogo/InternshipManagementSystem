@@ -163,7 +163,8 @@ func (service *InternshipService) CancelUniversityReview(caseID uint, comment st
 		if result.RowsAffected != 1 {
 			return ErrCaseNotPendingUniversityReview
 		}
-		return nil
+		return NewNotificationService(tx).CreateStudentNotification(internshipCase.StudentID,
+			"لغو پرونده کارآموزی", "پرونده کارآموزی شما توسط آموزش لغو شد. دلیل لغو را در سوابق پرونده مشاهده کنید.", "/student/application")
 	})
 	if err != nil {
 		return nil, err

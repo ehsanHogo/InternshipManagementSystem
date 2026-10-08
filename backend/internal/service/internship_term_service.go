@@ -139,7 +139,9 @@ func (service *InternshipTermService) Close(actorID, termID uint) (*model.Intern
 		now := time.Now().UTC()
 		// UPDATE locks affected cases and rechecks the terminal predicate after
 		// concurrent lifecycle changes; completed cases and their audit stay intact.
-		if err := tx.Model(&model.InternshipCase{}).
+		// RETURNING identifies only cases actually cancelled by this transaction.
+		var cancelledCases []model.InternshipCase
+		if err := tx.Model(&cancelledCases).Clauses(clause.Returning{Columns: []clause.Column{{Name: "student_id"}}}).
 			Where("term_id = ? AND status NOT IN ?", termID, terminalCaseStatuses()).
 			Updates(map[string]any{"status": model.InternshipCaseStatusCancelled,
 				"cancellation_comment": TermClosureCancellationComment, "cancelled_at": now}).Error; err != nil {
@@ -149,6 +151,12 @@ func (service *InternshipTermService) Close(actorID, termID uint) (*model.Intern
 		if err := tx.Model(&term).Updates(map[string]any{"status": model.InternshipTermStatusClosed,
 			"closed_at": now, "closed_by": actorID}).Error; err != nil {
 			return fmt.Errorf("close internship term: %w", err)
+		}
+		for _, item := range cancelledCases {
+			if err := NewNotificationService(tx).CreateStudentNotification(item.StudentID,
+				"لغو پرونده با بسته شدن ترم", "پرونده کارآموزی شما به دلیل بسته شدن ترم لغو شد. سوابق پرونده همچنان قابل مشاهده است.", "/student/application"); err != nil {
+				return err
+			}
 		}
 		return nil
 	})

@@ -34,7 +34,7 @@ async function notificationsPage(browser, email, expectedMessage, options = {}) 
  await page.getByRole('heading', {name:'اعلان‌ها', exact:true}).waitFor();
  if (expectedMessage) {
   await page.getByText(expectedMessage, {exact:false}).first().waitFor();
-  await page.locator('.notification.unread').waitFor({state:'hidden'});
+  await page.waitForFunction(() => document.querySelectorAll('.notification.unread').length === 0);
   await page.waitForFunction(() => Array.from(document.querySelectorAll('.notification')).every(n => n.textContent.includes('خوانده‌شده')));
   await page.waitForFunction(expected => {
    const badge = document.querySelector('.notification-badge'); return expected ? badge?.textContent.trim() === '۱' : !badge;
