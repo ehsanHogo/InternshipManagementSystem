@@ -104,7 +104,7 @@ func (service *CompanyAccountService) Register(input CompanyRegistrationInput) (
 
 		account.Company = company
 		account.Supervisor = supervisor
-		return nil
+		return NewNotificationService(tx).NotifyAdminCompanyRegistration()
 	})
 	if err != nil {
 		return nil, err

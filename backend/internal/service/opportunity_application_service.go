@@ -149,7 +149,7 @@ func (service *OpportunityApplicationService) Apply(studentID, opportunityID uin
 			return fmt.Errorf("create opportunity application: %w", err)
 		}
 		applicationID = application.ID
-		return nil
+		return NewNotificationService(tx).NotifyCompanyApplications(opportunity.CompanyID)
 	})
 	if err != nil {
 		return nil, err
@@ -250,7 +250,11 @@ func (service *OpportunityApplicationService) Review(supervisorID, applicationID
 		if result.RowsAffected != 1 {
 			return ErrApplicationNotPending
 		}
-		return nil
+		title, message := "درخواست کارآموزی شما رد شد", "درخواست کارآموزی شما توسط شرکت رد شد."
+		if status == model.ApplicationStatusAccepted {
+			title, message = "درخواست کارآموزی پذیرفته شد", "درخواست شما توسط شرکت پذیرفته شد."
+		}
+		return NewNotificationService(tx).CreateStudentNotification(application.StudentID, title, message, "/student/opportunity-applications")
 	})
 	if err != nil {
 		return nil, err

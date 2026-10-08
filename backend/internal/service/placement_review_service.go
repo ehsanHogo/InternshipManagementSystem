@@ -81,6 +81,13 @@ func (service *InternshipService) reviewPlacementDetails(caseID uint, changes fu
 			return fmt.Errorf("reload final review case: %w", err)
 		}
 		resultCase = &updated
+		notifications := NewNotificationService(tx)
+		if updated.Status == model.InternshipCaseStatusActive {
+			return notifications.CreateStudentNotification(item.StudentID, "فعال شدن کارآموزی", "کارآموزی شما تأیید و فعال شد.", "/student/application")
+		}
+		if updated.CompanySupervisorID != nil {
+			return notifications.NotifyCompanyPlacement(*updated.CompanySupervisorID, true)
+		}
 		return nil
 	})
 	return resultCase, err

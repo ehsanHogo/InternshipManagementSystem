@@ -39,6 +39,7 @@ func MigrateAndSeed(db *gorm.DB) error {
 		&model.WeeklyReport{},
 		&model.CompanyEvaluation{},
 		&model.StudentInternshipRating{},
+		&model.Notification{},
 	); err != nil {
 		return fmt.Errorf("migrate database: %w", err)
 	}

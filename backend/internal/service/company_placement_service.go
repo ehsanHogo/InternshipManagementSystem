@@ -181,7 +181,7 @@ func (service *InternshipService) SubmitPlacementDetails(supervisorID, caseID ui
 			return fmt.Errorf("reload submitted placement: %w", err)
 		}
 		resultCase = &updated
-		return nil
+		return NewNotificationService(tx).NotifyUniversityPlacementReview()
 	})
 	return resultCase, err
 }

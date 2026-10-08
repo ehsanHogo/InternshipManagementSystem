@@ -1,7 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { distinctUntilChanged, map } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
@@ -39,6 +41,8 @@ const REVIEW_LIST_STATUSES = [
 export class UniversityApplicationsComponent {
   private readonly internshipService = inject(InternshipService);
   private readonly messages = inject(MessageService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly cases = signal<InternshipCase[]>([]);
   readonly loading = signal(true);
@@ -51,14 +55,21 @@ export class UniversityApplicationsComponent {
   }));
 
   constructor() {
-    this.loadCases('PENDING_UNIVERSITY_REVIEW');
+    this.route.queryParamMap.pipe(
+      map(params => {
+        const status = params.get('status');
+        return REVIEW_LIST_STATUSES.find(value => value === status) ?? 'PENDING_UNIVERSITY_REVIEW';
+      }),
+      distinctUntilChanged(),
+      takeUntilDestroyed()
+    ).subscribe(status => this.loadCases(status));
   }
 
   filterChanged(status: ReviewListStatus): void {
     if (status === this.selectedStatus()) {
       return;
     }
-    this.loadCases(status);
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { status }, queryParamsHandling: 'merge' });
   }
 
   loadCases(status: ReviewListStatus): void {

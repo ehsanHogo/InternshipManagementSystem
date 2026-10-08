@@ -30,7 +30,7 @@ func TestUniversityXLSXImportsContinueAfterBadRows(t *testing.T) {
 	if err != nil {
 		t.Fatalf("connect to integration database: %v", err)
 	}
-	if err := db.AutoMigrate(&model.Company{}, &model.User{}); err != nil {
+	if err := db.AutoMigrate(&model.Company{}, &model.User{}, &model.Notification{}); err != nil {
 		t.Fatalf("migrate integration database: %v", err)
 	}
 	tx := db.Begin()

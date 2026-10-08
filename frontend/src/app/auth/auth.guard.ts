@@ -47,7 +47,7 @@ export const companyAccessGuard: CanActivateChildFn = (_route, state) => {
  const auth = inject(AuthService);
  const router = inject(Router);
  if (auth.getCurrentUser()?.role !== 'COMPANY_SUPERVISOR') return true;
- const personalOrRegistrationProfile = ['/profile', '/company/profile'].includes(state.url.split('?')[0].split('#')[0]);
+ const personalOrRegistrationProfile = ['/profile', '/company/profile', '/notifications'].includes(state.url.split('?')[0].split('#')[0]);
  return auth.refreshUser().pipe(
   map(user => user.companyRegistrationStatus === 'APPROVED' || personalOrRegistrationProfile
     ? true : router.createUrlTree(['/company/profile'])),
@@ -74,7 +74,7 @@ export const currentAccountGuard: CanActivateChildFn = (_route, state) => {
  const path = state.url.split('?')[0].split('#')[0];
  return auth.refreshUser().pipe(
   map(user => {
-   if (user.role === 'UNIVERSITY_SUPERVISOR' && user.verificationStatus !== 'APPROVED' && !['/profile', '/university-supervisor/verification'].includes(path)) {
+   if (user.role === 'UNIVERSITY_SUPERVISOR' && user.verificationStatus !== 'APPROVED' && !['/profile', '/university-supervisor/verification', '/notifications'].includes(path)) {
     return router.createUrlTree(['/university-supervisor/verification']);
    }
    return true;

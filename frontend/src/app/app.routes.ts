@@ -32,6 +32,7 @@ export const routes: Routes = [
     canActivateChild: [currentAccountGuard, companyAccessGuard],
     loadComponent: () => import('./layout/app-shell.component').then((module) => module.AppShellComponent),
     children: [
+      { path: 'notifications', loadComponent: () => import('./pages/notifications/notifications.component').then(m => m.NotificationsComponent) },
       { path: 'university-supervisor/verification', canActivate: [universityIdentityGuard], loadComponent: () => import('./pages/university-verification/university-verification.component').then(m => m.UniversityVerificationComponent) },
       { path: 'admin/user-verifications', canActivate: [adminGuard], data: { verificationOnly: true }, loadComponent: () => import('./pages/admin-users/admin-users.component').then(m => m.AdminUsersComponent) },
       { path: 'admin/users', canActivate: [adminGuard], data: { verificationOnly: false }, loadComponent: () => import('./pages/admin-users/admin-users.component').then(m => m.AdminUsersComponent) },

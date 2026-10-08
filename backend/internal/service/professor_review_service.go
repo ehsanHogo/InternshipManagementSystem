@@ -116,7 +116,11 @@ func (service *InternshipService) CompleteProfessorCase(professorID, caseID uint
 		}).Error; err != nil {
 			return fmt.Errorf("complete professor internship case: %w", err)
 		}
-		return nil
+		message := "نتیجه نهایی کارآموزی شما ثبت شد: قبول."
+		if input.Result == model.ProfessorFinalResultFailed {
+			message = "نتیجه نهایی کارآموزی شما ثبت شد: مردود."
+		}
+		return NewNotificationService(tx).CreateStudentNotification(internshipCase.StudentID, "نتیجه نهایی کارآموزی", message, "/student/application")
 	})
 	if err != nil {
 		return nil, err

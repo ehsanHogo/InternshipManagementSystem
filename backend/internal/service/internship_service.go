@@ -411,7 +411,7 @@ func (service *InternshipService) SubmitCase(studentID uint) (*model.InternshipC
 			return fmt.Errorf("submit internship case: %w", err)
 		}
 		caseID = internshipCase.ID
-		return nil
+		return NewNotificationService(tx).NotifyUniversityCaseReview()
 	})
 	if err != nil {
 		return nil, err

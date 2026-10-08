@@ -165,7 +165,10 @@ func (service *InternshipService) SubmitWeeklyReport(studentID, reportID uint) (
 		report.SubmittedAt = &now
 		// Keep the latest feedback until its author reviews the new submission.
 		report.CompanyReviewStatus, report.ProfessorReviewStatus = model.WeeklyReviewPending, model.WeeklyReviewPending
-		return tx.Save(report).Error
+		if err := tx.Save(report).Error; err != nil {
+			return err
+		}
+		return NewNotificationService(tx).NotifyWeeklyReportSubmitted(report.InternshipCaseID)
 	})
 }
 
@@ -269,7 +272,11 @@ func (service *InternshipService) reviewWeeklyReport(reviewerID, caseID, reportI
 			return err
 		}
 		result = report
-		return nil
+		var item model.InternshipCase
+		if err := tx.First(&item, caseID).Error; err != nil {
+			return err
+		}
+		return NewNotificationService(tx).NotifyWeeklyReportReviewed(item.StudentID, report.WeekNumber, role, decision == model.WeeklyReviewApproved)
 	})
 	if err != nil {
 		return nil, err

@@ -23,7 +23,7 @@ func TestOfficialInternshipApplicationFlow(t *testing.T) {
 		t.Fatalf("connect to integration database: %v", err)
 	}
 	if err := db.AutoMigrate(
-		&model.Company{}, &model.User{}, &model.InternshipOpportunity{}, &model.ProfessorAssignment{},
+		&model.Company{}, &model.User{}, &model.Notification{}, &model.InternshipOpportunity{}, &model.ProfessorAssignment{},
 		&model.File{}, &model.OpportunityApplication{}, &model.InternshipCase{}, &model.StudentInternshipRating{}, &model.FinalReport{}, &model.InternshipPreference{},
 	); err != nil {
 		t.Fatalf("migrate official application schema: %v", err)

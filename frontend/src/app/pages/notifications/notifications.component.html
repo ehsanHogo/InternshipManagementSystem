@@ -1,0 +1,25 @@
+<section class="notifications-page" aria-labelledby="notifications-title">
+  <h1 id="notifications-title">اعلان‌ها</h1>
+  <p class="description">آخرین اعلان‌های شما؛ با نمایش در این صفحه، خوانده می‌شوند.</p>
+  @if (error()) { <p role="alert" class="error">{{ error() }}</p> }
+  @if (loading()) {
+    <p role="status">در حال دریافت اعلان‌ها…</p>
+  } @else {
+    @if (notifications().length === 0 && !error()) { <p class="empty">هنوز اعلانی ندارید.</p> }
+    <ul class="notification-list">
+      @for (item of notifications(); track item.id) {
+        <li class="notification" [class.unread]="!item.isRead" [attr.data-notification-id]="item.id">
+          <div class="notification-heading">
+            <h2>{{ item.title }}</h2>
+            <span class="read-status">{{ item.isRead ? 'خوانده‌شده' : 'جدید' }}</span>
+          </div>
+          <p>{{ item.message }}</p>
+          <div class="notification-footer">
+            <time [attr.datetime]="item.createdAt">{{ item.createdAt | jalaliDate:true }}</time>
+            @if (item.actionPath) { <a [routerLink]="actionLink(item.actionPath)">مشاهده بخش مربوط</a> }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

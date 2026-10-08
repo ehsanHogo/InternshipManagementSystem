@@ -55,8 +55,13 @@ func (s *UserAccessService) Register(input UniversityRegistrationInput) (*model.
 	}
 	user := model.User{FullName: input.FullName, Email: input.Email, Phone: optionalString(input.Phone), PasswordHash: hash, Role: model.RoleUniversitySupervisor, IsActive: true, VerificationStatus: model.UserVerificationPending}
 	// Failed inserts must not write credential hashes into SQL error logs.
-	if err := s.db.Session(&gorm.Session{Logger: logger.Default.LogMode(logger.Silent)}).Create(&user).Error; err != nil {
-		return nil, classifyRegistrationConstraint(err)
+	if err := s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Session(&gorm.Session{Logger: logger.Default.LogMode(logger.Silent)}).Create(&user).Error; err != nil {
+			return classifyRegistrationConstraint(err)
+		}
+		return NewNotificationService(tx).NotifyAdminUniversityVerification()
+	}); err != nil {
+		return nil, err
 	}
 	public := user.Public()
 	return &public, nil
@@ -141,7 +146,10 @@ func (s *UserAccessService) Review(adminID, id uint, status model.UserVerificati
 		if status == model.UserVerificationRejected {
 			rejectionReason = &reason
 		}
-		return tx.Model(&user).Updates(map[string]any{"verification_status": status, "verification_reviewed_at": time.Now(), "verification_reviewed_by": adminID, "verification_rejection_reason": rejectionReason}).Error
+		if err := tx.Model(&user).Updates(map[string]any{"verification_status": status, "verification_reviewed_at": time.Now(), "verification_reviewed_by": adminID, "verification_rejection_reason": rejectionReason}).Error; err != nil {
+			return err
+		}
+		return NewNotificationService(tx).NotifyVerificationResult(id, status == model.UserVerificationApproved)
 	})
 	if err != nil {
 		return nil, err
@@ -165,7 +173,10 @@ func (s *UserAccessService) Resubmit(id uint) (*model.PublicUser, error) {
 		if err := tx.Model(&user).Updates(map[string]any{"verification_status": model.UserVerificationPending, "verification_resubmitted_at": time.Now(), "verification_reviewed_at": nil, "verification_reviewed_by": nil, "verification_rejection_reason": nil}).Error; err != nil {
 			return err
 		}
-		return tx.First(&user, id).Error
+		if err := tx.First(&user, id).Error; err != nil {
+			return err
+		}
+		return NewNotificationService(tx).NotifyAdminUniversityVerification()
 	})
 	if err != nil {
 		return nil, err

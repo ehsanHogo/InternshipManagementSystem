@@ -35,7 +35,7 @@ func TestInternshipTermAPI(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.AutoMigrate(&model.Company{}, &model.User{}, &model.ProfessorAssignment{}, &model.InternshipTerm{}, &model.InternshipOpportunity{}, &model.File{}, &model.OpportunityApplication{}, &model.InternshipCase{}, &model.StudentInternshipRating{}, &model.InternshipPreference{}, &model.WeeklyReport{}, &model.CompanyEvaluation{}, &model.FinalReport{}); err != nil {
+	if err := db.AutoMigrate(&model.Company{}, &model.User{}, &model.Notification{}, &model.ProfessorAssignment{}, &model.InternshipTerm{}, &model.InternshipOpportunity{}, &model.File{}, &model.OpportunityApplication{}, &model.InternshipCase{}, &model.StudentInternshipRating{}, &model.InternshipPreference{}, &model.WeeklyReport{}, &model.CompanyEvaluation{}, &model.FinalReport{}); err != nil {
 		t.Fatal(err)
 	}
 	tx := db.Begin()

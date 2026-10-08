@@ -6,6 +6,8 @@ import { Drawer } from 'primeng/drawer';
 import { TagModule } from 'primeng/tag';
 import { filter } from 'rxjs';
 
+import { NotificationService } from '../notifications/notification.service';
+import { PersianDigitsPipe } from '../shared/persian-digits.pipe';
 import { UserRole } from '../auth/auth.models';
 import { AuthService } from '../auth/auth.service';
 
@@ -19,7 +21,7 @@ const roleLabels: Record<UserRole, string> = {
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ButtonModule, Drawer, TagModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ButtonModule, Drawer, TagModule, PersianDigitsPipe],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.scss'
 })
@@ -27,6 +29,9 @@ export class AppShellComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+
+  private readonly notifications = inject(NotificationService);
+  readonly unreadCount = this.notifications.unreadCount;
 
   readonly shellBodyRef = viewChild.required<ElementRef<HTMLElement>>('shellBody');
 
@@ -37,6 +42,8 @@ export class AppShellComponent {
   readonly topbarElevated = signal(false);
 
   constructor() {
+    this.refreshNotificationCount();
+    this.destroyRef.onDestroy(() => this.notifications.reset());
     this.router.events
       .pipe(
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),
@@ -44,6 +51,7 @@ export class AppShellComponent {
       )
       .subscribe(() => {
         this.navOpen.set(false);
+        this.refreshNotificationCount();
         queueMicrotask(() => {
           this.shellBodyRef().nativeElement.scrollTop = 0;
           this.syncTopbarElevation();
@@ -57,6 +65,10 @@ export class AppShellComponent {
       shellBody.addEventListener('scroll', this.syncTopbarElevation, { passive: true });
       this.destroyRef.onDestroy(() => shellBody.removeEventListener('scroll', this.syncTopbarElevation));
     });
+  }
+
+  private refreshNotificationCount(): void {
+    this.notifications.refreshCount().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ error: () => this.notifications.reset() });
   }
 
   private syncTopbarElevation = (): void => {

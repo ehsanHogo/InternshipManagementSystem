@@ -155,3 +155,23 @@
     width: 100%;
   }
 }
+
+.notification-bell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.6rem;
+  border-radius: 0.6rem;
+  color: var(--p-text-color);
+  text-decoration: none;
+}
+.notification-bell:hover, .notification-bell.active { background: var(--p-primary-50); }
+.notification-badge {
+  min-width: 1.25rem;
+  padding-inline: 0.25rem;
+  border-radius: 1rem;
+  background: var(--p-primary-color);
+  color: var(--p-primary-contrast-color);
+  text-align: center;
+  font-size: 0.75rem;
+}

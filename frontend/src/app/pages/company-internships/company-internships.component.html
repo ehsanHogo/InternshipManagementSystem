@@ -12,7 +12,7 @@
     optionLabel="label"
     optionValue="value"
     [ngModel]="listFilter()"
-    (ngModelChange)="listFilter.set($event)"
+    (ngModelChange)="filterChanged($event)"
     placeholder="نمایش پرونده‌ها"
     appendTo="body"
     [disabled]="loading()"

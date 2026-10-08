@@ -1,0 +1,14 @@
+:host { display: block; }
+.notifications-page { max-width: 56rem; margin-inline: auto; }
+h1 { margin-block: 0 0.75rem; }
+.description, time, .read-status { color: var(--p-text-muted-color); }
+.notification-list { list-style: none; padding: 0; display: grid; gap: 1rem; }
+.notification { padding: 1.25rem; border: 1px solid var(--p-content-border-color); border-radius: 0.75rem; background: var(--p-content-background); }
+.unread { border-inline-start: 4px solid var(--p-primary-color); background: var(--p-primary-50); }
+.notification-heading, .notification-footer { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; align-items: center; }
+h2 { font-size: 1rem; margin: 0; }
+p { line-height: 1.9; overflow-wrap: anywhere; }
+.read-status, time { font-size: 0.8rem; }
+a { color: var(--p-primary-color); }
+.error { color: var(--p-red-600); }
+.empty { padding: 2rem; text-align: center; }

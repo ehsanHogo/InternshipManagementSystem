@@ -99,7 +99,10 @@ func (service *CompanyRegistrationService) Review(adminID, companyID uint, statu
 		}).Error; err != nil {
 			return err
 		}
-		return tx.First(&company, companyID).Error
+		if err := tx.First(&company, companyID).Error; err != nil {
+			return err
+		}
+		return NewNotificationService(tx).NotifyCompanyRegistrationResult(companyID, status == model.CompanyRegistrationStatusApproved)
 	})
 	if err != nil {
 		return nil, err
@@ -198,7 +201,10 @@ func (service *CompanyAccountService) Resubmit(userID uint) (*CompanyAccount, er
 			return err
 		}
 		result, err = NewCompanyAccountService(tx).GetProfile(userID)
-		return err
+		if err != nil {
+			return err
+		}
+		return NewNotificationService(tx).NotifyAdminCompanyRegistration()
 	})
 	return result, err
 }

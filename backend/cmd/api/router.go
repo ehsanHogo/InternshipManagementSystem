@@ -42,6 +42,10 @@ func newRouter(cfg config.Config, db *gorm.DB) *gin.Engine {
 
 	authenticated := api.Group("")
 	authenticated.Use(appmiddleware.RequireAuth(cfg.JWT.Secret), appmiddleware.RequireActiveUser(db))
+	notificationHandler := handler.NewNotificationHandler(service.NewNotificationService(db))
+	authenticated.GET("/notifications", notificationHandler.List)
+	authenticated.GET("/notifications/unread-count", notificationHandler.UnreadCount)
+	authenticated.POST("/notifications/mark-viewed", notificationHandler.MarkViewed)
 	profileHandler := handler.NewProfileHandler(service.NewProfileService(db))
 	authenticated.PUT("/profile", profileHandler.Update)
 	authenticated.POST("/profile/change-password", profileHandler.ChangePassword)

@@ -117,7 +117,11 @@ func (service *InternshipService) ApproveUniversityPlacement(caseID uint, input 
 		if result.RowsAffected != 1 {
 			return ErrCaseNotPendingUniversityReview
 		}
-		return nil
+		notifications := NewNotificationService(tx)
+		if err := notifications.CreateStudentNotification(internshipCase.StudentID, "انتخاب محل کارآموزی", "محل کارآموزی شما انتخاب شد.", "/student/application"); err != nil {
+			return err
+		}
+		return notifications.NotifyCompanyPlacement(creator.ID, false)
 	})
 	if err != nil {
 		return nil, err
@@ -235,7 +239,7 @@ func (service *InternshipService) RequestUniversityRevision(caseID, supervisorID
 		}).Error; err != nil {
 			return fmt.Errorf("request university revision: %w", err)
 		}
-		return nil
+		return NewNotificationService(tx).CreateStudentNotification(item.StudentID, "اصلاح درخواست کارآموزی", "درخواست کارآموزی شما نیازمند اصلاح است.", "/student/application")
 	})
 	if err != nil {
 		return nil, err

@@ -24,6 +24,10 @@
           <strong>{{ currentUser.fullName }}</strong>
           <p-tag [value]="roleLabel(currentUser.role)" severity="info" />
         </div>
+        <a class="notification-bell" routerLink="/notifications" routerLinkActive="active" aria-label="اعلان‌ها">
+          <i class="pi pi-bell" aria-hidden="true"></i>
+          @if (unreadCount() > 0) { <span class="notification-badge" aria-live="polite">{{ unreadCount() | persianDigits }}</span> }
+        </a>
         <a class="profile-link" routerLink="/profile" routerLinkActive="active" aria-label="پروفایل من">
           <i class="pi pi-user" aria-hidden="true"></i><span>پروفایل من</span>
         </a>
@@ -52,6 +56,7 @@
       [closeOnEscape]="true"
     >
       <nav class="navigation navigation--drawer" aria-label="منوی اصلی">
+        <a routerLink="/notifications" routerLinkActive="active"><i class="pi pi-bell" aria-hidden="true"></i>اعلان‌ها</a>
         @if (!restrictedCompany() && !restrictedUniversity()) {
           <a routerLink="/dashboard" routerLinkActive="active"><i class="pi pi-home" aria-hidden="true"></i>داشبورد</a>
         }

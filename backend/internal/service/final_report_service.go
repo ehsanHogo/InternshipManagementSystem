@@ -130,7 +130,7 @@ func (service *InternshipService) AttachFinalReport(studentID uint, file *model.
 			}
 		}
 		report.CurrentFile = *file
-		return nil
+		return NewNotificationService(tx).NotifyProfessorActionRequired(item.ProfessorID)
 	})
 	if err != nil {
 		return nil, nil, err
@@ -173,7 +173,14 @@ func (service *InternshipService) ReviewFinalReport(professorID, caseID uint, st
 		if err := tx.Model(&report).Updates(map[string]any{"status": status, "review_comment": comment, "reviewed_at": now}).Error; err != nil {
 			return fmt.Errorf("review final report: %w", err)
 		}
-		return tx.Preload("CurrentFile").First(&report, report.ID).Error
+		if err := tx.Preload("CurrentFile").First(&report, report.ID).Error; err != nil {
+			return err
+		}
+		message := "گزارش نهایی شما نیازمند اصلاح است."
+		if status == model.FinalReportApproved {
+			message = "گزارش نهایی شما تأیید شد."
+		}
+		return NewNotificationService(tx).CreateStudentNotification(item.StudentID, "نتیجه بررسی گزارش نهایی", message, "/student/final-report")
 	})
 	if err != nil {
 		return nil, err

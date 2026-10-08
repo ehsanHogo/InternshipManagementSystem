@@ -1,7 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
@@ -27,6 +28,8 @@ import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 export class CompanyInternshipsComponent {
   private readonly internshipService = inject(InternshipService);
   private readonly messages = inject(MessageService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly cases = signal<CompanyInternshipCase[]>([]);
   readonly loading = signal(true);
@@ -49,7 +52,14 @@ export class CompanyInternshipsComponent {
   }
 
   constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
+      this.listFilter.set(this.filterOptions.find(option => option.value === params.get('status'))?.value ?? 'PENDING_COMPANY_DETAILS');
+    });
     this.load();
+  }
+
+  filterChanged(status: CompanyListFilter): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { status }, queryParamsHandling: 'merge' });
   }
 
   load(): void {
