@@ -269,6 +269,7 @@ export interface ProfessorCaseListItem {
 
 export interface ProfessorStudentInformation {
   fullName: string;
+  email: string;
   studentNumber?: string;
   major?: string;
   passedCredits: number | null;

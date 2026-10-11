@@ -3,7 +3,7 @@
 <section class="page-heading">
   <div>
     <span class="eyebrow">درخواست رسمی کارآموزی</span>
-    <h1>{{ viewingHistory() ? "پرونده تاریخی کارآموزی" : "پرونده کارآموزی" }}</h1>
+    <h1>{{ viewingHistory() ? "پرونده پیشین کارآموزی" : "پرونده کارآموزی" }}</h1>
     <p>{{ viewingHistory() ? "اطلاعات ثبت‌شده این پرونده را مشاهده کنید." : "پرونده فعلی و پرونده‌های پیشین خود را مشاهده کنید." }}</p>
   </div>
   @if (internshipCase(); as currentCase) {
@@ -12,7 +12,7 @@
 </section>
 
 @if (!loading() && !loadFailed() && historicalCases().length) {
-  <p-card header="پرونده‌های پیشین">
+  <p-card header="سوابق کارآموزی">
     @for (past of historicalCases(); track past.id) {
       <div class="card-status-line status-line">
         <span>پرونده {{ past.id | persianDigits }}</span>
@@ -38,9 +38,9 @@
     }
   </p-card>
 } @else if (!loading() && !loadFailed()) {
-  <p class="inline-empty">هنوز پرونده تاریخی کارآموزی ندارید.</p>
+  <p class="inline-empty">هنوز سابقه کارآموزی ندارید.</p>
 }
-@if (historyLoading()) { <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت پرونده تاریخی...</span></div> }
+@if (historyLoading()) { <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت اطلاعات پرونده پیشین...</span></div> }
 @if (viewingHistory()) {
   <p-button label="بازگشت به نمای پرونده فعلی" icon="pi pi-arrow-right" severity="secondary" (onClick)="returnToCurrentCase()" />
 }
@@ -80,7 +80,7 @@
     </div>
   </p-card>
 } @else if (internshipCase(); as currentCase) {
-  <h2>{{ viewingHistory() ? "جزئیات پرونده تاریخی" : "پرونده فعلی" }} {{ currentCase.id | persianDigits }}</h2>
+  <h2>{{ viewingHistory() ? "جزئیات پرونده پیشین" : "پرونده فعلی" }} {{ currentCase.id | persianDigits }}</h2>
   <p>ترم کارآموزی: <strong>{{ termLabel(currentCase.term) | persianDigits }}</strong></p>
   @if (!canEditPreferences) {
     <div class="review-notice">

@@ -197,7 +197,7 @@ async function visit(page, path) {
   await check('A: PASSED history, immutable rating through browser, permanent application/case blocks',async()=>{
    await api(professor.token,'POST',`/professor/internship-cases/${caseID}/complete`,{result:'GOOD',comment:'پذیرش نهایی'});
    await visit(s,'/student/application');await text(s,'دوره کارآموزی را با موفقیت گذرانده‌اید');
-   await s.getByRole('button',{name:'مشاهده پرونده و گزارش‌ها'}).click();await text(s,'جزئیات پرونده تاریخی');
+   await s.getByRole('button',{name:'مشاهده پرونده و گزارش‌ها'}).click();await text(s,'جزئیات پرونده پیشین');
    assert.equal(await s.locator('app-case-reports details').count(),8);await text(s,'corrected.pdf');
    await s.getByRole('button',{name:'۵ از ۵'}).click();await response(s,`/student/internship-cases/${caseID}/rating`,'POST',()=>s.getByRole('button',{name:'ثبت امتیاز'}).click());
    await text(s,'امتیاز ثبت‌شده نهایی است');

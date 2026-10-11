@@ -27,6 +27,7 @@ type professorCaseListResponse struct {
 
 type professorStudentResponse struct {
 	FullName      string  `json:"fullName"`
+	Email         string  `json:"email"`
 	StudentNumber *string `json:"studentNumber"`
 	Major         *string `json:"major"`
 	PassedCredits *int    `json:"passedCredits"`
@@ -185,6 +186,7 @@ func professorDetailResponse(internshipCase *model.InternshipCase) professorCase
 		CaseID: internshipCase.ID,
 		Student: professorStudentResponse{
 			FullName: internshipCase.Student.FullName, StudentNumber: internshipCase.Student.StudentNumber,
+			Email: internshipCase.Student.Email,
 			Major: internshipCase.Student.Major, PassedCredits: internshipCase.PassedCredits, Mobile: internshipCase.Mobile,
 		},
 		Internship: professorInternshipResponse{
