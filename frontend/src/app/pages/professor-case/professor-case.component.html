@@ -7,10 +7,10 @@
 } @else if (internshipCase(); as item) {
   <section class="page-heading">
     <div>
-      <span class="eyebrow">پرونده کارآموزی شماره {{ item.caseId | persianDigits }}</span>
-      <h1>بررسی پرونده کارآموزی</h1>
+      <span class="eyebrow">بررسی پرونده کارآموزی</span>
+      <h1>{{ item.student.fullName }}</h1>
       <p>
-        {{ item.student.fullName }} {{ item.student.studentNumber ?? "—" }}
+        شماره دانشجویی: {{ item.student.studentNumber ?? "—" }}
       </p>
     </div>
     <div class="heading-actions">

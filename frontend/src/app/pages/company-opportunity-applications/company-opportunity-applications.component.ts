@@ -1,5 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { SelectModule } from 'primeng/select';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { MessageService } from 'primeng/api';
@@ -17,10 +19,11 @@ import {
 import { OpportunityService } from '../../opportunity/opportunity.service';
 import { userErrorMessage } from '../../shared/http-error-message';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
+import { StatusFilter, statusFilterOptions } from '../../shared/status-filter-options';
 
 @Component({
   selector: 'app-company-opportunity-applications',
-  imports: [RouterLink, ButtonModule, TableModule, TagModule, JalaliDatePipe],
+  imports: [FormsModule, SelectModule, RouterLink, ButtonModule, TableModule, TagModule, JalaliDatePipe],
   templateUrl: './company-opportunity-applications.component.html',
   styleUrl: './company-opportunity-applications.component.scss'
 })
@@ -31,6 +34,10 @@ export class CompanyOpportunityApplicationsComponent {
 
   readonly opportunity = signal<CompanyOpportunity | null>(null);
   readonly applications = signal<OpportunityApplication[]>([]);
+  readonly selectedStatus = signal<StatusFilter<ApplicationStatus>>('ALL');
+  readonly statusOptions = statusFilterOptions(applicationStatusLabels);
+  readonly visibleApplications = computed(() => this.selectedStatus() === 'ALL'
+    ? this.applications() : this.applications().filter(item => item.status === this.selectedStatus()));
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
   private readonly opportunityId = Number(this.route.snapshot.paramMap.get('id'));

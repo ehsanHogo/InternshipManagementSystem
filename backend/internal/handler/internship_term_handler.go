@@ -109,7 +109,7 @@ func (handler *InternshipTermHandler) Close(ctx *gin.Context) {
 func termIDFromContext(ctx *gin.Context) (uint, bool) {
 	id, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_INTERNSHIP_TERM", "error": "شناسه ترم کارآموزی معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_INTERNSHIP_TERM", "error": "ترم کارآموزی انتخاب‌شده معتبر نیست."})
 		return 0, false
 	}
 	return id, true

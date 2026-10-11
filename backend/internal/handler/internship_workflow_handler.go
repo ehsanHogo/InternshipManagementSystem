@@ -311,7 +311,7 @@ func caseResponses(cases []model.InternshipCase) []internshipCaseResponse {
 func caseIDFromContext(ctx *gin.Context) (uint, bool) {
 	caseID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه پرونده کارآموزی معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "پرونده کارآموزی انتخاب‌شده معتبر نیست."})
 		return 0, false
 	}
 	return caseID, true

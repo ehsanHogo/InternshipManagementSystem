@@ -214,7 +214,7 @@ func (handler *InternshipHandler) UpdatePreference(ctx *gin.Context) {
 	}
 	preferenceID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه اولویت معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اولویت انتخاب‌شده معتبر نیست."})
 		return
 	}
 	preference, err := handler.service.UpdatePreference(studentID, preferenceID, request.preferenceInput())
@@ -250,7 +250,7 @@ func (handler *InternshipHandler) DeletePreference(ctx *gin.Context) {
 	}
 	preferenceID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه اولویت معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "اولویت انتخاب‌شده معتبر نیست."})
 		return
 	}
 	if err := handler.service.DeletePreference(studentID, preferenceID); err != nil {

@@ -18,8 +18,10 @@ import {
   professorFinalResultLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
+import { internshipTermLabel } from '../../internship/internship-term.models';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
+import { statusFilterOptions } from '../../shared/status-filter-options';
 
 const REVIEW_LIST_STATUSES = [
   'PENDING_UNIVERSITY_REVIEW',
@@ -49,16 +51,13 @@ export class UniversityApplicationsComponent {
   readonly loadFailed = signal(false);
 
   readonly selectedStatus = signal<ReviewListStatus>('PENDING_UNIVERSITY_REVIEW');
-  readonly statusOptions = REVIEW_LIST_STATUSES.map((status) => ({
-    label: internshipStatusLabels[status],
-    value: status
-  }));
+  readonly statusOptions = statusFilterOptions<Exclude<ReviewListStatus, 'ALL'>>(internshipStatusLabels, REVIEW_LIST_STATUSES);
 
   constructor() {
     this.route.queryParamMap.pipe(
       map(params => {
         const status = params.get('status');
-        return REVIEW_LIST_STATUSES.find(value => value === status) ?? 'PENDING_UNIVERSITY_REVIEW';
+        return this.statusOptions.find(option => option.value === status)?.value ?? 'PENDING_UNIVERSITY_REVIEW';
       }),
       distinctUntilChanged(),
       takeUntilDestroyed()
@@ -76,7 +75,7 @@ export class UniversityApplicationsComponent {
     this.selectedStatus.set(status);
     this.loading.set(true);
     this.loadFailed.set(false);
-    const request = this.internshipService.listUniversityCases(status);
+    const request = this.internshipService.listUniversityCases(status === 'ALL' ? undefined : status);
     request.subscribe({
       next: (cases) => {
         this.cases.set(cases);
@@ -101,10 +100,11 @@ export class UniversityApplicationsComponent {
   }
 
   readonly internshipStatusSeverity = internshipStatusSeverity;
+  readonly termLabel = internshipTermLabel;
 
   caseStatusLabel(status: InternshipCaseStatus): string {
     return internshipStatusLabels[status];
   }
 }
 
-type ReviewListStatus = Exclude<InternshipCaseStatus, 'DRAFT'>;
+type ReviewListStatus = 'ALL' | Exclude<InternshipCaseStatus, 'DRAFT'>;

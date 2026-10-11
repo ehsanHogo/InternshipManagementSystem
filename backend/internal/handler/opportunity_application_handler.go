@@ -81,7 +81,7 @@ func (handler *OpportunityApplicationHandler) Apply(ctx *gin.Context) {
 	}
 	opportunityID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_OPPORTUNITY_ID", "error": "شناسه فرصت کارآموزی معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_OPPORTUNITY_ID", "error": "فرصت کارآموزی انتخاب‌شده معتبر نیست."})
 		return
 	}
 	if err := handler.service.EnsureCanApply(studentID, opportunityID); err != nil {
@@ -205,7 +205,7 @@ func (handler *OpportunityApplicationHandler) ListCompany(ctx *gin.Context) {
 	}
 	opportunityID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_OPPORTUNITY_ID", "error": "شناسه فرصت کارآموزی معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_OPPORTUNITY_ID", "error": "فرصت کارآموزی انتخاب‌شده معتبر نیست."})
 		return
 	}
 	applications, err := handler.service.ListCompany(supervisorID, opportunityID)
@@ -266,7 +266,7 @@ func requestUserAndApplicationID(ctx *gin.Context) (uint, uint, bool) {
 	}
 	applicationID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_APPLICATION_ID", "error": "شناسه درخواست معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_APPLICATION_ID", "error": "درخواست انتخاب‌شده معتبر نیست."})
 		return 0, 0, false
 	}
 	return userID, applicationID, true

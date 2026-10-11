@@ -1,6 +1,7 @@
 import { CompanyRatingComponent } from '../../shared/company-rating.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -8,6 +9,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
+import { SelectModule } from 'primeng/select';
 
 import { Company } from '../../internship/internship.models';
 import { UniversityManagementService } from '../../university-management/university-management.service';
@@ -19,7 +21,7 @@ import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
 
 @Component({
   selector: 'app-university-companies',
-  imports: [CompanyRatingComponent, ButtonModule, DialogModule, TableModule, TagModule, ConfirmDialogModule, JalaliDatePipe, PersianDigitsPipe],
+  imports: [FormsModule, SelectModule, CompanyRatingComponent, ButtonModule, DialogModule, TableModule, TagModule, ConfirmDialogModule, JalaliDatePipe, PersianDigitsPipe],
   providers: [ConfirmationService],
   templateUrl: './university-companies.component.html',
   styleUrl: '../workflow-page.scss'
@@ -34,7 +36,15 @@ export class UniversityCompaniesComponent {
   readonly eligible = signal<EligibleCompany[]>([]);
   readonly allCompanies = signal<Company[]>([]);
   readonly tab = signal<'eligible' | 'approved' | 'all'>('eligible');
+  readonly filterOptions = [
+    { label: 'همه شرکت‌ها', value: 'all' },
+    { label: 'واجد شرایط تأیید', value: 'eligible' },
+    { label: 'تأیید شده', value: 'approved' }
+  ];
   readonly visibleCompanies = computed(() => this.tab() === 'eligible' ? this.eligible() : this.tab() === 'all' ? this.allCompanies() : this.companies());
+  readonly emptyListMessage = computed(() => this.tab() === 'eligible'
+    ? 'شرکت واجد شرایط تأیید وجود ندارد.'
+    : this.tab() === 'approved' ? 'شرکت مورد تأییدی وجود ندارد.' : 'شرکتی ثبت نشده است.');
   readonly detail = signal<ApprovalCompanyDetail | null>(null);
   readonly detailVisible = signal(false);
   readonly detailLoading = signal(false);

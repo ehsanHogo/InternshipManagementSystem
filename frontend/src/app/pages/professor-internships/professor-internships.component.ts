@@ -16,6 +16,7 @@ import {
   professorFinalResultLabels
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
+import { statusFilterOptions } from '../../shared/status-filter-options';
 
 @Component({
   selector: 'app-professor-internships',
@@ -31,12 +32,9 @@ export class ProfessorInternshipsComponent {
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
 
-  readonly listFilter = signal<'ALL' | 'ACTIVE' | 'PASSED' | 'FAILED'>('ALL');
-  readonly filterOptions = [
-    { label: 'همه پرونده‌های اختصاص‌یافته', value: 'ALL' },
-    ...(['ACTIVE', 'PASSED', 'FAILED'] as const)
-      .map(status => ({ label: internshipStatusLabels[status], value: status }))
-  ];
+  readonly listFilter = signal<'ALL' | 'ACTIVE' | 'PASSED' | 'FAILED' | 'CANCELLED'>('ALL');
+  readonly filterOptions = statusFilterOptions<'ACTIVE' | 'PASSED' | 'FAILED' | 'CANCELLED'>(internshipStatusLabels,
+    ['ACTIVE', 'PASSED', 'FAILED', 'CANCELLED'] as const);
   readonly visibleCases = computed(() => this.listFilter() === 'ALL'
     ? this.cases() : this.cases().filter(item => item.status === this.listFilter()));
 
@@ -67,6 +65,7 @@ export class ProfessorInternshipsComponent {
   }
 
   readinessLabel(item: ProfessorCaseListItem): string {
+    if (item.status === 'CANCELLED') return 'لغو شده';
     if (item.status === 'PASSED' || item.status === 'FAILED') return 'ارزیابی شده';
     return item.canProfessorComplete ? 'آماده ارزیابی' : 'مدارک ناقص';
   }

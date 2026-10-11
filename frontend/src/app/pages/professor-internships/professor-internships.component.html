@@ -2,13 +2,13 @@
   <div>
     <span class="eyebrow">استاد راهنما</span>
     <h1>دانشجویان کارآموز</h1>
-    <p>پرونده‌های فعال، قبول شده و مردودی که به شما اختصاص یافته‌اند.</p>
+    <p>پرونده‌های اختصاص‌یافته را بر اساس وضعیت مشاهده کنید.</p>
   </div>
 </section>
 
 <div class="filter-row">
   <p-select [options]="filterOptions" optionLabel="label" optionValue="value" [ngModel]="listFilter()"
-    (ngModelChange)="listFilter.set($event)" [disabled]="loading()" appendTo="body" />
+    (ngModelChange)="listFilter.set($event)" ariaLabel="فیلتر وضعیت پرونده" [disabled]="loading()" appendTo="body" />
 </div>
 
 @if (loading()) {
@@ -43,7 +43,7 @@
         <td>
           <p-tag
             [value]="readinessLabel(item)"
-            [severity]="(item.status === 'PASSED' || item.status === 'FAILED') || item.canProfessorComplete ? 'success' : 'warn'"
+            [severity]="item.status === 'CANCELLED' ? 'secondary' : (item.status === 'PASSED' || item.status === 'FAILED') || item.canProfessorComplete ? 'success' : 'warn'"
           />
         </td>
         <td><p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" /></td>

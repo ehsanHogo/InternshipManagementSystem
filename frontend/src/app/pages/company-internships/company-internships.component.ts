@@ -18,6 +18,7 @@ import {
 } from '../../internship/internship.models';
 import { InternshipService } from '../../internship/internship.service';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
+import { statusFilterOptions } from '../../shared/status-filter-options';
 
 @Component({
   selector: 'app-company-internships',
@@ -36,11 +37,8 @@ export class CompanyInternshipsComponent {
   readonly loadFailed = signal(false);
   readonly listFilter = signal<CompanyListFilter>('PENDING_COMPANY_DETAILS');
 
-  readonly filterOptions: { label: string; value: CompanyListFilter }[] = [
-    { label: 'همه پرونده‌های اختصاص‌یافته', value: 'ALL' },
-    ...(['PENDING_COMPANY_DETAILS', 'PENDING_FINAL_APPROVAL', 'ACTIVE', 'PASSED', 'FAILED'] as const)
-      .map(status => ({ label: internshipStatusLabels[status], value: status }))
-  ];
+  readonly filterOptions = statusFilterOptions<Exclude<CompanyListFilter, 'ALL'>>(internshipStatusLabels,
+    ['PENDING_COMPANY_DETAILS', 'PENDING_FINAL_APPROVAL', 'ACTIVE', 'PASSED', 'FAILED', 'CANCELLED'] as const);
 
   readonly visibleCases = computed(() => this.listFilter() === 'ALL'
     ? this.cases() : this.cases().filter(item => item.status === this.listFilter()));
@@ -89,4 +87,4 @@ export class CompanyInternshipsComponent {
   }
 }
 
-type CompanyListFilter = 'ALL' | Exclude<InternshipCaseStatus, 'DRAFT' | 'REVISION_REQUESTED' | 'PENDING_UNIVERSITY_REVIEW' | 'CANCELLED'>;
+type CompanyListFilter = 'ALL' | Exclude<InternshipCaseStatus, 'DRAFT' | 'REVISION_REQUESTED' | 'PENDING_UNIVERSITY_REVIEW'>;

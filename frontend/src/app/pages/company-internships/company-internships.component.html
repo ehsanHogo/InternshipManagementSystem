@@ -14,6 +14,7 @@
     [ngModel]="listFilter()"
     (ngModelChange)="filterChanged($event)"
     placeholder="نمایش پرونده‌ها"
+    ariaLabel="فیلتر وضعیت پرونده"
     appendTo="body"
     [disabled]="loading()"
   />

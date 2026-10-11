@@ -189,7 +189,7 @@ func (handler *OpportunityHandler) GetStudent(ctx *gin.Context) {
 	}
 	opportunityID, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
 	if err != nil || opportunityID == 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_OPPORTUNITY_ID", "error": "شناسه فرصت کارآموزی معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_OPPORTUNITY_ID", "error": "فرصت کارآموزی انتخاب‌شده معتبر نیست."})
 		return
 	}
 	opportunity, err := handler.service.GetStudent(uint(opportunityID))
@@ -251,7 +251,7 @@ func requestUserAndOpportunityID(ctx *gin.Context) (uint, uint, bool) {
 	}
 	opportunityID, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
 	if err != nil || opportunityID == 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_OPPORTUNITY_ID", "error": "شناسه فرصت کارآموزی معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_OPPORTUNITY_ID", "error": "فرصت کارآموزی انتخاب‌شده معتبر نیست."})
 		return 0, 0, false
 	}
 	return userID, uint(opportunityID), true

@@ -15,12 +15,12 @@
   <p-card header="سوابق کارآموزی">
     @for (past of historicalCases(); track past.id) {
       <div class="card-status-line status-line">
-        <span>پرونده {{ past.id | persianDigits }}</span>
+        <span>پرونده کارآموزی — {{ termLabel(past.term) | persianDigits }}</span>
         <p-tag [value]="statusLabel(past.status)" [severity]="internshipStatusSeverity(past.status)" />
         <p-button label="مشاهده پرونده و گزارش‌ها" severity="secondary" [text]="true" [disabled]="historyLoading() || saving() || preferenceSaving() || creating()" (onClick)="viewHistoricalCase(past)" />
       </div>
       <div class="detail-grid">
-        <div class="detail"><span>ترم کارآموزی</span><strong>{{ termLabel(past.term) | persianDigits }}</strong></div>
+        <div class="detail"><span>تاریخ ایجاد پرونده</span><strong>{{ past.createdAt | jalaliDate:true }}</strong></div>
         @if (past.selectedPreference; as selected) {
           <div class="detail"><span>شرکت</span><strong>{{ selected.application.opportunity.company.name }}</strong></div>
           <div class="detail"><span>فرصت</span><strong>{{ selected.application.opportunity.title }}</strong></div>
@@ -80,8 +80,9 @@
     </div>
   </p-card>
 } @else if (internshipCase(); as currentCase) {
-  <h2>{{ viewingHistory() ? "جزئیات پرونده پیشین" : "پرونده فعلی" }} {{ currentCase.id | persianDigits }}</h2>
+  <h2>{{ viewingHistory() ? "جزئیات پرونده پیشین" : "پرونده فعلی" }}</h2>
   <p>ترم کارآموزی: <strong>{{ termLabel(currentCase.term) | persianDigits }}</strong></p>
+  <p>تاریخ ایجاد پرونده: {{ currentCase.createdAt | jalaliDate:true }}</p>
   @if (!canEditPreferences) {
     <div class="review-notice">
       <i class="pi pi-lock" aria-hidden="true"></i>

@@ -1,5 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { SelectModule } from 'primeng/select';
 import { RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -15,10 +17,11 @@ import {
 import { OpportunityService } from '../../opportunity/opportunity.service';
 import { userErrorMessage } from '../../shared/http-error-message';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
+import { StatusFilter, statusFilterOptions } from '../../shared/status-filter-options';
 
 @Component({
   selector: 'app-student-opportunity-applications',
-  imports: [RouterLink, ButtonModule, TableModule, TagModule, JalaliDatePipe],
+  imports: [FormsModule, SelectModule, RouterLink, ButtonModule, TableModule, TagModule, JalaliDatePipe],
   templateUrl: './student-opportunity-applications.component.html',
   styleUrl: './student-opportunity-applications.component.scss'
 })
@@ -27,6 +30,10 @@ export class StudentOpportunityApplicationsComponent {
   private readonly messages = inject(MessageService);
 
   readonly applications = signal<OpportunityApplication[]>([]);
+  readonly selectedStatus = signal<StatusFilter<ApplicationStatus>>('ALL');
+  readonly statusOptions = statusFilterOptions(applicationStatusLabels);
+  readonly visibleApplications = computed(() => this.selectedStatus() === 'ALL'
+    ? this.applications() : this.applications().filter(item => item.status === this.selectedStatus()));
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
 

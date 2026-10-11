@@ -2,7 +2,10 @@
  <div><span class="eyebrow">مدیر سیستم</span><h1>بررسی ثبت شرکت‌ها</h1><p>ثبت شرکت برای دسترسی به امکانات سامانه بررسی می‌شود. تأیید دانشکده فرایندی مستقل است.</p></div>
  <p-button label="به‌روزرسانی" icon="pi pi-refresh" [disabled]="loading()" (onClick)="load()" />
 </section>
-<label class="field">وضعیت ثبت<p-select [options]="filters" optionLabel="label" optionValue="value" [(ngModel)]="status" (ngModelChange)="load()" /></label>
+<div class="filter-row">
+ <p-select [options]="filters" optionLabel="label" optionValue="value" [(ngModel)]="status" (ngModelChange)="load()"
+   ariaLabel="فیلتر وضعیت ثبت شرکت" [disabled]="loading()" appendTo="body" />
+</div>
 @if (loading()) { <div class="state-card">در حال دریافت ثبت شرکت‌ها...</div> }
 @else if (failed()) { <div class="state-card"><p>دریافت اطلاعات ناموفق بود.</p><p-button label="تلاش دوباره" (onClick)="load()" /></div> }
 @else {

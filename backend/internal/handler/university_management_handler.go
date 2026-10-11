@@ -266,7 +266,7 @@ func (handler *UniversityManagementHandler) CreateProfessorAssignment(ctx *gin.C
 func (handler *UniversityManagementHandler) UpdateProfessorAssignment(ctx *gin.Context) {
 	id, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه تخصیص استاد معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "تخصیص استاد انتخاب‌شده معتبر نیست."})
 		return
 	}
 	handler.saveProfessorAssignment(ctx, id)

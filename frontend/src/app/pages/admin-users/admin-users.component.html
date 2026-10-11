@@ -5,10 +5,10 @@
 <form class="form-grid" (ngSubmit)="load()">
  <label class="field" for="user-search">جستجوی نام یا ایمیل<input id="user-search" pInputText name="search" [(ngModel)]="search" /></label>
  @if (verificationOnly) {
-  <label class="field">وضعیت احراز هویت<p-select name="status" inputId="verification-filter" [options]="statusOptions" optionLabel="label" optionValue="value" [(ngModel)]="status" /></label>
+  <label class="field" for="verification-filter">وضعیت احراز هویت<p-select name="status" inputId="verification-filter" ariaLabel="وضعیت احراز هویت" [options]="statusOptions" optionLabel="label" optionValue="value" [(ngModel)]="status" (ngModelChange)="load()" [disabled]="loading()" appendTo="body" /></label>
  } @else {
-  <label class="field">فیلتر نقش<p-select name="role" inputId="role-filter" [options]="roleOptions" optionLabel="label" optionValue="value" [(ngModel)]="role" /></label>
-  <label class="field">وضعیت حساب<p-select name="active" inputId="active-filter" [options]="activeOptions" optionLabel="label" optionValue="value" [(ngModel)]="active" /></label>
+  <label class="field" for="role-filter">فیلتر نقش<p-select name="role" inputId="role-filter" ariaLabel="فیلتر نقش" [options]="roleOptions" optionLabel="label" optionValue="value" [(ngModel)]="role" (ngModelChange)="load()" [disabled]="loading()" appendTo="body" /></label>
+  <label class="field" for="active-filter">وضعیت حساب<p-select name="active" inputId="active-filter" ariaLabel="وضعیت حساب" [options]="activeOptions" optionLabel="label" optionValue="value" [(ngModel)]="active" (ngModelChange)="load()" [disabled]="loading()" appendTo="body" /></label>
  }
  <div class="card-actions"><p-button type="submit" label="جستجو" [disabled]="loading()" /></div>
 </form>

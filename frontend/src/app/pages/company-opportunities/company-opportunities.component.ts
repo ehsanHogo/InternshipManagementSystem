@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, computed, inject, signal } from '@angular/core';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { SelectModule } from 'primeng/select';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { MessageService } from 'primeng/api';
@@ -21,10 +22,13 @@ import {
 import { OpportunityService } from '../../opportunity/opportunity.service';
 import { userErrorMessage } from '../../shared/http-error-message';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
+import { StatusFilter, statusFilterOptions } from '../../shared/status-filter-options';
 
 @Component({
   selector: 'app-company-opportunities',
   imports: [
+    FormsModule,
+    SelectModule,
     ReactiveFormsModule,
     RouterLink,
     ButtonModule,
@@ -44,6 +48,10 @@ export class CompanyOpportunitiesComponent {
   private readonly formBuilder = inject(FormBuilder);
 
   readonly opportunities = signal<CompanyOpportunity[]>([]);
+  readonly selectedStatus = signal<StatusFilter<OpportunityStatus>>('ALL');
+  readonly statusOptions = statusFilterOptions(opportunityStatusLabels);
+  readonly visibleOpportunities = computed(() => this.selectedStatus() === 'ALL'
+    ? this.opportunities() : this.opportunities().filter(item => item.status === this.selectedStatus()));
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
   readonly formVisible = signal(false);

@@ -3,10 +3,9 @@
   <div><span class="eyebrow">مدیریت محل کارآموزی</span><h1>شرکت‌ها</h1><p>سابقه کارآموزی موفق شرکت‌ها را بررسی و شرکت‌های واجد شرایط را تأیید کنید.</p></div>
 </section>
 
-<div class="filter-row" role="group" aria-label="فهرست شرکت‌ها">
-  <p-button label="همه شرکت‌ها" [outlined]="tab() !== 'all'" (onClick)="tab.set('all')" />
-  <p-button label="واجد شرایط تأیید" [outlined]="tab() !== 'eligible'" [attr.aria-pressed]="tab() === 'eligible'" (onClick)="tab.set('eligible')" />
-  <p-button label="تأیید شده" [outlined]="tab() !== 'approved'" [attr.aria-pressed]="tab() === 'approved'" (onClick)="tab.set('approved')" />
+<div class="filter-row">
+  <p-select [options]="filterOptions" optionLabel="label" optionValue="value" [ngModel]="tab()"
+    (ngModelChange)="tab.set($event)" ariaLabel="فیلتر وضعیت تأیید شرکت" [disabled]="loading()" appendTo="body" />
 </div>
 
 @if (loading()) {
@@ -25,7 +24,7 @@
       @if (tab() === 'eligible') { <td>{{ company.passedInternshipCount | persianDigits }}</td> }
       <td><p-button label="مشاهده" icon="pi pi-eye" [text]="true" (onClick)="review(company.id)" /></td>
     </tr></ng-template>
-    <ng-template #emptymessage><tr><td [attr.colspan]="tab() === 'eligible' ? 9 : 8" class="muted">{{ tab() === 'eligible' ? 'شرکت واجد شرایط تأیید وجود ندارد.' : 'شرکت مورد تأییدی وجود ندارد.' }}</td></tr></ng-template>
+    <ng-template #emptymessage><tr><td [attr.colspan]="tab() === 'eligible' ? 9 : 8" class="muted">{{ emptyListMessage() }}</td></tr></ng-template>
   </p-table>
 }
 

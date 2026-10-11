@@ -97,7 +97,7 @@ func (handler *CompanyApprovalHandler) Approve(ctx *gin.Context) {
 func approvalCompanyID(ctx *gin.Context) (uint, bool) {
 	id, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_COMPANY_ID", "error": "شناسه شرکت معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_COMPANY_ID", "error": "شرکت انتخاب‌شده معتبر نیست."})
 		return 0, false
 	}
 	return id, true

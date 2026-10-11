@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -17,10 +17,11 @@ import { InternshipCaseStatus, internshipStatusLabels, internshipStatusSeverity 
 import { userErrorMessage } from '../../shared/http-error-message';
 import { JalaliDatePipe } from '../../shared/jalali-date/jalali-date.pipe';
 import { PersianDigitsPipe } from '../../shared/persian-digits.pipe';
+import { StatusFilter, statusFilterOptions } from '../../shared/status-filter-options';
 
 @Component({
   selector: 'app-university-internship-terms',
-  imports: [ReactiveFormsModule, RouterLink, ButtonModule, ConfirmDialogModule, DialogModule,
+  imports: [FormsModule, ReactiveFormsModule, RouterLink, ButtonModule, ConfirmDialogModule, DialogModule,
     InputNumberModule, SelectModule, TableModule, TagModule, JalaliDatePipe, PersianDigitsPipe],
   providers: [ConfirmationService],
   templateUrl: './university-internship-terms.component.html',
@@ -33,6 +34,10 @@ export class UniversityInternshipTermsComponent {
   private readonly formBuilder = inject(FormBuilder);
 
   readonly terms = signal<InternshipTerm[]>([]);
+  readonly termStatus = signal<StatusFilter<InternshipTerm['status']>>('ALL');
+  readonly termStatusOptions = statusFilterOptions({ OPEN: 'باز', CLOSED: 'بسته' });
+  readonly visibleTerms = computed(() => this.termStatus() === 'ALL'
+    ? this.terms() : this.terms().filter(term => term.status === this.termStatus()));
   readonly currentTerm = computed(() => this.terms().find(term => term.status === 'OPEN'));
   readonly loading = signal(true);
   readonly loadFailed = signal(false);
@@ -43,6 +48,13 @@ export class UniversityInternshipTermsComponent {
   readonly detailFailed = signal(false);
   readonly detailID = signal<number | null>(null);
   readonly detail = signal<InternshipTermDetail | null>(null);
+  readonly caseStatus = signal<StatusFilter<InternshipCaseStatus>>('ALL');
+  readonly caseFirst = signal(0);
+  readonly caseStatusOptions = statusFilterOptions(internshipStatusLabels);
+  readonly visibleCases = computed(() => {
+    const cases = this.detail()?.cases ?? [];
+    return this.caseStatus() === 'ALL' ? cases : cases.filter(item => item.status === this.caseStatus());
+  });
   readonly termLabel = internshipTermLabel;
   statusLabel(status: InternshipCaseStatus): string { return internshipStatusLabels[status]; }
   readonly statusSeverity = internshipStatusSeverity;
@@ -89,6 +101,8 @@ export class UniversityInternshipTermsComponent {
 
   inspect(id: number): void {
     if (this.detailLoading()) return;
+    if (this.detailID() !== id) this.caseStatus.set('ALL');
+    this.caseFirst.set(0);
     this.detailID.set(id);
     this.detail.set(null);
     this.detailVisible.set(true);

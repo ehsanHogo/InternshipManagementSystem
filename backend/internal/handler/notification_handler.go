@@ -58,7 +58,7 @@ func (h *NotificationHandler) MarkViewed(ctx *gin.Context) {
 }
 func writeNotificationError(ctx *gin.Context, err error) {
 	if errors.Is(err, service.ErrInvalidNotificationIDs) {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه اعلان‌های نمایش‌داده‌شده را ارسال کنید (حداکثر ۱۰۰ مورد)."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "ثبت وضعیت خواندن اعلان‌ها امکان‌پذیر نبود. صفحه اعلان‌ها را دوباره بارگذاری کنید."})
 		return
 	}
 	log.Printf("notification operation failed: %v", err)

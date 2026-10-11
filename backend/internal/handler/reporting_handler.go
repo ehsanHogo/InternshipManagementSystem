@@ -84,7 +84,7 @@ func (handler *InternshipHandler) UpdateWeeklyReport(ctx *gin.Context) {
 	}
 	reportID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه گزارش هفتگی معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "گزارش هفتگی انتخاب‌شده معتبر نیست."})
 		return
 	}
 	input, ok := bindWeeklyReport(ctx)
@@ -123,7 +123,7 @@ func (handler *InternshipHandler) GetStudentWeeklyReport(ctx *gin.Context) {
 	}
 	reportID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه گزارش معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "گزارش انتخاب‌شده معتبر نیست."})
 		return
 	}
 	report, err := handler.service.GetStudentWeeklyReport(userID, reportID)
@@ -140,7 +140,7 @@ func (handler *InternshipHandler) SubmitWeeklyReport(ctx *gin.Context) {
 	}
 	reportID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه گزارش معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "گزارش انتخاب‌شده معتبر نیست."})
 		return
 	}
 	report, err := handler.service.SubmitWeeklyReport(userID, reportID)
@@ -179,7 +179,7 @@ func (handler *InternshipHandler) getReviewerWeeklyReport(ctx *gin.Context, role
 	}
 	reportID, err := parseID(ctx.Param("reportId"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه گزارش معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "گزارش انتخاب‌شده معتبر نیست."})
 		return
 	}
 	report, err := handler.service.GetReviewerWeeklyReport(userID, caseID, reportID, role)
@@ -212,7 +212,7 @@ func (handler *InternshipHandler) reviewWeeklyReport(ctx *gin.Context, role mode
 	}
 	reportID, err := parseID(ctx.Param("reportId"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه گزارش معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "گزارش انتخاب‌شده معتبر نیست."})
 		return
 	}
 	var request weeklyReviewRequest
@@ -393,7 +393,7 @@ func (handler *InternshipHandler) DownloadFile(ctx *gin.Context) {
 	}
 	fileID, err := parseID(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "شناسه فایل معتبر نیست."})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "فایل انتخاب‌شده معتبر نیست."})
 		return
 	}
 	file, err := handler.service.GetAccessibleFile(userID, role, fileID)

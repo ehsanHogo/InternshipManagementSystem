@@ -7,6 +7,11 @@
   <p-button label="ایجاد فرصت" icon="pi pi-plus" (onClick)="openCreate()" />
 </section>
 
+<div class="filter-row">
+  <p-select [options]="statusOptions" optionLabel="label" optionValue="value" [ngModel]="selectedStatus()"
+    (ngModelChange)="selectedStatus.set($event)" ariaLabel="فیلتر وضعیت فرصت" [disabled]="loading()" appendTo="body" />
+</div>
+
 @if (loading()) {
   <div class="state-card"><span><i class="pi pi-spin pi-spinner"></i> در حال دریافت فرصت‌ها...</span></div>
 } @else if (loadFailed()) {
@@ -20,7 +25,7 @@
     <p-button label="ایجاد اولین فرصت" icon="pi pi-plus" (onClick)="openCreate()" />
   </div>
 } @else {
-  <p-table [value]="opportunities()" [rowHover]="true" responsiveLayout="scroll">
+  <p-table [value]="visibleOpportunities()" [rowHover]="true" responsiveLayout="scroll">
     <ng-template #header>
       <tr><th>عنوان</th><th>زمینه کاری</th><th>محل</th><th>وضعیت</th><th>تاریخ ایجاد</th><th>عملیات</th></tr>
     </ng-template>
@@ -45,6 +50,7 @@
         </td>
       </tr>
     </ng-template>
+    <ng-template #emptymessage><tr><td colspan="6" class="muted">فرصتی در این وضعیت وجود ندارد.</td></tr></ng-template>
   </p-table>
 }
 

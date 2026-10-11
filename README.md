@@ -20,21 +20,21 @@ cp .env.example .env
 docker compose up --build
 ```
 
-| Service | Default URL |
-| --- | --- |
-| Application | <http://localhost:4200> |
-| API health | <http://localhost:8082/api/health> |
-| pgAdmin | <http://localhost:5050> |
+| Service     | Default URL                        |
+| ----------- | ---------------------------------- |
+| Application | <http://localhost:4200>            |
+| API health  | <http://localhost:8082/api/health> |
+| pgAdmin     | <http://localhost:5050>            |
 
 The backend applies migrations and creates missing demo accounts automatically. Newly created demo accounts use password `Demo123!`:
 
-| Role | Email |
-| --- | --- |
-| Student | `student@demo.local` |
+| Role                  | Email                   |
+| --------------------- | ----------------------- |
+| Student               | `student@demo.local`    |
 | University supervisor | `university@demo.local` |
-| Company supervisor | `company@demo.local` |
-| Professor | `professor@demo.local` |
-| Admin | `admin@demo.local` |
+| Company supervisor    | `company@demo.local`    |
+| Professor             | `professor@demo.local`  |
+| Admin                 | `admin@demo.local`      |
 
 To try the workflow, first sign in as the university supervisor and open an internship term.
 

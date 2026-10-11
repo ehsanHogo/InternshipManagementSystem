@@ -61,7 +61,8 @@ export function formatJalaliDate(value: string | Date, includeTime = false): str
   }).formatToParts(instant);
   const hour = timeParts.find((part) => part.type === 'hour')?.value ?? '00';
   const minute = timeParts.find((part) => part.type === 'minute')?.value ?? '00';
-  return toPersianDigits(`${date} ${hour}:${minute}`);
+  // Read time before date from right to left, keeping each numeric part left to right.
+  return toPersianDigits(`\u2067\u2066${hour}:${minute}\u2069 \u2066${date}\u2069\u2069`);
 }
 
 export function toPersianDigits(value: string | number): string {
