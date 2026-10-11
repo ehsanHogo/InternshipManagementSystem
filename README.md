@@ -1,61 +1,58 @@
 # Internship Management System
 
-## Project Overview
+A Persian, right-to-left application for managing university internships, from placement applications and approvals to weekly reports and final evaluation.
 
-A Persian, RTL internship workflow for students, university supervisors, company supervisors, professors, and a minimal administrator role. The application preserves the complete record as a case advances from draft through university/company approval, active reporting, final evaluations, and completion.
+## Features
 
-## Technology Stack
+- Role-based access for students, university supervisors, company supervisors, professors, and administrators.
+- Internship opportunities, recruitment, placement approvals, and academic term management.
+- Weekly reports, final PDF submissions, evaluations, and company ratings.
+- Account and company verification, Excel imports, profiles, and notifications.
 
-- Angular 20, TypeScript, SCSS, PrimeNG, PrimeIcons, Vazirmatn
-- Go 1.24, Gin, GORM
-- PostgreSQL 16
-- Docker Compose and Nginx
+**Stack:** Angular 20 / PrimeNG · Go / Gin / GORM · PostgreSQL 16 · Docker Compose / Nginx.
 
-## Prerequisites
+## Quick start
 
-For the all-Docker setup, install Docker with Docker Compose. For local development, also install Node.js 20.19+ or 22.12+, npm, and Go 1.24+.
-
-## Environment Configuration
-
-Docker Compose reads optional values from a root `.env` file. Copy `.env.example` and replace the development-only defaults when needed:
+Install Docker with Docker Compose, then run from the repository root:
 
 ```bash
 cp .env.example .env
-```
-
-The backend supports `APP_PORT`, `FRONTEND_ORIGIN`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SSLMODE`, `JWT_SECRET`, `JWT_EXPIRES_HOURS`, and `UPLOAD_DIR`. See `backend/.env.example` for local-backend defaults. The Go process reads environment variables directly and does not load `.env` files itself.
-
-Host ports can be changed with `POSTGRES_PORT`, `BACKEND_PORT`, `FRONTEND_PORT`, and `PGADMIN_PORT`. Never use the included demo database password, pgAdmin password, or JWT secret in production.
-
-## Docker Setup
-
-Start PostgreSQL, the API, the Angular/Nginx frontend, and pgAdmin:
-
-```bash
 docker compose up --build
 ```
 
-Open:
+| Service | Default URL |
+| --- | --- |
+| Application | <http://localhost:4200> |
+| API health | <http://localhost:8082/api/health> |
+| pgAdmin | <http://localhost:5050> |
 
-- Application: <http://localhost:4200>
-- API health check: <http://localhost:8082/api/health>
-- pgAdmin: <http://localhost:5050>
+The backend applies migrations and creates missing demo accounts automatically. Newly created demo accounts use password `Demo123!`:
 
-The frontend sends relative `/api` requests. In Docker, Nginx proxies them to the backend service; in local development, Angular's `proxy.conf.json` proxies them to `http://localhost:8082`. No machine-specific API URL is compiled into the application.
+| Role | Email |
+| --- | --- |
+| Student | `student@demo.local` |
+| University supervisor | `university@demo.local` |
+| Company supervisor | `company@demo.local` |
+| Professor | `professor@demo.local` |
+| Admin | `admin@demo.local` |
 
-PostgreSQL data, pgAdmin settings, and uploaded final reports use the `postgres_data`, `pgadmin_data`, and `final_reports` named volumes.
+To try the workflow, first sign in as the university supervisor and open an internship term.
 
-## Local Development
+Stop with `docker compose down`; database records and uploaded reports remain in Docker volumes. The included credentials and secrets are for development only; replace them before deployment.
 
-Start infrastructure and run the backend locally:
+## Local development
+
+Requires Go 1.24+, npm, and Node.js 20.19+ (20.x), 22.12+ (22.x), or 24+.
+
+Start PostgreSQL and the backend from the repository root:
 
 ```bash
-docker compose up -d postgres pgadmin
+docker compose up -d postgres
 cd backend
-APP_PORT=8082 DB_HOST=localhost DB_PORT=5433 go run ./cmd/api
+APP_PORT=8083 DB_HOST=localhost DB_PORT=5433 go run ./cmd/api
 ```
 
-In another terminal:
+In a second terminal, from the repository root:
 
 ```bash
 cd frontend
@@ -63,176 +60,21 @@ npm ci
 npm start
 ```
 
-Open <http://localhost:4200/login>. Restart `go run` after backend changes. Database and uploaded-file volumes survive backend restarts.
+Open <http://localhost:4200>. The Angular development proxy expects the API on port `8083`. The Go process reads environment variables directly; it does not load `.env` files. For custom database settings, export matching values from [backend/.env.example](backend/.env.example).
 
-## Main Roles
+## Checks
 
-- Student: creates and submits an application, maintains unconfirmed weekly reports, uploads/replaces the final PDF while active, and views the completed result.
-- University supervisor: manages students, professors, assignments, and manual university company trust approval; selects the placement and records introduction-letter metadata, and views submitted company details.
-- Company supervisor: manages registration information while pending/rejected; after Admin registration approval, recruits students through opportunity applications and submits start/placement details for the university-selected official case.
-- Professor: reviews assigned active/completed cases and records the final qualitative result when every prerequisite is complete.
-- Admin: reviews company registrations at `/admin/company-registrations`; approves or rejects pending registrations without changing university trust.
-
-Frontend route guards improve navigation UX; backend role middleware and case-ownership checks remain the authorization boundary.
-
-## Workflow
-
-The statuses are:
-
-```text
-OpportunityApplication: PENDING → ACCEPTED (company recruitment)
-
-InternshipCase:
-DRAFT → PENDING_UNIVERSITY_REVIEW
-PENDING_UNIVERSITY_REVIEW → REVISION_REQUESTED → PENDING_UNIVERSITY_REVIEW
-PENDING_UNIVERSITY_REVIEW → PENDING_COMPANY_DETAILS → PENDING_FINAL_APPROVAL
-PENDING_FINAL_APPROVAL → PENDING_COMPANY_DETAILS (company correction)
-PENDING_FINAL_APPROVAL → ACTIVE → PASSED / FAILED
-PENDING_UNIVERSITY_REVIEW → CANCELLED (university cancellation)
-Any unfinished case → CANCELLED (atomic internship term closure)
-```
-
-Recommended demonstration order:
-
-Before creating an official case, sign in as the university supervisor and open an academic internship term at `/university/internship-terms`.
-
-1. Register a company, sign in as Admin and approve its registration, then publish an opportunity and accept the student's opportunity application.
-2. As the student, create the official case, enter credits/mobile, select one to three accepted applications in priority order, and submit.
-3. As the university supervisor, select one preference and enter introduction-letter number/date. The selected opportunity determines the company supervisor automatically.
-4. As that company supervisor, open **پرونده‌های کارآموزی**, enter subject, Jalali start date, actual workplace address/phone, and confirm submission to university.
-5. As the university supervisor, request company placement correction if needed, then give final approval. The case becomes **ACTIVE** immediately, including when its declared start date is in the future.
-6. Continue the existing weekly reporting and evaluation workflows.
-
-If none of the submitted preferences is suitable, the university can request student preference revision with a required reason. The student edits and resubmits the same case, preserving its term and professor. Students may apply for new opportunities in **DRAFT** or **REVISION_REQUESTED**; successful **PASSED** history still permanently blocks recruitment.
-
-There is no separate manual activation action. On startup or `cmd/migrate`, existing **READY_TO_START** records are converted to **ACTIVE** without changing unrelated case data.
-
-## Student Company Ratings \
-
-After successful completion, a student can open a **PASSED** case in their case history and submit a final company rating from 1 to 5 stars. This also works for older cases and closed academic terms. **FAILED**, **CANCELLED**, and unfinished cases cannot be rated. Each case allows one rating; there are no edit/delete actions or comments.
-
-`POST /api/student/internship-cases/:id/rating` accepts only `{"rating": 4}`. The server verifies ownership and resolves the company through the case's selected preference and accepted opportunity application. The database enforces a unique case, the 1–5 range, foreign keys, and a company index. Startup or `cmd/migrate` adds the ratings table without backfilling ratings.
-
-Student opportunity list/detail show `companyAverageRating` and `companyRatingCount`. These are company-wide aggregates, so all opportunities from one company show the same result. A company without ratings returns `null`/`0` and displays «هنوز ارزیابی‌ای ثبت نشده است». University company details and case review, and assigned professor case details, show the aggregate read-only. Company responses and Admin registration review contain no rating fields. Ratings do not change application eligibility, completion, term handling, registration status, or manual university approval.
-
-## Company Registration Governance
-
-Self-registration creates one company and its linked company supervisor with `RegistrationStatus=PENDING` and `IsApproved=false`. Pending and rejected supervisors can log in, edit registration data, and view status/rejection reasons at `/company/profile`. Rejected companies explicitly resubmit the same record for review; editing alone does not change status. Operational routes require Admin registration approval on the server and in frontend navigation/guards.
-
-`RegistrationStatus` (`PENDING`, `APPROVED`, `REJECTED`) controls access to company business features. `IsApproved` still means university trust: a passed internship makes a company eligible, and the university manually approves it. Students can apply and the university can select companies with approved registration even when `IsApproved=false`. The student approved-companies directory still uses only university trust.
-
-The university can inspect companies and existing supervisors but cannot create either. Existing companies are backfilled as registration-approved without changing trust. New demo companies are operational; subsequent startup preserves real decisions and existing trust values. Historical cases remain readable.
-
-## Excel Import Format
-
-Only `.xlsx` files up to 10 MB are accepted. Header spelling is Persian; header order is flexible.
-
-Student import headers:
-
-```text
-نام و نام خانوادگی
-ایمیل
-شماره دانشجویی
-رشته
-```
-
-Professor import headers:
-
-```text
-نام و نام خانوادگی
-ایمیل
-```
-
-Each successful row returns a temporary password. It is shown only in that result and cannot be retrieved later, so copy it before leaving the page.
-
-## Personal Profile
-
-Every authenticated role can open `/profile` using **پروفایل من** in the shared header. Users can edit their name and optional account phone; company supervisors can also edit their personal job title. Email, role, student number/major and company affiliation are read-only. Account phone changes never update internship-case Mobile.
-
-Profile reads reuse `GET /api/auth/me`. `PUT /api/profile` accepts only `fullName`, `phone` and the company-supervisor-only `jobTitle`; `POST /api/profile/change-password` accepts only `currentPassword` and `newPassword`. Identity comes from the JWT, and protected/unknown fields are rejected. Saving updates the shared cached user immediately.
-
-Password changes verify the current password and store a bcrypt hash. New passwords follow the existing company-registration rule: nonblank and at most 72 UTF-8 bytes, with a different value from the current password. Existing JWTs remain valid until expiry;
-
-The `/company/profile` registration workflow remains separate. Pending/rejected company supervisors can access both profile screens but remain restricted from operational company features.
-
-## File Upload Rules
-
-- Final reports must be non-empty PDF files no larger than 10 MB.
-- Initial final report upload requires an `ACTIVE` case and all distinct weeks 1–8 submitted and approved by both the company reviewer and professor.
-- The server validates extension and MIME type and generates a unique storage name.
-- Files are downloaded only through an authenticated, case-authorized endpoint.
-- Filesystem paths and stored filenames are not exposed by the API.
-- A student may replace a final report only while the case is `ACTIVE` and the report is `REVISION_REQUESTED`. Corrections do not revalidate initial weekly readiness; completed cases are immutable.
-
-## How to Run
-
-The shortest demo command is:
+Run from the repository root:
 
 ```bash
-docker compose up --build
+(cd backend && go test -p 1 ./... && go vet ./... && go build ./...)
+(cd frontend && npm ci && npm run build)
 ```
 
-Useful verification commands:
+Database integration tests require `TEST_DATABASE_DSN` pointing to an existing, dedicated test database; otherwise, they are skipped.
 
-```bash
-cd backend
-go test ./...
-go vet ./...
-go build ./...
+## Project layout
 
-cd ../frontend
-npm ci
-npm run build
-```
-
-Enable the full PostgreSQL integration suite against a dedicated test database:
-
-```bash
-cd backend
-TEST_DATABASE_DSN='host=localhost port=5433 user=postgres password=postgres dbname=internship_test sslmode=disable' go test -p 1 ./... -count=1
-```
-
-The test database must already exist. Run packages serially (`-p 1`) because existing integration tests share the public schema and run GORM migrations. Term and compatibility tests also create and remove isolated schemas.
-
-To apply idempotent migrations/seeds to the local Docker database without deleting data:
-
-```bash
-cd backend
-DB_HOST=localhost DB_PORT=5433 go run ./cmd/migrate
-```
-
-## How to Stop
-
-Stop containers while retaining persistent data:
-
-```bash
-docker compose down
-```
-
-To intentionally remove the database, pgAdmin state, and uploaded reports as well:
-
-```bash
-docker compose down --volumes
-```
-
-The second command is destructive and should not be used when demo data must be preserved.
-
-## Troubleshooting
-
-- Ports used on the host are `4200` (frontend), `8082` (backend), `5433` (PostgreSQL), and `5050` (pgAdmin). Stop any conflicting local service or change the port mapping.
-- Run `docker compose ps` and `docker compose logs backend postgres frontend` if the UI cannot reach the API.
-- The backend waits for PostgreSQL health; the frontend waits for backend health.
-- A 401 clears the local session and returns the browser to login. Sign in again if a demo JWT expires.
-- Local frontend development requires the backend on port `8082`, matching `frontend/proxy.conf.json`.
-- Uploaded reports missing after a container restart usually indicates the `final_reports` volume was removed.
-
-University Supervisors can self-register at `/university-supervisor-register`. New accounts are active and pending verification; pending/rejected accounts retain Profile, password change, and `/university-supervisor/verification`, while approved accounts gain University operational access. Existing University accounts are backfilled as approved once.
-
-Admins use `/admin/user-verifications` for University identity review and `/admin/users` for read-only user inspection and enable/disable. `/admin/company-registrations` remains the separate Company registration flow. Roles are fixed by their creation workflow, and Student/Professor provisioning remains with the University. Disabled accounts cannot log in or use existing JWTs; activation does not change business history or approval decisions.
-
-```bash
-SMOKE_BASE_URL=http://127.0.0.1:14222 \
-PLAYWRIGHT_MODULE=/path/to/node_modules/playwright \
-CHROME_PATH=/usr/bin/google-chrome \
-node frontend/scripts/m22-browser-smoke.cjs
-```
+- [`frontend/`](frontend/) — Angular interface.
+- [`backend/`](backend/) — Go API, database migrations, and tests.
+- [`docker-compose.yml`](docker-compose.yml) — development services and persistent volumes.
