@@ -269,8 +269,15 @@ p-card {
   }
 
   span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     color: #64748b;
     font-size: 0.85rem;
+  }
+
+  i {
+    flex-shrink: 0;
   }
 }
 
