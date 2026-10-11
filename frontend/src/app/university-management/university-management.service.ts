@@ -5,7 +5,6 @@ import { Observable } from 'rxjs';
 import { User } from '../auth/auth.models';
 import { Company } from '../internship/internship.models';
 import {
-  CompanySupervisor,
   CreatedAccount,
   ImportResult,
   ProfessorAssignment,
@@ -43,10 +42,6 @@ export class UniversityManagementService {
 
   listCompanies(): Observable<Company[]> {
     return this.http.get<Company[]>('/api/university/companies');
-  }
-
-  listCompanySupervisors(): Observable<CompanySupervisor[]> {
-    return this.http.get<CompanySupervisor[]>('/api/university/company-supervisors');
   }
 
   listProfessorAssignments(): Observable<ProfessorAssignment[]> {

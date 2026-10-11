@@ -267,7 +267,7 @@ func TestCompanyRegistrationGovernanceProductionRoutes(t *testing.T) {
 	registrationRequest(t, router, "GET", "/api/admin/company-registrations?status=APPROVED", adminToken, nil, http.StatusOK)
 	registrationRequest(t, router, "GET", "/api/admin/company-registrations?status=REJECTED", adminToken, nil, http.StatusOK)
 	university := registrationToken(t, registrationDemoUser(t, db, "university"))
-	for _, path := range []string{"/api/university/companies", "/api/university/company-supervisors"} {
+	for _, path := range []string{"/api/university/companies"} {
 		registrationRequest(t, router, "POST", path, university, map[string]any{}, http.StatusNotFound)
 		registrationRequest(t, router, "GET", path, university, nil, http.StatusOK)
 		for _, route := range router.Routes() {

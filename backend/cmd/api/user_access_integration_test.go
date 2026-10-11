@@ -71,7 +71,7 @@ func TestUniversityIdentityLifecycle(t *testing.T) {
 	registrationRequest(t, router, "GET", path, adminToken, nil, http.StatusOK)
 	blocked := func() {
 		t.Helper()
-		for _, endpoint := range []string{"/api/university/internship-terms", "/api/university/students", "/api/university/professors", "/api/university/professor-assignments", "/api/university/internship-cases", "/api/university/companies", "/api/university/company-supervisors", "/api/companies", "/api/files/1/download"} {
+		for _, endpoint := range []string{"/api/university/internship-terms", "/api/university/students", "/api/university/professors", "/api/university/professor-assignments", "/api/university/internship-cases", "/api/university/companies", "/api/companies", "/api/files/1/download"} {
 			registrationRequest(t, router, "GET", endpoint, token, nil, http.StatusForbidden)
 		}
 		for _, endpoint := range []string{"/api/university/students", "/api/university/students/import", "/api/university/professors", "/api/university/professors/import", "/api/university/professor-assignments", "/api/university/internship-cases/1/approve-placement"} {

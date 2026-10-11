@@ -93,7 +93,6 @@ func newRouter(cfg config.Config, db *gorm.DB) *gin.Engine {
 	university.POST("/professors", managementHandler.CreateProfessor)
 	university.POST("/professors/import", managementHandler.ImportProfessors)
 	university.GET("/companies", managementHandler.ListCompanies)
-	university.GET("/company-supervisors", managementHandler.ListCompanySupervisors)
 	university.GET("/professor-assignments", managementHandler.ListProfessorAssignments)
 	university.POST("/professor-assignments", managementHandler.CreateProfessorAssignment)
 	university.PUT("/professor-assignments/:id", managementHandler.UpdateProfessorAssignment)

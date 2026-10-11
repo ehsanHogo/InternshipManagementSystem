@@ -46,9 +46,6 @@ func NewUniversityManagementService(db *gorm.DB) *UniversityManagementService {
 func (service *UniversityManagementService) ListUsers(role model.Role) ([]model.User, error) {
 	var users []model.User
 	query := service.db.Where("role = ?", role).Order("full_name ASC")
-	if role == model.RoleCompanySupervisor {
-		query = query.Preload("Company")
-	}
 	if err := query.Find(&users).Error; err != nil {
 		return nil, fmt.Errorf("list %s users: %w", role, err)
 	}

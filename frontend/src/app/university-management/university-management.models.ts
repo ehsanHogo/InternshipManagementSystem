@@ -1,5 +1,4 @@
 import { User } from '../auth/auth.models';
-import { Company } from '../internship/internship.models';
 
 export interface CreatedAccount {
   user: User;
@@ -16,10 +15,6 @@ export interface StudentPayload {
 export interface ProfessorPayload {
   fullName: string;
   email: string;
-}
-
-export interface CompanySupervisor extends User {
-  company?: Company;
 }
 
 export interface ImportRowResult {

@@ -91,7 +91,7 @@
             گزارش نهایی
           </a>
         }
-        @if (user()?.role === 'UNIVERSITY_SUPERVISOR') {
+        @if (restrictedUniversity()) {
           <a routerLink="/university-supervisor/verification" routerLinkActive="active">وضعیت احراز هویت</a>
         }
         @if (user()?.role === 'UNIVERSITY_SUPERVISOR' && !restrictedUniversity()) {
@@ -114,10 +114,6 @@
           <a routerLink="/university/companies" routerLinkActive="active">
             <i class="pi pi-building" aria-hidden="true"></i>
             شرکت‌ها
-          </a>
-          <a routerLink="/university/company-supervisors" routerLinkActive="active">
-            <i class="pi pi-id-card" aria-hidden="true"></i>
-            سرپرستان شرکت
           </a>
           <a routerLink="/university/professor-assignments" routerLinkActive="active">
             <i class="pi pi-link" aria-hidden="true"></i>

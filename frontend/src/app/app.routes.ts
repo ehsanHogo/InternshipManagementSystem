@@ -168,14 +168,6 @@ export const routes: Routes = [
           )
       },
       {
-        path: 'university/company-supervisors',
-        canActivate: [universitySupervisorGuard],
-        loadComponent: () =>
-          import('./pages/university-company-supervisors/university-company-supervisors.component').then(
-            (module) => module.UniversityCompanySupervisorsComponent
-          )
-      },
-      {
         path: 'university/professor-assignments',
         canActivate: [universitySupervisorGuard],
         loadComponent: () =>

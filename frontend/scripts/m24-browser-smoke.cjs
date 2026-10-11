@@ -78,7 +78,7 @@ async function visit(page, path) {
   });
   await check('all operational roles: navigation, Profile, Notifications, and cross-role direct-route guards',async()=>{
    const paths={admin:['/dashboard','/admin/company-registrations','/admin/user-verifications','/admin/users'],
-    university:['/dashboard','/university/students','/university/professors','/university/professor-assignments','/university/internship-terms','/university/applications','/university/companies','/university/company-supervisors'],
+    university:['/dashboard','/university/students','/university/professors','/university/professor-assignments','/university/internship-terms','/university/applications','/university/companies'],
     professor:['/dashboard','/professor/internships'],company:['/dashboard','/company/profile','/company/opportunities','/company/internships']};
    for(const [role, routes] of Object.entries(paths)) {
     const page=pages[role];for(const route of [...routes,'/profile','/notifications'])await visit(page,route);

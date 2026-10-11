@@ -40,11 +40,6 @@ type managedUserCreatedResponse struct {
 	TemporaryPassword string           `json:"temporaryPassword"`
 }
 
-type managedCompanySupervisorResponse struct {
-	model.PublicUser
-	Company *model.Company `json:"company,omitempty"`
-}
-
 type professorAssignmentRequest struct {
 	StudentID   uint `json:"studentId"`
 	ProfessorID uint `json:"professorId"`
@@ -89,19 +84,6 @@ func (handler *UniversityManagementHandler) ListProfessors(ctx *gin.Context) {
 
 func (handler *UniversityManagementHandler) CreateProfessor(ctx *gin.Context) {
 	handler.createUser(ctx, model.RoleProfessor)
-}
-
-func (handler *UniversityManagementHandler) ListCompanySupervisors(ctx *gin.Context) {
-	users, err := handler.service.ListUsers(model.RoleCompanySupervisor)
-	if err != nil {
-		handler.writeError(ctx, err)
-		return
-	}
-	response := make([]managedCompanySupervisorResponse, 0, len(users))
-	for _, user := range users {
-		response = append(response, managedCompanySupervisorResponse{PublicUser: user.Public(), Company: user.Company})
-	}
-	ctx.JSON(http.StatusOK, response)
 }
 
 func (handler *UniversityManagementHandler) listUsers(ctx *gin.Context, role model.Role) {
