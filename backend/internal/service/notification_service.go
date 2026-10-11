@@ -28,8 +28,6 @@ func (s *NotificationService) UnreadCount(userID uint) (int64, error) {
 	return count, err
 }
 
-// Unknown and foreign IDs are ignored. Ownership is part of the UPDATE predicate;
-// a newly arrived notification absent from this snapshot is never consumed.
 func (s *NotificationService) MarkViewed(userID uint, ids []uint) error {
 	if len(ids) > NotificationListLimit {
 		return ErrInvalidNotificationIDs
@@ -45,8 +43,6 @@ func (s *NotificationService) MarkViewed(userID uint, ids []uint) error {
 	return s.db.Model(&model.Notification{}).Where("user_id = ? AND id IN ? AND is_read = false", userID, ids).Update("is_read", true).Error
 }
 
-// Call creation helpers with the current business transaction, so notification
-// failures roll back the state change and rejected transitions produce no alert.
 func (s *NotificationService) CreateStudentNotification(userID uint, title, message, path string) error {
 	return s.personal(userID, model.NotificationStudentStatus, title, message, path)
 }
@@ -77,8 +73,6 @@ func (s *NotificationService) notifyUsers(query *gorm.DB, kind model.Notificatio
 	return nil
 }
 
-// Match M17 operational eligibility at notification delivery time, including
-// when an older assigned case still points to a now restricted company user.
 func (s *NotificationService) companyRecipients() *gorm.DB {
 	return s.db.Where("role = ?", model.RoleCompanySupervisor).
 		Where("EXISTS (SELECT 1 FROM companies WHERE companies.id = users.company_id AND companies.registration_status = ?)", model.CompanyRegistrationStatusApproved)

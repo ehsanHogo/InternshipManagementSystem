@@ -56,7 +56,6 @@ func TestLegacyReadyCasesMigration(t *testing.T) {
 	if err := MigrateAndSeed(db); err != nil {
 		t.Fatal(err)
 	}
-	// Simulate the previous deployed CHECK constraint and stored approved rows.
 	if err := db.Exec("ALTER TABLE internship_cases DROP CONSTRAINT chk_internship_case_status").Error; err != nil {
 		t.Fatal(err)
 	}
@@ -135,7 +134,6 @@ func TestLegacyReadyCasesMigration(t *testing.T) {
 	if !reflect.DeepEqual(once, twice) {
 		t.Fatal("repeated startup changed case data")
 	}
-	// New status is accepted, and both new legacy inserts and updates are rejected.
 	revision := model.InternshipCase{TermID: &term.ID, StudentID: student.ID, ProfessorID: professor.ID, Status: model.InternshipCaseStatusRevisionRequested}
 	if err := db.Create(&revision).Error; err != nil {
 		t.Fatal(err)
@@ -188,7 +186,6 @@ func TestLegacyCompanyRegistrationBackfillAndSeedDecisions(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer sqlDB.Close()
-	// A pre-M17 table has no registration columns. Both existing trust values must survive.
 	if err := db.Exec(`CREATE TABLE companies (
  id bigserial PRIMARY KEY, name varchar(250) NOT NULL,
  national_id varchar(50) NOT NULL, economic_code varchar(50) NOT NULL,
@@ -228,7 +225,6 @@ func TestLegacyCompanyRegistrationBackfillAndSeedDecisions(t *testing.T) {
 			t.Fatal("new seed company not operational")
 		}
 	}
-	// Simulate real Admin decisions on known seed records, including university trust false.
 	now := time.Now().UTC()
 	reason := "مدارک ناقص"
 	var admin model.User
@@ -257,7 +253,6 @@ func TestLegacyCompanyRegistrationBackfillAndSeedDecisions(t *testing.T) {
 			t.Fatal("repeated migration/seed rewrote company registration or trust data")
 		}
 	}
-	// The database default after the one-time legacy backfill is PENDING.
 	company := model.Company{Name: "new after migration", NationalID: "new-national", EconomicCode: "new-economic"}
 	if err := db.Create(&company).Error; err != nil {
 		t.Fatal(err)
@@ -265,7 +260,6 @@ func TestLegacyCompanyRegistrationBackfillAndSeedDecisions(t *testing.T) {
 	if company.RegistrationStatus != model.CompanyRegistrationStatusPending || company.IsApproved {
 		t.Fatal("new company inherited legacy registration default")
 	}
-	// Invalid statuses are rejected by the database, independently of API validation.
 	if err := db.Model(&company).Update("registration_status", "UNKNOWN").Error; err == nil {
 		t.Fatal("invalid registration status accepted")
 	}

@@ -2,8 +2,6 @@ package model
 
 import "time"
 
-// StudentInternshipRating snapshots the company resolved from a successful case.
-// It is final: the application exposes creation only, with no update/delete API.
 type StudentInternshipRating struct {
 	ID               uint           `gorm:"primaryKey"`
 	InternshipCaseID uint           `gorm:"not null;uniqueIndex"`

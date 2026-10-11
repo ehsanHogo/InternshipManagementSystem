@@ -10,7 +10,6 @@ import (
 	"strings"
 )
 
-// Both resume and final-report uploads validate extension, MIME, and PDF signature.
 func openValidatedPDF(header *multipart.FileHeader) (multipart.File, error) {
 	contentType := strings.ToLower(strings.TrimSpace(strings.Split(header.Header.Get("Content-Type"), ";")[0]))
 	if header.Size <= 0 || !strings.EqualFold(filepath.Ext(header.Filename), ".pdf") || contentType != "application/pdf" {

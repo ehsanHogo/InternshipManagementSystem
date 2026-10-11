@@ -482,7 +482,6 @@ func TestWorkflow(t *testing.T) {
 	})
 }
 
-// Case-creation fixtures explicitly open a term; legacy raw case fixtures stay nullable.
 func createOpenTermFixture(t *testing.T, db *gorm.DB, suffix int64) {
 	t.Helper()
 	university := createTestUser(t, db, suffix, "term-university", model.RoleUniversitySupervisor)
@@ -660,7 +659,6 @@ func createWorkflowOpportunityApplication(t *testing.T, db *gorm.DB, suffix int6
 	return application
 }
 
-// Reporting fixtures also satisfy V2 selected-placement company ownership.
 func attachSelectedWorkflowPlacement(t *testing.T, db *gorm.DB, suffix int64, internshipCase *model.InternshipCase, supervisorID uint) {
 	t.Helper()
 	var supervisor model.User

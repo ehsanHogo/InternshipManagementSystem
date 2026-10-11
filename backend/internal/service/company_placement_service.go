@@ -32,8 +32,6 @@ type PlacementDetailsInput struct {
 	WorkplacePhone    string
 }
 
-// companyCaseQuery binds the supervisor snapshot AND the selected placement to
-// the supervisor's current company. Other accepted preferences grant no access.
 func (service *InternshipService) companyCaseQuery(db *gorm.DB, supervisorID uint) *gorm.DB {
 	return service.caseQuery(db).Where("internship_cases.company_supervisor_id = ?", supervisorID).
 		Where(`EXISTS (
@@ -88,8 +86,6 @@ func (service *InternshipService) GetCompanyCase(supervisorID, caseID uint) (*mo
 	return &internshipCase, nil
 }
 
-// SubmitPlacementDetails is the only company placement action. Recruitment has
-// already accepted the student. Locking serializes submissions and future edits.
 func (service *InternshipService) SubmitPlacementDetails(supervisorID, caseID uint, input PlacementDetailsInput) (*model.InternshipCase, error) {
 	if err := requireCompanyCaseAccess(service.db, supervisorID); err != nil {
 		return nil, err
@@ -175,7 +171,6 @@ func (service *InternshipService) SubmitPlacementDetails(supervisorID, caseID ui
 		if result.RowsAffected != 1 {
 			return ErrCaseNotPendingCompanyDetails
 		}
-		// Build the response inside the transaction so a failed reload rolls back too.
 		var updated model.InternshipCase
 		if err := service.caseQuery(tx).First(&updated, caseID).Error; err != nil {
 			return fmt.Errorf("reload submitted placement: %w", err)
@@ -186,7 +181,6 @@ func (service *InternshipService) SubmitPlacementDetails(supervisorID, caseID ui
 	return resultCase, err
 }
 
-// Historical reads retain the original placement and supervisor ownership checks.
 func (service *InternshipService) ListCompanyHistoricalCases(supervisorID uint) ([]model.InternshipCase, error) {
 	cases := []model.InternshipCase{}
 	err := service.companyCaseQuery(service.db, supervisorID).

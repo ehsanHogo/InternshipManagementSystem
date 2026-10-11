@@ -53,8 +53,6 @@ func (service *InternshipService) GetProfessorCase(professorID, caseID uint) (*m
 	return &internshipCase, nil
 }
 
-// CompleteProfessorCase finalizes the qualitative outcome once, using the Case
-// professor snapshot. All report mutations also lock this Case before writing.
 func (service *InternshipService) CompleteProfessorCase(professorID, caseID uint, input ProfessorCompletionInput) (*model.InternshipCase, error) {
 	if !input.Result.Valid() {
 		return nil, ErrInvalidProfessorResult

@@ -41,8 +41,6 @@ export const professorGuard: CanActivateFn = () => {
   return auth.getCurrentUser()?.role === 'PROFESSOR' ? true : router.createUrlTree(['/dashboard']);
 };
 
-// Refresh the permission on every authenticated child navigation so an Admin
-// decision takes effect for an already logged-in company without a new JWT.
 export const companyAccessGuard: CanActivateChildFn = (_route, state) => {
  const auth = inject(AuthService);
  const router = inject(Router);
@@ -66,8 +64,6 @@ export const universityIdentityGuard: CanActivateFn = () => {
  return auth.getCurrentUser()?.role === 'UNIVERSITY_SUPERVISOR' ? true : router.createUrlTree(['/dashboard']);
 };
 
-// Refresh current account authorization on every child navigation. Approval and
-// disable decisions take effect without replacing the existing JWT.
 export const currentAccountGuard: CanActivateChildFn = (_route, state) => {
  const auth = inject(AuthService);
  const router = inject(Router);

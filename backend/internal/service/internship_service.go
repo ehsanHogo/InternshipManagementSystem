@@ -48,7 +48,6 @@ func NewInternshipService(db *gorm.DB) *InternshipService {
 	return &InternshipService{db: db}
 }
 
-// The generic directory has the same safe contract as the student directory.
 func (service *InternshipService) ListApprovedCompanies() ([]PublicApprovedCompany, error) {
 	return NewCompanyApprovalService(service.db).ListStudentApprovedCompanies()
 }
@@ -68,7 +67,6 @@ func (service *InternshipService) GetCurrentCase(studentID uint) (*model.Interns
 	return &internshipCase, nil
 }
 
-// ListStudentHistoricalCases retains access to terminal cases after a new draft.
 func (service *InternshipService) ListStudentHistoricalCases(studentID uint) ([]model.InternshipCase, error) {
 	cases := []model.InternshipCase{}
 	err := service.caseQuery(service.db).
@@ -121,8 +119,6 @@ func (service *InternshipService) CreateOrGetCase(studentID uint) (*model.Intern
 			return fmt.Errorf("look up current internship case: %w", err)
 		}
 
-		// SHARE coordinates with term closure's UPDATE lock and remains held
-		// until insertion commits. A closed term can never receive a new case.
 		var term model.InternshipTerm
 		err = tx.Clauses(clause.Locking{Strength: "SHARE"}).
 			Where("status = ?", model.InternshipTermStatusOpen).First(&term).Error
@@ -436,8 +432,6 @@ func (service *InternshipService) getCaseByID(caseID uint) (*model.InternshipCas
 	return &internshipCase, nil
 }
 
-// Mutation validation prefers the current case; terminal fallback only provides
-// the existing non-editable error and never permits historical writes.
 func (service *InternshipService) findOwnedCaseForUpdate(db *gorm.DB, studentID uint) (*model.InternshipCase, error) {
 	var internshipCase model.InternshipCase
 	err := db.Clauses(clause.Locking{Strength: "UPDATE"}).

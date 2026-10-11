@@ -48,7 +48,6 @@ func (service *InternshipTermService) List(actorID uint) ([]model.InternshipTerm
 	return terms, err
 }
 
-// Current exposes only term metadata to students, never other students' cases.
 func (service *InternshipTermService) Current() (*model.InternshipTerm, error) {
 	var term model.InternshipTerm
 	err := service.db.Where("status = ?", model.InternshipTermStatusOpen).First(&term).Error
@@ -72,7 +71,6 @@ func (service *InternshipTermService) Detail(actorID, termID uint) (*model.Inter
 		if err != nil {
 			return err
 		}
-		// Includes drafts without changing the regular university review list.
 		return NewInternshipService(tx).caseQuery(tx).Where("term_id = ?", termID).
 			Order("created_at DESC, id DESC").Find(&cases).Error
 	})
@@ -104,7 +102,6 @@ func (service *InternshipTermService) Create(actorID uint, academicYear int, ter
 		term = model.InternshipTerm{AcademicYear: academicYear, TermType: termType, Status: model.InternshipTermStatusOpen, OpenedAt: time.Now().UTC(), CreatedBy: actorID}
 		return tx.Create(&term).Error
 	})
-	// The database indexes also arbitrate concurrent creation attempts.
 	var pgError *pgconn.PgError
 	if errors.As(err, &pgError) && pgError.Code == "23505" {
 		switch pgError.ConstraintName {
@@ -137,9 +134,6 @@ func (service *InternshipTermService) Close(actorID, termID uint) (*model.Intern
 			return ErrTermClosed
 		}
 		now := time.Now().UTC()
-		// UPDATE locks affected cases and rechecks the terminal predicate after
-		// concurrent lifecycle changes; completed cases and their audit stay intact.
-		// RETURNING identifies only cases actually cancelled by this transaction.
 		var cancelledCases []model.InternshipCase
 		if err := tx.Model(&cancelledCases).Clauses(clause.Returning{Columns: []clause.Column{{Name: "student_id"}}}).
 			Where("term_id = ? AND status NOT IN ?", termID, terminalCaseStatuses()).
@@ -147,7 +141,6 @@ func (service *InternshipTermService) Close(actorID, termID uint) (*model.Intern
 				"cancellation_comment": TermClosureCancellationComment, "cancelled_at": now}).Error; err != nil {
 			return fmt.Errorf("cancel unfinished term cases: %w", err)
 		}
-		// ClosedBy records the actor for the term and its automatic cancellations.
 		if err := tx.Model(&term).Updates(map[string]any{"status": model.InternshipTermStatusClosed,
 			"closed_at": now, "closed_by": actorID}).Error; err != nil {
 			return fmt.Errorf("close internship term: %w", err)

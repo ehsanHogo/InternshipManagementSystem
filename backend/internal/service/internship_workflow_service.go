@@ -52,9 +52,6 @@ func (service *InternshipService) GetUniversityCase(caseID uint) (*model.Interns
 	return &internshipCase, nil
 }
 
-// ApproveUniversityPlacement atomically selects one submitted preference,
-// records the introduction-letter metadata, resolves the opportunity owner as
-// the company-supervisor snapshot, and advances the case to company details.
 func (service *InternshipService) ApproveUniversityPlacement(caseID uint, input UniversityPlacementApprovalInput) (*model.InternshipCase, error) {
 	letterNumber := strings.TrimSpace(input.LetterNumber)
 	if letterNumber == "" {
@@ -129,8 +126,6 @@ func (service *InternshipService) ApproveUniversityPlacement(caseID uint, input 
 	return service.getCaseByID(caseID)
 }
 
-// CancelUniversityReview atomically closes a case during its first official
-// university review. Preferences and recruitment applications are untouched.
 func (service *InternshipService) CancelUniversityReview(caseID uint, comment string) (*model.InternshipCase, error) {
 	comment = strings.TrimSpace(comment)
 	if comment == "" {
@@ -207,8 +202,6 @@ func containsStatus(statuses []model.InternshipCaseStatus, status model.Internsh
 
 var ErrUniversityRevisionCommentRequired = errors.New("university revision comment is required")
 
-// RequestUniversityRevision returns the same case for preference correction.
-// The case lock serializes revision, selection, resubmission and term closure.
 func (service *InternshipService) RequestUniversityRevision(caseID, supervisorID uint, comment string) (*model.InternshipCase, error) {
 	comment = strings.TrimSpace(comment)
 	if comment == "" {

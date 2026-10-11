@@ -20,7 +20,6 @@ var (
 
 type ProfileService struct{ db *gorm.DB }
 
-// ProfileInput contains personal fields only. Nil JobTitle preserves the value.
 type ProfileInput struct {
 	FullName string
 	Phone    string
@@ -48,7 +47,6 @@ func (service *ProfileService) Update(userID uint, input ProfileInput) (*model.P
 			}
 			updates["job_title"] = optionalString(jobTitle)
 		}
-		// An explicit column allowlist avoids mass assignment and association writes.
 		if err := tx.Model(&model.User{}).Where("id = ?", user.ID).Updates(updates).Error; err != nil {
 			return err
 		}
@@ -62,8 +60,6 @@ func (service *ProfileService) Update(userID uint, input ProfileInput) (*model.P
 }
 
 func (service *ProfileService) ChangePassword(userID uint, currentPassword, newPassword string) error {
-	// Match company registration: nonblank and at most bcrypt's 72-byte limit.
-	// Do not trim the actual password; spaces can be intentional.
 	if strings.TrimSpace(newPassword) == "" || len([]byte(newPassword)) > 72 {
 		return ErrInvalidNewPassword
 	}
@@ -81,8 +77,6 @@ func (service *ProfileService) ChangePassword(userID uint, currentPassword, newP
 	if err != nil {
 		return err
 	}
-	// Compare-and-swap prevents two concurrent requests using the old password
-	// from both succeeding. No other account fields or sessions are changed.
 	result := service.db.Model(&model.User{}).Where("id = ? AND password_hash = ?", user.ID, user.PasswordHash).Update("password_hash", hash)
 	if result.Error != nil {
 		return result.Error

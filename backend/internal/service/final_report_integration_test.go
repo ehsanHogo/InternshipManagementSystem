@@ -16,7 +16,6 @@ import (
 	"internship-management-system/backend/internal/service"
 )
 
-// Committed fixtures and separate connections exercise PostgreSQL row locks.
 func TestFinalReportConcurrentMutations(t *testing.T) {
 	dsn := os.Getenv("TEST_DATABASE_DSN")
 	if dsn == "" {

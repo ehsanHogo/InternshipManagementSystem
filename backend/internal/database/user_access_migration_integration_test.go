@@ -45,7 +45,6 @@ func TestLegacyUserAccessBackfillAndSeedSafety(t *testing.T) {
 	var assignment model.ProfessorAssignment
 	must(tx.Order("id").Find(&before).Error)
 	must(tx.First(&assignment).Error)
-	// Recreate the exact absence of M22 columns on a previously deployed schema.
 	must(tx.Exec("ALTER TABLE users DROP CONSTRAINT chk_user_verification_status").Error)
 	for _, column := range []string{"is_active", "verification_status", "verification_reviewed_at", "verification_reviewed_by", "verification_rejection_reason", "verification_resubmitted_at"} {
 		must(tx.Exec("ALTER TABLE users DROP COLUMN " + column).Error)

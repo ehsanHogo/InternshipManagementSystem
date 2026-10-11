@@ -14,8 +14,6 @@ var (
 	temporaryPasswordChars   = append(append([]byte{}, temporaryPasswordLetters...), temporaryPasswordDigits...)
 )
 
-// GenerateTemporaryPassword creates a cryptographically random password that
-// always contains both letters and numbers.
 func GenerateTemporaryPassword() (string, error) {
 	password := make([]byte, temporaryPasswordLength)
 	var err error

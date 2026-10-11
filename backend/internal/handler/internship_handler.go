@@ -565,7 +565,6 @@ func parseID(value string) (uint, error) {
 	return uint(id), nil
 }
 
-// Student outcome data becomes visible only after professor finalization.
 func studentCaseResponse(item *model.InternshipCase) internshipCaseResponse {
 	response := caseResponse(item)
 	if item.Status != model.InternshipCaseStatusPassed && item.Status != model.InternshipCaseStatusFailed {

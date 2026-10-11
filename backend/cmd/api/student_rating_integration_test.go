@@ -35,8 +35,6 @@ func (l *ratingQueryLogger) Trace(ctx context.Context, begin time.Time, fc func(
 	l.Interface.Trace(ctx, begin, fc, err)
 }
 
-// Committed fixtures in a private schema let simultaneous HTTP requests use
-// independent PostgreSQL transactions and exercise real row locks/uniqueness.
 func ratingTestDB(t *testing.T) (*gorm.DB, *ratingQueryLogger) {
 	t.Helper()
 	dsn := os.Getenv("TEST_DATABASE_DSN")
@@ -171,7 +169,6 @@ func TestStudentCompanyRatingProductionRoutes(t *testing.T) {
 	t.Run("additive migration preserves legacy passed cases without backfill", func(t *testing.T) {
 		var before model.InternshipCase
 		must(db.First(&before, passed.ID).Error)
-		// This isolated schema now represents the pre-M20 database.
 		must(db.Migrator().DropTable(&model.StudentInternshipRating{}))
 		must(database.MigrateAndSeed(db))
 		var after model.InternshipCase
@@ -235,7 +232,6 @@ func TestStudentCompanyRatingProductionRoutes(t *testing.T) {
 		}
 	})
 	t.Run("rating five persisted for selected company without side effects", func(t *testing.T) {
-		// An unselected preference to another company must not influence the rating.
 		_, otherApplication := fixture(student, model.InternshipCaseStatusPassed, b1)
 		create(&model.InternshipPreference{InternshipCaseID: passed.ID, OpportunityApplicationID: otherApplication.ID, Priority: 2})
 		var beforeCase model.InternshipCase

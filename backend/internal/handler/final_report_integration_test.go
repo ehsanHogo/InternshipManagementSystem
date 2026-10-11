@@ -294,8 +294,6 @@ func TestFinalReportV2API(t *testing.T) {
 		if approved.Status != model.FinalReportApproved || approved.ReviewedAt == nil || approved.ReviewComment == nil || *approved.ReviewComment != "accepted" {
 			t.Fatalf("invalid approval: %+v", approved)
 		}
-		// Exercise each database constraint independently so another constraint
-		// cannot mask a missing File FK or status check.
 		_, emptyCase := fixture(t, model.InternshipCaseStatusActive)
 		constraints := []struct {
 			name     string
@@ -344,7 +342,6 @@ func TestFinalReportV2API(t *testing.T) {
 		}
 		previous := stored(t, report.ID)
 		assertStudentReadiness(t, student, true, true)
-		// Historical inconsistencies must not block replacement after a valid first upload.
 		if err := tx.Where("internship_case_id = ? AND week_number = 8", item.ID).Delete(&model.WeeklyReport{}).Error; err != nil {
 			t.Fatal(err)
 		}
@@ -426,7 +423,6 @@ func TestFinalReportV2API(t *testing.T) {
 		student, item := fixture(t, model.InternshipCaseStatusActive)
 		otherStudent, otherCase := fixture(t, model.InternshipCaseStatusActive)
 		report := firstUpload(t, student)
-		// A changed current assignment cannot transfer the historical case's review permission.
 		assignment := model.ProfessorAssignment{StudentID: student.ID, ProfessorID: otherProfessor.ID, AssignedAt: time.Now()}
 		if err := tx.Create(&assignment).Error; err != nil {
 			t.Fatal(err)
@@ -447,7 +443,6 @@ func TestFinalReportV2API(t *testing.T) {
 		if manipulated.InternshipCaseID != otherCase.ID || stored(t, report.ID).CurrentFileID != report.CurrentFileID {
 			t.Fatal("student replaced another case's report")
 		}
-		// Valid company file access requires the same selected placement as case access.
 		placement := model.InternshipOpportunity{CompanyID: companyA.ID, CreatedBy: supervisor.ID, Title: "selected final report placement", Description: "test", WorkField: "software", Location: "Tehran", Status: model.OpportunityStatusOpen}
 		if err := tx.Create(&placement).Error; err != nil {
 			t.Fatal(err)
@@ -471,13 +466,11 @@ func TestFinalReportV2API(t *testing.T) {
 		for _, owner := range []model.User{student, professor, supervisor, university} {
 			request(t, "GET", path, owner, nil, 200)
 		}
-		// Assigned company and University retain the explicit pre-existing read-only policy.
 		for _, wrong := range []model.User{otherStudent, otherProfessor, unrelated, admin} {
 			request(t, "GET", path, wrong, nil, 403)
 		}
 		request(t, "GET", path, model.User{}, nil, 401)
 		decode(t, review(t, item, "approve", nil, 200), model.FinalReportApproved)
-		// Resume permissions remain relationship-based and exclude Professor/University.
 		opportunity := model.InternshipOpportunity{CompanyID: companyA.ID, CreatedBy: supervisor.ID, Title: "resume regression", Description: "test", WorkField: "software", Location: "Tehran", Status: model.OpportunityStatusOpen}
 		if err := tx.Create(&opportunity).Error; err != nil {
 			t.Fatal(err)
@@ -598,7 +591,6 @@ func TestFinalReportV2API(t *testing.T) {
 		if err := tx.Create(&eval).Error; err != nil {
 			t.Fatal(err)
 		}
-		// Merely submitted and revision-requested reports cannot complete a case.
 		for _, status := range []model.FinalReportStatus{model.FinalReportSubmitted, model.FinalReportRevisionRequested} {
 			if err := tx.Model(&report).Update("status", status).Error; err != nil {
 				t.Fatal(err)

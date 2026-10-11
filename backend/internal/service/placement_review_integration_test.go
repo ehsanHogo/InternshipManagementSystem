@@ -108,8 +108,6 @@ func TestUniversityFinalPlacementReview(t *testing.T) {
 			t.Fatalf("unexpected case mutation: want %+v got %+v", before, after)
 		}
 	}
-	// Compare complete rows, including timestamps, to detect any recruitment,
-	// company approval or user affiliation mutation during university actions.
 	externalSnapshot := func(t *testing.T, f fixture) []any {
 		t.Helper()
 		var preference model.InternshipPreference

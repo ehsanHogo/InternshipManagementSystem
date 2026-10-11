@@ -1,5 +1,3 @@
-// M24 acceptance: run against a dedicated, freshly seeded PostgreSQL database.
-// API calls arrange real workflow data; browser checks exercise the production UI.
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict');
 const base = process.env.SMOKE_BASE_URL || 'http://127.0.0.1:14225';

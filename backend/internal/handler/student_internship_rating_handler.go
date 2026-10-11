@@ -113,7 +113,6 @@ func (handler *InternshipHandler) ratedCaseViews(items []model.InternshipCase) (
 	return views, nil
 }
 
-// University case details receive only company aggregates, with no student controls.
 func (handler *InternshipHandler) writeUniversityRatedCase(ctx *gin.Context, item *model.InternshipCase) {
 	ids := []uint{selectedCaseCompanyID(item)}
 	for _, preference := range item.Preferences {

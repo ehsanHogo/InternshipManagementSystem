@@ -48,8 +48,6 @@ func MigrateAndSeed(db *gorm.DB) error {
 	var existingSupervisor model.User
 	err := db.Where("email = ?", "company@demo.local").First(&existingSupervisor).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		// Demo companies are bootstrap data. Once the demo account exists,
-		// names, legal identifiers and membership may all have changed at runtime.
 		if err := seedCompanies(db); err != nil {
 			return err
 		}
@@ -146,8 +144,6 @@ func createDemoUserIfMissing(db *gorm.DB, user *model.User) error {
 	return nil
 }
 
-// GORM does not replace an existing named CHECK when its expression changes.
-// Convert approved legacy rows before atomically replacing that constraint.
 func migrateInternshipCaseStatuses(db *gorm.DB) error {
 	if !db.Migrator().HasTable(&model.InternshipCase{}) {
 		return nil
@@ -156,8 +152,6 @@ func migrateInternshipCaseStatuses(db *gorm.DB) error {
 		if err := tx.Exec("LOCK TABLE internship_cases IN ACCESS EXCLUSIVE MODE").Error; err != nil {
 			return fmt.Errorf("lock internship status migration: %w", err)
 		}
-		// updated_at is the best existing audit timestamp for legacy ready cases.
-		// Preserve activated_at when present and never rewrite unrelated timestamps.
 		if err := tx.Exec(`UPDATE internship_cases SET status = 'ACTIVE',
    activated_at = COALESCE(activated_at, updated_at, submitted_at, created_at, CURRENT_TIMESTAMP)
    WHERE status = 'READY_TO_START'`).Error; err != nil {
@@ -173,8 +167,6 @@ func migrateInternshipCaseStatuses(db *gorm.DB) error {
 	})
 }
 
-// Only the first addition backfills legacy companies. Subsequent startups never
-// rewrite decisions, including PENDING and REJECTED seed-company records.
 func migrateCompanyRegistrations(db *gorm.DB) error {
 	if !db.Migrator().HasTable(&model.Company{}) {
 		return nil
@@ -192,8 +184,6 @@ func migrateCompanyRegistrations(db *gorm.DB) error {
 	})
 }
 
-// Backfill only when each column is first introduced. Table locking makes the
-// legacy boundary atomic; future startups preserve all account decisions.
 func migrateUserAccess(db *gorm.DB) error {
 	if !db.Migrator().HasTable(&model.User{}) {
 		return nil

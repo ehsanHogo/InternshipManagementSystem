@@ -110,7 +110,6 @@ func TestInternshipTermAPI(t *testing.T) {
 	request("GET", "/api/university/internship-terms", university, nil, 200)
 	request("GET", "/api/university/internship-terms/0", university, nil, 400)
 	request("GET", "/api/university/internship-terms/99999999", university, nil, 404)
-	// Student-supplied IDs are rejected and cannot influence assignment.
 	request("POST", "/api/student/internship-case", student, gin.H{"termId": term.ID + 100}, 400)
 	request("POST", "/api/student/internship-case", student, gin.H{"termId": nil}, 400)
 	var item internshipCaseResponse

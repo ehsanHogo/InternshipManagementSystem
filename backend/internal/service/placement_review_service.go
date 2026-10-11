@@ -24,8 +24,6 @@ func (service *InternshipService) ListPendingFinalApprovalCases() ([]model.Inter
 	return service.ListUniversityCases(&status)
 }
 
-// ApprovePlacementDetails preserves the selected placement, supervisor snapshot,
-// letter and company fields, and activates the finally approved case.
 func (service *InternshipService) ApprovePlacementDetails(caseID uint) (*model.InternshipCase, error) {
 	return service.reviewPlacementDetails(caseID, func(tx *gorm.DB, item *model.InternshipCase) (map[string]any, error) {
 		if err := validateFinalPlacement(tx, item); err != nil {
@@ -35,8 +33,6 @@ func (service *InternshipService) ApprovePlacementDetails(caseID uint) (*model.I
 	})
 }
 
-// RequestPlacementCorrection returns only the placement fields for company editing;
-// previously submitted values and all selection/letter metadata remain intact.
 func (service *InternshipService) RequestPlacementCorrection(caseID uint, comment string) (*model.InternshipCase, error) {
 	return service.reviewPlacementDetails(caseID, func(_ *gorm.DB, _ *model.InternshipCase) (map[string]any, error) {
 		comment = strings.TrimSpace(comment)
@@ -100,7 +96,6 @@ func validateFinalPlacement(tx *gorm.DB, item *model.InternshipCase) error {
 		blankPlacementField(item.WorkplaceAddress) || blankPlacementField(item.WorkplacePhone) {
 		return ErrPlacementDetailsIncomplete
 	}
-	// Share locks keep the validated relationship stable until the case commits.
 	lock := func(db *gorm.DB) *gorm.DB { return db.Clauses(clause.Locking{Strength: "SHARE"}) }
 	var preference model.InternshipPreference
 	err := lock(tx).Preload("OpportunityApplication", lock).

@@ -10,7 +10,6 @@ import (
 
 var ErrCompanyRegistrationRequired = errors.New("company registration is not approved")
 
-// Registration approval is an access permission; IsApproved is university trust.
 func RequireApprovedRegistration(db *gorm.DB, companyID uint) error {
 	var company model.Company
 	if err := db.Select("id", "registration_status").First(&company, companyID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
@@ -40,7 +39,6 @@ func ApprovedCompanyID(db *gorm.DB, supervisorID uint) (uint, error) {
 	return *supervisor.CompanyID, nil
 }
 
-// Preserve case authorization errors for missing or invalid company membership.
 func requireCompanyCaseAccess(db *gorm.DB, supervisorID uint) error {
 	_, err := ApprovedCompanyID(db, supervisorID)
 	if errors.Is(err, ErrOpportunityCompanyMissing) {

@@ -9,8 +9,6 @@ import (
 	"internship-management-system/backend/internal/model"
 )
 
-// Cancellation is a personal workflow change, including automatic term closure.
-// Exercise the production routes, not just notification helper functions.
 func TestAcceptanceCancellationNotifications(t *testing.T) {
 	db := registrationTestDB(t)
 	router := registrationRouter(t, db)
@@ -68,7 +66,6 @@ func TestAcceptanceCancellationNotifications(t *testing.T) {
 		}
 		assertNotification(students[i], want, "بسته شدن ترم")
 	}
-	// Previously cancelled cases and rejected repeated closes produce no new alert.
 	assertNotification(student, 1, "لغو")
 	registrationRequest(t, router, "POST", closePath, token, nil, 409)
 	for i, status := range statuses {

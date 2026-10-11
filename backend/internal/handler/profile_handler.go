@@ -30,7 +30,6 @@ func NewProfileHandler(profileService *service.ProfileService) *ProfileHandler {
 	return &ProfileHandler{service: profileService}
 }
 
-// Follow the strict request pattern used for workflow/rating mutations.
 func decodeProfileRequest(ctx *gin.Context, request any) bool {
 	decoder := json.NewDecoder(http.MaxBytesReader(ctx.Writer, ctx.Request.Body, 4096))
 	decoder.DisallowUnknownFields()
@@ -84,7 +83,6 @@ func writeProfileError(ctx *gin.Context, err error) {
 	case errors.Is(err, service.ErrInvalidNewPassword):
 		ctx.JSON(http.StatusBadRequest, gin.H{"code": "INVALID_NEW_PASSWORD", "error": "رمز عبور جدید نباید خالی باشد و باید حداکثر ۷۲ بایت باشد."})
 	case errors.Is(err, service.ErrWrongCurrentPassword):
-		// A business error keeps the valid JWT session intact on the frontend.
 		ctx.JSON(http.StatusBadRequest, gin.H{"code": "WRONG_CURRENT_PASSWORD", "error": "رمز عبور فعلی نادرست است."})
 	case errors.Is(err, service.ErrPasswordUnchanged):
 		ctx.JSON(http.StatusBadRequest, gin.H{"code": "PASSWORD_UNCHANGED", "error": "رمز عبور جدید باید با رمز عبور فعلی متفاوت باشد."})

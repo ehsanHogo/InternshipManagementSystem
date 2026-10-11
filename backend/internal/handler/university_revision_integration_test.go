@@ -61,7 +61,6 @@ func TestUniversityRevisionAPIAndRecruitmentEligibility(t *testing.T) {
 	if err := tx.Create(&opportunity).Error; err != nil {
 		t.Fatal(err)
 	}
-	// Use another opportunity for the initial accepted preference; the new one remains unapplied.
 	oldOpportunity := opportunity
 	oldOpportunity.ID = 0
 	oldOpportunity.Title = "فرصت اولیه"

@@ -76,7 +76,6 @@ func TestNotificationRegistrationAndVerificationEvents(t *testing.T) {
 			t.Fatalf("missing personal approval: %+v", list)
 		}
 	}
-	// Repeated invalid submissions/reviews do not create any extra notification.
 	_, err = companyService.Resubmit(account.Supervisor.ID)
 	if err == nil {
 		t.Fatal("approved company resubmitted")

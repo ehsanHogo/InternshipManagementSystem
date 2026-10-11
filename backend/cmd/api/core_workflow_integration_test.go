@@ -13,7 +13,6 @@ import (
 	"internship-management-system/backend/internal/service"
 )
 
-// Exercise the production router, including role and registration middleware.
 func TestCoreWorkflowStabilizationProductionRoutes(t *testing.T) {
 	db := registrationTestDB(t)
 	router := registrationRouter(t, db)
@@ -136,7 +135,7 @@ func TestCoreWorkflowStabilizationProductionRoutes(t *testing.T) {
 			request(t, "GET", "/api/student/internship-case/final-report", student, nil, 404)
 			if oldStatus == model.InternshipCaseStatusPassed {
 				continue
-			} // PASSED cannot retry.
+			}
 			current := model.InternshipCase{StudentID: student.ID, ProfessorID: professor.ID, Status: model.InternshipCaseStatusDraft}
 			must(t, db.Create(&current).Error)
 			for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusDraft, model.InternshipCaseStatusRevisionRequested} {
@@ -199,7 +198,6 @@ func TestCoreWorkflowStabilizationProductionRoutes(t *testing.T) {
 		must(t, db.Where("internship_case_id = ?", item.ID).First(&pref).Error)
 		for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusActive, model.InternshipCaseStatusPassed, model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled} {
 			must(t, db.Model(&item).Updates(map[string]any{"status": status, "activated_at": time.Now(), "cancellation_comment": service.TermClosureCancellationComment}).Error)
-			// Cancellation operational professor access requires a real term.
 			if status != model.InternshipCaseStatusCancelled {
 				request(t, "GET", path, professor, nil, 200)
 			}
@@ -213,7 +211,6 @@ func TestCoreWorkflowStabilizationProductionRoutes(t *testing.T) {
 			request(t, "GET", path, supervisor, nil, 403)
 			must(t, db.Model(&model.User{}).Where("id = ?", supervisor.ID).Update("company_id", company.ID).Error)
 			must(t, db.Model(&model.User{}).Where("id = ?", supervisor.ID).Update("role", model.RoleStudent).Error)
-			// Preserve the old supervisor JWT to ensure current DB membership is checked.
 			request(t, "GET", path, supervisor, nil, 403)
 			must(t, db.Model(&model.User{}).Where("id = ?", supervisor.ID).Update("role", model.RoleCompanySupervisor).Error)
 			must(t, db.Model(&item).Update("selected_preference_id", nil).Error)

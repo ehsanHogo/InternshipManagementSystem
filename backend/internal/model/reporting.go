@@ -73,7 +73,6 @@ func (report WeeklyReport) Status() WeeklyReportStatus {
 	return WeeklyReportSubmitted
 }
 
-// Status is computed for every response, including reports nested in case responses.
 func (report WeeklyReport) MarshalJSON() ([]byte, error) {
 	type fields WeeklyReport
 	return json.Marshal(struct {
@@ -114,8 +113,6 @@ type File struct {
 	UploadedAt   time.Time `gorm:"not null" json:"uploadedAt"`
 }
 
-// WeeklyReportsReadyForFinalEvaluation requires every distinct week 1..8 and
-// approvals from both reviewers on submitted content.
 func WeeklyReportsReadyForFinalEvaluation(reports []WeeklyReport) bool {
 	if len(reports) != 8 {
 		return false

@@ -258,7 +258,6 @@ func TestProfilePasswordChangeAllRoles(t *testing.T) {
 			}
 			registrationRequest(t, router, "POST", "/api/auth/login", "", map[string]string{"email": owner.Email, "password": "Demo123!"}, http.StatusUnauthorized)
 			registrationRequest(t, router, "POST", "/api/auth/login", "", map[string]string{"email": owner.Email, "password": newPassword}, http.StatusOK)
-			// Existing JWTs remain valid under the unchanged session architecture.
 			registrationRequest(t, router, "GET", "/api/auth/me", token, nil, http.StatusOK)
 			change("Demo123!", "ThirdPassword123!", http.StatusBadRequest)
 		})

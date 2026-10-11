@@ -233,8 +233,6 @@ func (handler *InternshipHandler) reviewWeeklyReport(ctx *gin.Context, role mode
 	ctx.JSON(http.StatusOK, report)
 }
 
-// Keep production and integration-test route wiring identical. Role middleware
-// is installed by the caller on each authenticated group.
 func (handler *InternshipHandler) RegisterStudentWeeklyReportRoutes(group *gin.RouterGroup) {
 	group.GET("/internship-case/weekly-reports", handler.ListStudentWeeklyReports)
 	group.GET("/internship-case/weekly-reports/:id", handler.GetStudentWeeklyReport)

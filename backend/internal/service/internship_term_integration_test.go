@@ -63,7 +63,6 @@ func termTestDatabase(t *testing.T) *gorm.DB {
 	}
 	sqlDB.SetMaxOpenConns(6)
 	t.Cleanup(func() { sqlDB.Close() })
-	// Exercise the production migration and seeding, including repeated startup.
 	if err := database.MigrateAndSeed(db); err != nil {
 		t.Fatal(err)
 	}
@@ -178,7 +177,6 @@ func TestAcademicInternshipTerms(t *testing.T) {
 		})
 	}
 
-	// All current statuses, plus another term and a nullable legacy case.
 	closedCases := []model.InternshipCase{}
 	for _, status := range studentReadableCaseStatuses() {
 		user := student()
@@ -353,7 +351,6 @@ func TestTermClosureRollsBack(t *testing.T) {
 			}
 		}
 	}
-	// A real PostgreSQL failure during case updates must roll back the whole close.
 	if err := db.Exec(fmt.Sprintf(`CREATE FUNCTION reject_case_cancel() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.id = %d THEN RAISE EXCEPTION 'test cancellation failure'; END IF; RETURN NEW; END $$`, cases[1].ID)).Error; err != nil {
 		t.Fatal(err)
 	}
@@ -367,7 +364,6 @@ func TestTermClosureRollsBack(t *testing.T) {
 	if err := db.Exec(`DROP TRIGGER reject_case_cancel ON internship_cases`).Error; err != nil {
 		t.Fatal(err)
 	}
-	// Failure in the final term update also rolls back successful cancellations.
 	if err := db.Exec(`CREATE FUNCTION reject_term_close() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'test term close failure'; END $$`).Error; err != nil {
 		t.Fatal(err)
 	}
@@ -424,7 +420,6 @@ func TestInternshipTermConcurrency(t *testing.T) {
 	if err != nil || term == nil {
 		t.Fatalf("current: %+v %v", term, err)
 	}
-	// Also prove the database constraint works without service prechecks.
 	extra := model.InternshipTerm{AcademicYear: 1406, TermType: model.InternshipTermTypeSummer, Status: model.InternshipTermStatusOpen, OpenedAt: time.Now(), CreatedBy: university.ID}
 	if err := db.Create(&extra).Error; !isUniqueViolation(err) {
 		t.Fatalf("one-open database index: %v", err)
@@ -604,7 +599,6 @@ func TestTermMigrationPreservesLegacyCases(t *testing.T) {
 	suffix := time.Now().UnixNano()
 	student := applicationTestUser(t, db, suffix, "migration-student", model.RoleStudent, nil)
 	professor := applicationTestUser(t, db, suffix, "migration-professor", model.RoleProfessor, nil)
-	// Reproduce the pre-milestone schema in this disposable test schema.
 	if err := db.Exec("ALTER TABLE internship_cases DROP COLUMN term_id").Error; err != nil {
 		t.Fatal(err)
 	}

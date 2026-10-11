@@ -32,7 +32,6 @@ func TestFinalReportReadinessRequiresExactApprovedWeeks(t *testing.T) {
 	if service.CanUploadFinalReport(&item) {
 		t.Fatal("extra weekly rows must not allow the initial upload")
 	}
-	// An existing revision is eligible even without any historical weekly rows.
 	item.WeeklyReports = nil
 	item.FinalReport = &model.FinalReport{Status: model.FinalReportRevisionRequested}
 	if !service.CanUploadFinalReport(&item) {

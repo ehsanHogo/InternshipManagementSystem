@@ -69,7 +69,6 @@ func TestUniversityIdentityLifecycle(t *testing.T) {
 		}
 	}
 	registrationRequest(t, router, "GET", path, adminToken, nil, http.StatusOK)
-	// Broad business-route coverage also catches shared-route authorization leaks.
 	blocked := func() {
 		t.Helper()
 		for _, endpoint := range []string{"/api/university/internship-terms", "/api/university/students", "/api/university/professors", "/api/university/professor-assignments", "/api/university/internship-cases", "/api/university/companies", "/api/university/company-supervisors", "/api/companies", "/api/files/1/download"} {
@@ -110,7 +109,6 @@ func TestUniversityIdentityLifecycle(t *testing.T) {
 		t.Fatal("invalid resubmission")
 	}
 	blocked()
-	// Approve a disabled account: identity review must never enable access.
 	registrationRequest(t, router, "POST", fmt.Sprintf("/api/admin/users/%d/disable", user.ID), adminToken, nil, http.StatusOK)
 	approved := registrationDecode[model.PublicUser](t, registrationRequest(t, router, "POST", path+"/approve", adminToken, nil, http.StatusOK))
 	stored = profileUser(t, db, user.ID)
@@ -134,7 +132,6 @@ func TestAccountActivationAllRolesAndProvisioning(t *testing.T) {
 	adminToken := registrationToken(t, admin)
 	university := registrationDemoUser(t, db, "university")
 	universityToken := registrationToken(t, university)
-	// Existing trusted university provisioning produces normal, active accounts.
 	for _, kind := range []string{"students", "professors"} {
 		payload := map[string]string{"fullName": "M22 managed " + kind, "email": "m22-" + kind + "@example.test", "studentNumber": "m22-123", "major": "Computer"}
 		created := registrationDecode[struct {
@@ -214,7 +211,6 @@ func TestAccountActivationAllRolesAndProvisioning(t *testing.T) {
 		t.Fatal("assignment history changed")
 	}
 	registrationRequest(t, router, "GET", "/api/professor/internship-cases", registrationToken(t, professor), nil, http.StatusOK)
-	// Re-enabling rejected university/company users must preserve restrictions.
 	rejected, token := universityRegistration(t, db, router, "m22-reenable")
 	registrationRequest(t, router, "POST", fmt.Sprintf("/api/admin/user-verifications/%d/reject", rejected.ID), adminToken, map[string]string{"reason": "Reason"}, http.StatusOK)
 	for _, action := range []string{"disable", "enable"} {
@@ -268,7 +264,6 @@ func TestAdminActivationSafety(t *testing.T) {
 	registrationRequest(t, router, "POST", "/api/auth/login", "", map[string]string{"email": other.Email, "password": "Demo123!"}, http.StatusUnauthorized)
 	registrationRequest(t, router, "POST", fmt.Sprintf("/api/admin/users/%d/enable", other.ID), token, nil, http.StatusOK)
 	registrationRequest(t, router, "POST", fmt.Sprintf("/api/admin/users/%d/disable", admin.ID), otherToken, nil, http.StatusOK)
-	// The service independently enforces active Admin authority.
 	_, err := service.NewUserAccessService(db).SetActive(admin.ID, other.ID, false)
 	if err != service.ErrUserAccessForbidden {
 		t.Fatalf("disabled admin service access: %v", err)
@@ -284,13 +279,11 @@ func TestCurrentDatabaseRoleAndVerificationReasonLimits(t *testing.T) {
 	admin := registrationDemoUser(t, db, "admin")
 	adminToken := registrationToken(t, admin)
 	student := registrationDemoUser(t, db, "student")
-	// A valid signature must not grant a token's stale role over the current row.
 	stale := student
 	stale.Role = model.RoleAdmin
 	token := registrationToken(t, stale)
 	registrationRequest(t, router, "GET", "/api/admin/users", token, nil, http.StatusForbidden)
 	registrationRequest(t, router, "POST", "/api/university-supervisor/verification/resubmit", token, nil, http.StatusForbidden)
-	// Missing current users cannot keep using their JWT.
 	missingToken, err := auth.CreateToken(model.User{ID: 4294967295, Role: model.RoleAdmin}, registrationTestSecret, time.Hour)
 	if err != nil {
 		t.Fatal(err)
@@ -299,7 +292,6 @@ func TestCurrentDatabaseRoleAndVerificationReasonLimits(t *testing.T) {
 	user, _ := universityRegistration(t, db, router, "m22-reason-limit")
 	path := fmt.Sprintf("/api/admin/user-verifications/%d/reject", user.ID)
 	registrationRequest(t, router, "POST", path, adminToken, map[string]string{"reason": strings.Repeat("ن", 5001)}, http.StatusBadRequest)
-	// UTF-8 reasons up to the documented character limit fit the strict decoder.
 	reason := strings.Repeat("ن", 5000)
 	rejected := registrationDecode[model.PublicUser](t, registrationRequest(t, router, "POST", path, adminToken, map[string]string{"reason": reason}, http.StatusOK))
 	if rejected.VerificationRejectionReason == nil || *rejected.VerificationRejectionReason != reason {

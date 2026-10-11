@@ -54,7 +54,6 @@ func (s *UserAccessService) Register(input UniversityRegistrationInput) (*model.
 		return nil, err
 	}
 	user := model.User{FullName: input.FullName, Email: input.Email, Phone: optionalString(input.Phone), PasswordHash: hash, Role: model.RoleUniversitySupervisor, IsActive: true, VerificationStatus: model.UserVerificationPending}
-	// Failed inserts must not write credential hashes into SQL error logs.
 	if err := s.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Session(&gorm.Session{Logger: logger.Default.LogMode(logger.Silent)}).Create(&user).Error; err != nil {
 			return classifyRegistrationConstraint(err)
@@ -85,7 +84,6 @@ func (s *UserAccessService) List(verificationOnly bool, status model.UserVerific
 		query = query.Where("is_active = ?", *active)
 	}
 	if search = strings.TrimSpace(search); search != "" {
-		// Treat wildcard characters literally in user-entered searches.
 		pattern := "%" + strings.NewReplacer("\\", "\\\\", "%", "\\%", "_", "\\_").Replace(search) + "%"
 		query = query.Where("full_name ILIKE ? OR email ILIKE ?", pattern, pattern)
 	}
@@ -169,7 +167,6 @@ func (s *UserAccessService) Resubmit(id uint) (*model.PublicUser, error) {
 		if user.VerificationStatus != model.UserVerificationRejected {
 			return ErrVerificationTransition
 		}
-		// Clear the previous decision; the next review will populate latest metadata.
 		if err := tx.Model(&user).Updates(map[string]any{"verification_status": model.UserVerificationPending, "verification_resubmitted_at": time.Now(), "verification_reviewed_at": nil, "verification_reviewed_by": nil, "verification_rejection_reason": nil}).Error; err != nil {
 			return err
 		}
@@ -187,8 +184,6 @@ func (s *UserAccessService) Resubmit(id uint) (*model.PublicUser, error) {
 
 func (s *UserAccessService) SetActive(adminID, id uint, active bool) (*AdminUserDetail, error) {
 	err := s.db.Transaction(func(tx *gorm.DB) error {
-		// All activation changes share this transaction lock. Concurrent Admin
-		// disables cannot both count the other account as the last active Admin.
 		if err := tx.Exec("SELECT pg_advisory_xact_lock(220022)").Error; err != nil {
 			return err
 		}

@@ -29,7 +29,6 @@ export class NotificationsComponent {
       next: notifications => {
         this.notifications.set(notifications);
         this.loading.set(false);
-        // A render must complete before acknowledging this exact list snapshot.
         afterNextRender(() => {
           if (this.destroyRef.destroyed) return;
           const ids = notifications.filter(item => !item.isRead).map(item => item.id);

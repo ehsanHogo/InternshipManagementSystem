@@ -174,7 +174,6 @@ func TestCompanyRegistrationGovernanceProductionRoutes(t *testing.T) {
 	registrationRequest(t, router, "GET", "/api/companies", token, nil, http.StatusForbidden)
 	registrationRequest(t, router, "POST", "/api/company/registration/resubmit", token, nil, http.StatusConflict)
 
-	// Every review route is Admin-only, including all other authenticated roles.
 	for _, role := range []string{"student", "professor", "university", "company"} {
 		nonAdmin := registrationToken(t, registrationDemoUser(t, db, role))
 		for _, request := range []struct{ method, path string }{{"GET", "/api/admin/company-registrations"}, {"GET", reviewPath}, {"POST", reviewPath + "/approve"}, {"POST", reviewPath + "/reject"}} {
@@ -236,7 +235,6 @@ func TestCompanyRegistrationGovernanceProductionRoutes(t *testing.T) {
 	if edited.Company.RegistrationStatus != model.CompanyRegistrationStatusRejected || edited.Company.RegistrationRejectionReason == nil {
 		t.Fatal("edit auto-resubmitted rejected registration")
 	}
-	// Check ownership: another company can only resubmit its own record.
 	_, otherCompany, _, otherToken := registrationFixture(t, router, "other")
 	registrationRequest(t, router, "POST", "/api/company/registration/resubmit", otherToken, nil, http.StatusConflict)
 	resubmitted := registrationDecode[struct {
@@ -299,7 +297,6 @@ func TestRegistrationStudentPlacementAndTrustSeparation(t *testing.T) {
 	registrationRequest(t, router, "PUT", opportunityPath, token, create, http.StatusOK)
 	registrationRequest(t, router, "GET", opportunityPath, token, nil, http.StatusOK)
 	registrationRequest(t, router, "GET", fmt.Sprintf("/api/student/opportunities/%d", opportunity.ID), studentToken, nil, http.StatusOK)
-	// Use the production multipart apply endpoint with a real PDF signature.
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
 	header := textproto.MIMEHeader{}
@@ -346,7 +343,6 @@ func TestRegistrationStudentPlacementAndTrustSeparation(t *testing.T) {
 			}
 		}
 		registrationRequest(t, router, "POST", fmt.Sprintf("/api/student/opportunities/%d/apply", opportunity.ID), studentToken, nil, http.StatusForbidden)
-		// Apply rechecks independently of the catalog and pre-upload eligibility.
 		if _, err := service.NewOpportunityApplicationService(db).Apply(student.ID, opportunity.ID, &model.File{OriginalName: "resume.pdf", StoredName: "resume.pdf", Path: "fixture.pdf", MimeType: "application/pdf", SizeBytes: 10}); !errors.Is(err, service.ErrCompanyRegistrationRequired) {
 			t.Fatalf("service application bypass: %v", err)
 		}
@@ -391,7 +387,6 @@ func TestRegistrationStudentPlacementAndTrustSeparation(t *testing.T) {
 	casePath := fmt.Sprintf("/api/company/internship-cases/%d", item.ID)
 	registrationRequest(t, router, "GET", casePath, token, nil, http.StatusOK)
 	_, _, _, otherToken := registrationFixture(t, router, "ownership")
-	// Approve the other company through the actual review API.
 	var other model.User
 	claims, err := auth.ParseToken(otherToken, registrationTestSecret)
 	if err != nil {
@@ -411,7 +406,6 @@ func TestRegistrationStudentPlacementAndTrustSeparation(t *testing.T) {
 	registrationRequest(t, router, "GET", casePath+"/weekly-reports", token, nil, http.StatusOK)
 	historyPath := fmt.Sprintf("/api/company/internship-cases/history/%d", item.ID)
 	registrationRequest(t, router, "GET", historyPath, token, nil, http.StatusForbidden)
-	// Historical report files remain available only through existing assignment authorization.
 	var finalFile model.File
 	if err := db.First(&finalFile, application.Resume.ID).Error; err != nil {
 		t.Fatal(err)
@@ -430,7 +424,6 @@ func TestRegistrationStudentPlacementAndTrustSeparation(t *testing.T) {
 		t.Fatal(err)
 	}
 	registrationRequest(t, router, "GET", finalPath, token, nil, http.StatusForbidden)
-	// Terminal history remains readable despite inconsistent legacy registration.
 	for _, status := range []model.InternshipCaseStatus{model.InternshipCaseStatusFailed, model.InternshipCaseStatusCancelled, model.InternshipCaseStatusPassed} {
 		if err := db.Model(&item).Update("status", status).Error; err != nil {
 			t.Fatal(err)
@@ -460,7 +453,6 @@ func TestRegistrationStudentPlacementAndTrustSeparation(t *testing.T) {
 	if !strings.Contains(directory.Body.String(), company.Name) {
 		t.Fatal("trusted-company directory was conflated with registration permission")
 	}
-	// Admin approval preserves a pre-existing true university trust flag as well.
 	if err := db.Model(&company).Update("registration_status", model.CompanyRegistrationStatusPending).Error; err != nil {
 		t.Fatal(err)
 	}
@@ -476,7 +468,6 @@ func TestRegistrationProfileCorrectionValidationAndIdentity(t *testing.T) {
 	router := registrationRouter(t, db)
 	input, company, supervisor, token := registrationFixture(t, router, "validation")
 	otherInput, _, _, _ := registrationFixture(t, router, "unique")
-	// Uniqueness failures roll back both records and never change status.
 	for _, field := range []string{"name", "nationalId", "economicCode", "email"} {
 		payload := registrationProfilePayload(input)
 		if field == "email" {
@@ -504,7 +495,6 @@ func TestRegistrationProfileCorrectionValidationAndIdentity(t *testing.T) {
 	if profile.Company.RegistrationRejectionReason == nil || *profile.Company.RegistrationRejectionReason != "مدارک را اصلاح کنید" {
 		t.Fatal("rejection reason not visible to company")
 	}
-	// Defensively validate required fields at resubmission, even for inconsistent legacy data.
 	if err := db.Model(&company).Updates(map[string]any{"address": nil, "is_approved": true}).Error; err != nil {
 		t.Fatal(err)
 	}

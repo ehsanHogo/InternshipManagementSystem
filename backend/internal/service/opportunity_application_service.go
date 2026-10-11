@@ -29,8 +29,7 @@ const (
 	ApplicationRestrictionAlreadyExists = "APPLICATION_ALREADY_EXISTS"
 	ApplicationRestrictionNotOpen       = "OPPORTUNITY_NOT_OPEN"
 	ApplicationRestrictionCaseActive    = "INTERNSHIP_CASE_ALREADY_IN_PROGRESS"
-	// Retained wire code means successful PASSED history only.
-	ApplicationRestrictionPassed = "INTERNSHIP_ALREADY_COMPLETED"
+	ApplicationRestrictionPassed        = "INTERNSHIP_ALREADY_COMPLETED"
 )
 
 type ApplicationEligibility struct {
@@ -276,7 +275,7 @@ func checkStudentOpportunityApplicationEligibility(db *gorm.DB, studentID uint) 
 		model.InternshipCaseStatusPendingUniversityReview,
 		model.InternshipCaseStatusPendingCompanyDetails,
 		model.InternshipCaseStatusPendingFinalApproval,
-		model.InternshipCaseStatus("READY_TO_START"), // Defensive block for unmigrated legacy data only.
+		model.InternshipCaseStatus("READY_TO_START"),
 		model.InternshipCaseStatusActive,
 	}
 	var activeCount int64

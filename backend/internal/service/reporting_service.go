@@ -102,8 +102,6 @@ func (service *InternshipService) GetStudentWeeklyReport(studentID, reportID uin
 	return &report, nil
 }
 
-// Every mutation locks the case before the report. This also serializes final approval,
-// completion, evaluation readiness, resubmission, and simultaneous reviews.
 func lockWeeklyReport(tx *gorm.DB, caseID, reportID uint) (*model.WeeklyReport, error) {
 	var report model.WeeklyReport
 	err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ? AND internship_case_id = ?", reportID, caseID).First(&report).Error
@@ -163,7 +161,6 @@ func (service *InternshipService) SubmitWeeklyReport(studentID, reportID uint) (
 		}
 		now := time.Now()
 		report.SubmittedAt = &now
-		// Keep the latest feedback until its author reviews the new submission.
 		report.CompanyReviewStatus, report.ProfessorReviewStatus = model.WeeklyReviewPending, model.WeeklyReviewPending
 		if err := tx.Save(report).Error; err != nil {
 			return err
@@ -368,7 +365,6 @@ func (service *InternshipService) GetAccessibleFile(userID uint, role model.Role
 	var finalReport model.FinalReport
 	err := service.db.Where("current_file_id = ?", fileID).First(&finalReport).Error
 	if err == nil {
-		// Download authorization uses the same case permissions as case detail.
 		var accessErr error
 		switch role {
 		case model.RoleStudent:
@@ -381,8 +377,6 @@ func (service *InternshipService) GetAccessibleFile(userID uint, role model.Role
 		case model.RoleProfessor:
 			_, accessErr = service.GetProfessorCase(userID, finalReport.InternshipCaseID)
 		case model.RoleCompanySupervisor:
-			// M17 preserves terminal history even when registration is restricted.
-			// Both helpers enforce the selected placement and current membership.
 			_, accessErr = service.GetCompanyHistoricalCase(userID, finalReport.InternshipCaseID)
 			if errors.Is(accessErr, ErrCaseNotAssignedToCompany) {
 				_, accessErr = service.GetCompanyCase(userID, finalReport.InternshipCaseID)

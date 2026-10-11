@@ -85,8 +85,7 @@ type ProfessorAssignment struct {
 }
 
 type InternshipCase struct {
-	ID uint `gorm:"primaryKey"`
-	// Nullable only for legacy cases. New cases receive the currently open term.
+	ID          uint                 `gorm:"primaryKey"`
 	TermID      *uint                `gorm:"index"`
 	Term        *InternshipTerm      `gorm:"foreignKey:TermID;constraint:OnDelete:RESTRICT"`
 	StudentID   uint                 `gorm:"not null;index"`
@@ -96,21 +95,18 @@ type InternshipCase struct {
 	PassedCredits *int    `gorm:"check:passed_credits IS NULL OR passed_credits >= 0"`
 	Mobile        *string `gorm:"size:30"`
 
-	SelectedPreferenceID *uint
-	// CompanySupervisorID snapshots the selected opportunity's supervisor.
-	// It is never populated through arbitrary university selection.
-	CompanySupervisorID *uint
-	LetterNumber        *string `gorm:"size:100"`
-	LetterDate          *time.Time
-	InternshipSubject   *string `gorm:"size:500"`
-	StartDate           *time.Time
-	WorkplaceAddress    *string               `gorm:"size:1000"`
-	WorkplacePhone      *string               `gorm:"size:50"`
-	FinalResult         *ProfessorFinalResult `gorm:"type:varchar(16);check:final_result IS NULL OR final_result IN ('EXCELLENT','GOOD','FAILED')"`
-	ProfessorComment    *string               `gorm:"size:2000"`
-	CancellationComment *string               `gorm:"type:text"`
-	// Latest preference revision request; retained after student resubmission.
-	UniversityRevisionComment     *string `gorm:"type:text"`
+	SelectedPreferenceID          *uint
+	CompanySupervisorID           *uint
+	LetterNumber                  *string `gorm:"size:100"`
+	LetterDate                    *time.Time
+	InternshipSubject             *string `gorm:"size:500"`
+	StartDate                     *time.Time
+	WorkplaceAddress              *string               `gorm:"size:1000"`
+	WorkplacePhone                *string               `gorm:"size:50"`
+	FinalResult                   *ProfessorFinalResult `gorm:"type:varchar(16);check:final_result IS NULL OR final_result IN ('EXCELLENT','GOOD','FAILED')"`
+	ProfessorComment              *string               `gorm:"size:2000"`
+	CancellationComment           *string               `gorm:"type:text"`
+	UniversityRevisionComment     *string               `gorm:"type:text"`
 	UniversityRevisionRequestedAt *time.Time
 	UniversityRevisionRequestedBy *uint
 	UniversityRevisionRequester   *User   `gorm:"foreignKey:UniversityRevisionRequestedBy"`
@@ -130,7 +126,6 @@ type InternshipCase struct {
 	UpdatedAt   time.Time
 	SubmittedAt *time.Time
 	ActivatedAt *time.Time
-	// CompletedAt records final evaluation for both successful and failed outcomes.
 	CompletedAt *time.Time
 	CancelledAt *time.Time
 }

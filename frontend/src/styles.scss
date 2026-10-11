@@ -66,7 +66,6 @@ h4,
   width: 100%;
 }
 
-/* Keep historical/read-only values legible while retaining a disabled cue. */
 .p-disabled,
 .p-component:disabled,
 input:disabled,
@@ -82,7 +81,6 @@ textarea:disabled {
   opacity: 1;
 }
 
-/* PrimeNG overlays are appended to body; these values document the shared stack. */
 .p-select-overlay,
 .p-dropdown-panel,
 .p-multiselect-overlay,
@@ -110,7 +108,6 @@ textarea:disabled {
   max-height: calc(100vh - 2rem);
 }
 
-/* The local Jalali picker lives in two compact forms; let its calendar escape dialog scrolling. */
 .p-dialog:has(app-jalali-date-picker) .p-dialog-content {
   overflow: visible;
 }

@@ -15,8 +15,6 @@ import (
 	"internship-management-system/backend/internal/service"
 )
 
-// Separate connections and committed fixtures exercise actual PostgreSQL locks.
-// The temporary schema is the only schema created/dropped by this test.
 func TestWeeklyReportsConcurrentMutations(t *testing.T) {
 	dsn := os.Getenv("TEST_DATABASE_DSN")
 	if dsn == "" {

@@ -23,7 +23,6 @@ import (
 	"internship-management-system/backend/internal/service"
 )
 
-// Committed fixtures in an isolated schema allow real row-lock concurrency.
 func TestCompanyFacultyApproval(t *testing.T) {
 	db := companyApprovalTestDB(t)
 	suffix := time.Now().UnixNano()
@@ -111,7 +110,7 @@ func TestCompanyFacultyApproval(t *testing.T) {
 	}
 	eligible := newCompany("excellent", false)
 	good := newCompany("good", false)
-	seedApproved := newCompany("seeded", true) // Approved lists do not require history.
+	seedApproved := newCompany("seeded", true)
 	nonSelected := newCompany("non-selected", false)
 	empty := newCompany("no-history", false)
 	passedCase, openOpportunity := newCase(eligible, model.InternshipCaseStatusPassed, model.ProfessorFinalResultExcellent)
@@ -126,10 +125,8 @@ func TestCompanyFacultyApproval(t *testing.T) {
 		}
 		newCase(company, status, result)
 		ineligible = append(ineligible, company)
-		// Mixed history must still display only successful evidence.
 		newCase(eligible, status, result)
 	}
-	// Company A accepted the student and is priority 1; only selected B qualifies.
 	priorityCase, _ := newCase(nonSelected, model.InternshipCaseStatusPassed, model.ProfessorFinalResultGood)
 	var oldPreference model.InternshipPreference
 	if err := db.Where("internship_case_id = ?", priorityCase.ID).First(&oldPreference).Error; err != nil {
@@ -158,7 +155,6 @@ func TestCompanyFacultyApproval(t *testing.T) {
 	if err := db.Model(&priorityCase).Update("selected_preference_id", secondPreference.ID).Error; err != nil {
 		t.Fatal(err)
 	}
-	// Add reporting data to make the invariance snapshot meaningful.
 	now := time.Now()
 	report := model.WeeklyReport{InternshipCaseID: passedCase.ID, WeekNumber: 1, StartDate: now, EndDate: now, ActivityDescription: "فعالیت", SubmittedAt: &now, CompanyReviewStatus: model.WeeklyReviewApproved, ProfessorReviewStatus: model.WeeklyReviewApproved}
 	if err := db.Create(&report).Error; err != nil {

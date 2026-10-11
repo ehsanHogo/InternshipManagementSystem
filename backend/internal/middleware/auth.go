@@ -68,7 +68,6 @@ func abortUnauthorized(ctx *gin.Context) {
 	ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "ورود به سامانه الزامی است."})
 }
 
-// JWTs identify the user; the current database row authorizes every request.
 func RequireActiveUser(db *gorm.DB) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		id, exists := ctx.Get(ContextUserID)
@@ -93,8 +92,6 @@ func RequireActiveUser(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// Register personal/status endpoints before this middleware. All subsequent
-// business routes, including shared company/file routes, require verification.
 func RequireVerifiedUniversity() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		value, exists := ctx.Get("auth_current_user")

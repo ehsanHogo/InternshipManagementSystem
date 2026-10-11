@@ -87,7 +87,6 @@ func TestActionNotificationsDeduplicateConcurrentlyAndAfterRead(t *testing.T) {
 			}
 		})
 	}
-	// Different unread action categories coexist for the same reviewer.
 	for _, test := range []struct {
 		userID uint
 		want   int64
@@ -97,7 +96,6 @@ func TestActionNotificationsDeduplicateConcurrentlyAndAfterRead(t *testing.T) {
 			t.Fatalf("category coexistence: count %d want %d err %v", count, test.want, err)
 		}
 	}
-	// Corrections use the same placement slot even when an applicant/report alert exists.
 	if err := s.NotifyCompanyPlacement(company.ID, true); err != nil {
 		t.Fatal(err)
 	}
@@ -105,7 +103,6 @@ func TestActionNotificationsDeduplicateConcurrentlyAndAfterRead(t *testing.T) {
 	if err != nil || countUnread != 3 {
 		t.Fatalf("correction duplicated placement: %d, %v", countUnread, err)
 	}
-	// Personal notifications are never aggregated, even when both remain unread.
 	if err := s.CreateStudentNotification(company.ID, "personal", "one", ""); err != nil {
 		t.Fatal(err)
 	}
@@ -217,7 +214,6 @@ func TestNotificationFailureRollsBackBusinessOperation(t *testing.T) {
 		t.Fatal("resume metadata committed despite rollback")
 	}
 	db.Callback().Create().Remove(callback)
-	// A broader enclosing transaction can also roll back both after notification creation.
 	err = db.Transaction(func(tx *gorm.DB) error {
 		resume.ID = 0
 		if _, err := NewOpportunityApplicationService(tx).Apply(student.ID, opportunity.ID, resume); err != nil {
@@ -271,7 +267,6 @@ func TestCompanyActionNotificationsRequireOperationalAccess(t *testing.T) {
 				t.Fatalf("company %s got %d want %d", status, count, want)
 			}
 			if status == model.CompanyRegistrationStatusApproved {
-				// Disabling or losing membership prevents all later operational alerts.
 				list, err := s.List(user.ID)
 				if err != nil {
 					t.Fatal(err)

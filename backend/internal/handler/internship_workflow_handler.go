@@ -280,15 +280,13 @@ func (handler *InternshipHandler) SubmitPlacementDetails(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, companyCaseResponse(internshipCase))
 }
 
-// A company sees only its selected placement, without student preference priority
-// or other recruitment preferences or passed-credit information.
 func companyCaseResponse(internshipCase *model.InternshipCase) internshipCaseResponse {
 	response := caseResponse(internshipCase)
 	response.WeeklyReports = submittedWeeklyReports(response.WeeklyReports)
 	response.PassedCredits = nil
 	response.Preferences = []internshipPreferenceResponse{}
 	if response.SelectedPreference != nil {
-		response.SelectedPreference.Priority = 0 // omitted from the company JSON
+		response.SelectedPreference.Priority = 0
 		response.Preferences = append(response.Preferences, *response.SelectedPreference)
 	}
 	return response
@@ -327,7 +325,6 @@ func parseDate(value string) (time.Time, error) {
 	return date.UTC(), nil
 }
 
-// RegisterUniversityCaseRoutes is shared by production and integration tests.
 func (handler *InternshipHandler) RegisterUniversityCaseRoutes(university *gin.RouterGroup) {
 	university.POST("/internship-cases/:id/approve-placement", handler.ApproveUniversityPlacement)
 	university.POST("/internship-cases/:id/request-revision", handler.RequestUniversityRevision)

@@ -1,5 +1,3 @@
-// Run after a production build. API fixtures exercise Angular routes, forms,
-// auth state and the M17 guard; real persistence/authorization is tested in Go.
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const fs = require('node:fs');

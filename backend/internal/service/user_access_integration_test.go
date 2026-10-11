@@ -49,13 +49,10 @@ func TestConcurrentAdminDisableAndVerificationReview(t *testing.T) {
 	if count != 1 || successes != 1 {
 		t.Fatalf("concurrent disables left %d active admins, %d successes", count, successes)
 	}
-	// Defense in depth: a transaction snapshot still forbids disabling the sole
-	// Admin even if a new request raced with an earlier disable after authentication.
 	var active model.User
 	if err := db.Where("role = ? AND is_active = true", model.RoleAdmin).First(&active).Error; err != nil {
 		t.Fatal(err)
 	}
-	// Self-disable has a dedicated error and also covers the single-Admin case.
 	if _, err := s.SetActive(active.ID, active.ID, false); !errors.Is(err, ErrAdminSelfDisable) {
 		t.Fatalf("self-disable: %v", err)
 	}

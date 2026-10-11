@@ -158,7 +158,6 @@ func TestWeeklyReportsV2API(t *testing.T) {
 
 	t.Run("drafts validation week constraints and ownership", func(t *testing.T) {
 		student, item := fixture(t, model.InternshipCaseStatusActive)
-		// Week 3 before Week 2; equal and future dates are valid.
 		report := draft(t, student, 3)
 		if report.SubmittedAt != nil || report.CompanyReviewStatus != model.WeeklyReviewPending || report.ProfessorReviewStatus != model.WeeklyReviewPending || report.ActivityDescription != "فعالیت هفته" {
 			t.Fatalf("unexpected draft: %+v", report)
@@ -190,7 +189,6 @@ func TestWeeklyReportsV2API(t *testing.T) {
 		request(t, "PUT", studentPath(report.ID), token(t, other), body(3), 404)
 		request(t, "POST", studentPath(report.ID)+"/submit", token(t, other), nil, 404)
 		decode(t, request(t, "GET", studentPath(report.ID), token(t, student), nil, 200), model.WeeklyReportDraft)
-		// Drafts are private to the student, including nested case responses.
 		for _, role := range []string{"company", "professor"} {
 			user := supervisorA
 			if role == "professor" {
@@ -220,7 +218,6 @@ func TestWeeklyReportsV2API(t *testing.T) {
 			}
 		}
 
-		// Database constraints, independently of service validation.
 		for i, week := range []int{0, 9, 3} {
 			savepoint := fmt.Sprintf("wr_constraint_%d", i)
 			tx.SavePoint(savepoint)
@@ -360,7 +357,6 @@ func TestWeeklyReportsV2API(t *testing.T) {
 			}
 			decode(t, request(t, "GET", base, token(t, owner), nil, 200), model.WeeklyReportSubmitted)
 		}
-		// The selected company still controls access if the supervisor moves company.
 		if err := tx.Model(&model.User{}).Where("id = ?", supervisorA.ID).Update("company_id", companyB.ID).Error; err != nil {
 			t.Fatal(err)
 		}
@@ -425,7 +421,6 @@ func TestWeeklyReportsV2API(t *testing.T) {
 		request(t, "POST", evalPath, token(t, supervisorA), evaluation, 409)
 		submit(t, student, last)
 		review(t, supervisorA, "company", item, last, "approve", nil, 200)
-		// All eight company approvals suffice while EVERY professor review is pending.
 		request(t, "POST", evalPath, token(t, supervisorA), evaluation, 201)
 		request(t, "POST", evalPath, token(t, supervisorA), evaluation, 409)
 		completion := map[string]string{"result": "GOOD"}
@@ -436,7 +431,6 @@ func TestWeeklyReportsV2API(t *testing.T) {
 				request(t, "POST", completePath, token(t, professorA), completion, 409)
 			}
 		}
-		// Final completion requires a professor-approved final report.
 		request(t, "POST", completePath, token(t, professorA), completion, 409)
 		file := model.File{OriginalName: "final.pdf", StoredName: fmt.Sprintf("wr-final-%d.pdf", suffix), Path: "/tmp/final.pdf", MimeType: "application/pdf", SizeBytes: 100, UploadedBy: student.ID, UploadedAt: time.Now()}
 		if err := tx.Create(&file).Error; err != nil {
@@ -446,7 +440,6 @@ func TestWeeklyReportsV2API(t *testing.T) {
 		if err := tx.Create(&finalReport).Error; err != nil {
 			t.Fatal(err)
 		}
-		// Also ensure a missing company approval blocks final completion.
 		if err := tx.Model(&model.WeeklyReport{}).Where("id = ?", last.ID).Update("company_review_status", model.WeeklyReviewPending).Error; err != nil {
 			t.Fatal(err)
 		}

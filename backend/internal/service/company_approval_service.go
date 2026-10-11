@@ -38,7 +38,6 @@ type ApprovalCompanyDetail struct {
 	SuccessfulInternships []SuccessfulInternshipView `json:"successfulInternships"`
 }
 
-// PublicApprovedCompany deliberately excludes company identifiers and student evidence.
 type PublicApprovedCompany struct {
 	ID      uint    `json:"id"`
 	Name    string  `json:"name"`
@@ -52,8 +51,6 @@ func NewCompanyApprovalService(db *gorm.DB) *CompanyApprovalService {
 	return &CompanyApprovalService{db: db}
 }
 
-// All approval evidence follows the university-selected placement, never an
-// arbitrary preference, accepted application, or cached company supervisor.
 func selectedPassedInternships(db *gorm.DB) *gorm.DB {
 	return db.Table("internship_cases AS cases").
 		Joins("JOIN internship_preferences AS preference ON preference.id = cases.selected_preference_id AND preference.internship_case_id = cases.id").
@@ -111,7 +108,6 @@ func (service *CompanyApprovalService) GetCompany(id uint) (*ApprovalCompanyDeta
 	if err := query.Distinct("cases.id").Count(&detail.PassedInternshipCount).Error; err != nil {
 		return nil, fmt.Errorf("count successful internships: %w", err)
 	}
-	// Keep the approval view concise; the count above still includes all passed cases.
 	err = selectedPassedInternships(service.db).Where("opportunity.company_id = ?", id).
 		Joins("JOIN users AS student ON student.id = cases.student_id").
 		Select("cases.id AS case_id, student.full_name AS student_name, opportunity.title AS opportunity_title, cases.final_result, cases.completed_at").
@@ -140,7 +136,6 @@ func (service *CompanyApprovalService) ApproveCompany(id uint) (*model.Company, 
 		if count == 0 {
 			return ErrCompanyNotEligibleForApproval
 		}
-		// UpdateColumn intentionally avoids touching UpdatedAt or any associations.
 		if err := tx.Model(&company).UpdateColumn("is_approved", true).Error; err != nil {
 			return fmt.Errorf("approve company: %w", err)
 		}

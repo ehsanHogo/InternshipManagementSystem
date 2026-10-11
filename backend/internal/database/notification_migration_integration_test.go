@@ -41,7 +41,6 @@ func TestNotificationMigrationDoesNotBackfillAndPreservesExistingRows(t *testing
 	must(tx.Exec("CREATE SCHEMA " + schema).Error)
 	must(tx.Exec("SET LOCAL search_path TO " + schema).Error)
 	must(MigrateAndSeed(tx))
-	// Simulate M22's existing users with no notifications table.
 	must(tx.Migrator().DropTable(&model.Notification{}))
 	var before []model.User
 	must(tx.Order("id").Find(&before).Error)
@@ -61,7 +60,6 @@ func TestNotificationMigrationDoesNotBackfillAndPreservesExistingRows(t *testing
 			t.Fatalf("missing index %s", index)
 		}
 	}
-	// Simulate an already deployed M23 table and preserve its generic history.
 	must(tx.Exec("ALTER TABLE notifications ALTER COLUMN type TYPE varchar(32)").Error)
 	legacy := model.Notification{UserID: before[0].ID, Type: "COMPANY_ACTION_REQUIRED", Title: "قدیمی", Message: "محفوظ"}
 	must(tx.Create(&legacy).Error)
@@ -72,10 +70,8 @@ func TestNotificationMigrationDoesNotBackfillAndPreservesExistingRows(t *testing
 	if !reflect.DeepEqual(legacy, old) {
 		t.Fatal("category migration rewrote legacy notification")
 	}
-	// The longest category must fit after upgrading the original varchar(32).
 	n := model.Notification{UserID: before[0].ID, Type: model.NotificationAdminUniversityVerification, Title: "اعلان", Message: "محفوظ", IsRead: true}
 	must(tx.Create(&n).Error)
-	// Compare persisted timestamps at PostgreSQL precision.
 	must(tx.First(&n, n.ID).Error)
 	must(MigrateAndSeed(tx))
 	must(MigrateAndSeed(tx))

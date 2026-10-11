@@ -55,7 +55,6 @@ func TestCaseHistoryAPI(t *testing.T) {
 	university := createOpportunityTestUser(t, tx, suffix, "historyuniversity", model.RoleUniversitySupervisor, nil)
 	student := createOpportunityTestUser(t, tx, suffix, "historystudent", model.RoleStudent, nil)
 	otherStudent := createOpportunityTestUser(t, tx, suffix, "historyotherstudent", model.RoleStudent, nil)
-	// Current assignment differs from the Case snapshot: it grants no history access.
 	if err := tx.Create(&model.ProfessorAssignment{StudentID: student.ID, ProfessorID: otherProfessor.ID, AssignedAt: time.Now()}).Error; err != nil {
 		t.Fatal(err)
 	}
@@ -326,7 +325,6 @@ func TestCaseHistoryAPI(t *testing.T) {
 			if draft.ID == old.ID || draft.Status != model.InternshipCaseStatusDraft || draft.Professor.ID != otherProfessor.ID {
 				t.Fatalf("incorrect retry: %+v", draft)
 			}
-			// A historical record with a later timestamp must never become current.
 			if err := tx.Model(old).Update("created_at", time.Now().Add(time.Hour)).Error; err != nil {
 				t.Fatal(err)
 			}

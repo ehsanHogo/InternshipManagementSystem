@@ -23,7 +23,6 @@ type RatingField = keyof Pick<CompanyEvaluation,
   'persistenceRating' | 'suggestionRating' | 'resourceUsageRating' |
   'reportQualityRating' | 'projectPerformanceRating'>;
 
-/** Read-only business data for Student history and University case inspection. */
 @Component({
   selector: 'app-case-reports',
   imports: [ButtonModule, CardModule, TagModule, JalaliDatePipe, PersianDigitsPipe, WeeklyReportReviewComponent],

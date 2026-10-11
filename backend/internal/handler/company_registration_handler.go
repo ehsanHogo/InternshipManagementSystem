@@ -91,8 +91,6 @@ func (handler *CompanyAccountHandler) UpdateProfile(ctx *gin.Context) {
 		return
 	}
 	var request companyProfileUpdateRequest
-	// Explicit DTO and strict decoding reject attempts to mutate approval, role,
-	// membership, password, or audit fields rather than silently accepting them.
 	decoder := json.NewDecoder(http.MaxBytesReader(ctx.Writer, ctx.Request.Body, 64<<10))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&request); err != nil {

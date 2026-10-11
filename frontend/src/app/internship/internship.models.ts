@@ -13,7 +13,6 @@ export type InternshipCaseStatus =
   | 'FAILED'
   | 'CANCELLED';
 
-/** PrimeNG Tag severities used for status chips across the app. */
 export type StatusTagSeverity = 'secondary' | 'info' | 'success' | 'warn' | 'danger' | 'contrast';
 
 export type CompanyRegistrationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -101,7 +100,6 @@ export interface InternshipCase {
   completedAt?: string;
 }
 
-// These fields are available only through the authorized student/university views.
 export interface StudentInternshipCase extends InternshipCase, Partial<CompanyRating> {
   studentRating?: number | null;
   canRateInternship?: boolean;

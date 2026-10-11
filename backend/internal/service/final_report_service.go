@@ -19,8 +19,6 @@ var (
 	ErrFinalReportWeeklyReportsIncomplete = errors.New("all 8 weekly reports must be approved by both reviewers before the initial final report upload")
 )
 
-// CanUploadFinalReport uses the preloaded case data for response readiness.
-// The upload path enforces the same rule again under the case lock.
 func CanUploadFinalReport(item *model.InternshipCase) bool {
 	return finalReportUploadError(item) == nil
 }
@@ -33,7 +31,6 @@ func finalReportUploadError(item *model.InternshipCase) error {
 		if item.FinalReport.Status != model.FinalReportRevisionRequested {
 			return ErrFinalReportState
 		}
-		// Corrections retain the existing lifecycle even with inconsistent historical weeks.
 		return nil
 	}
 	if !model.WeeklyReportsReadyForFinalEvaluation(item.WeeklyReports) {
@@ -83,9 +80,6 @@ func uploadableFinalReport(db *gorm.DB, item *model.InternshipCase) (*model.Fina
 	return &report, finalReportUploadError(item)
 }
 
-// The case lock serializes first uploads, corrections, reviews, and completion.
-// All metadata changes, including deletion of superseded metadata, commit together.
-// The handler removes the new disk file on failure and the old disk file after success.
 func (service *InternshipService) AttachFinalReport(studentID uint, file *model.File) (*model.FinalReport, *model.File, error) {
 	if file == nil || file.MimeType != "application/pdf" || file.SizeBytes <= 0 {
 		return nil, nil, ErrInvalidFinalReportFile

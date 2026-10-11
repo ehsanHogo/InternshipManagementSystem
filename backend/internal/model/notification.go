@@ -17,8 +17,6 @@ const (
 	NotificationAdminUniversityVerification NotificationType = "ADMIN_UNIVERSITY_VERIFICATION_ACTION_REQUIRED"
 )
 
-// The partial unique index also prevents duplicate unread reviewer alerts when
-// independent business transactions create work concurrently.
 type Notification struct {
 	ID         uint             `gorm:"primaryKey" json:"id"`
 	UserID     uint             `gorm:"not null;index:idx_notifications_user_created,priority:1;index:idx_notifications_user_read,priority:1;uniqueIndex:idx_notifications_unread_action,where:is_read = false AND type LIKE '%ACTION_REQUIRED'" json:"-"`

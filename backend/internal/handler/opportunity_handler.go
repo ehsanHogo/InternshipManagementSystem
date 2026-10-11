@@ -211,7 +211,6 @@ func (handler *OpportunityHandler) GetStudent(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
-// The catalog and detail use the same recruitment policy and application data.
 func (handler *OpportunityHandler) studentOpportunityWithEligibility(studentID uint, opportunity model.InternshipOpportunity) (studentOpportunityResponse, error) {
 	response := studentOpportunityView(opportunity)
 	response.CanApply = true

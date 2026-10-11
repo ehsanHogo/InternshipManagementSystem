@@ -18,8 +18,6 @@ import (
 	"internship-management-system/backend/internal/service"
 )
 
-// A fresh, isolated schema and committed fixtures exercise real PostgreSQL
-// constraints, transactions, and simultaneous final-evaluation requests.
 func TestProfessorFinalEvaluation(t *testing.T) {
 	dsn := os.Getenv("TEST_DATABASE_DSN")
 	if dsn == "" {
@@ -79,7 +77,7 @@ func TestProfessorFinalEvaluation(t *testing.T) {
 		t.Helper()
 		counter++
 		item := createProfessorReviewCase(t, db, suffix+counter, professor.ID, supervisor.ID, 8, 8, true, true)
-		createAssignment(t, db, item.StudentID, otherProfessor.ID) // Snapshot wins over current assignment.
+		createAssignment(t, db, item.StudentID, otherProfessor.ID)
 		now := time.Now().Add(-24 * time.Hour).UTC()
 		if err := db.Model(&item).Updates(map[string]any{"activated_at": now, "submitted_at": now, "letter_number": "letter-12", "letter_date": now, "internship_subject": "subject", "start_date": now, "workplace_address": "address", "workplace_phone": "02112345678"}).Error; err != nil {
 			t.Fatal(err)
@@ -145,7 +143,6 @@ func TestProfessorFinalEvaluation(t *testing.T) {
 			if actual.Status != expected || actual.FinalResult == nil || *actual.FinalResult != result || actual.CompletedAt == nil || actual.ProfessorComment == nil || *actual.ProfessorComment != "overall professor comment" {
 				t.Fatalf("incorrect final evaluation: %+v", actual)
 			}
-			// Compare the entire reloaded graph after masking only the four permitted fields.
 			after := load(t, item.ID)
 			after.Status, after.FinalResult, after.ProfessorComment, after.CompletedAt = before.Status, before.FinalResult, before.ProfessorComment, before.CompletedAt
 			unchanged(t, before, after)

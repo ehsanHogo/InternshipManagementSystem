@@ -31,7 +31,6 @@ func TestSeedPreservesMutableOperationalData(t *testing.T) {
 		t.Fatal(tx.Error)
 	}
 	defer tx.Rollback()
-	// Isolate bootstrap tests from all existing test/bootstrap records.
 	schema := fmt.Sprintf("m19_seed_%d", time.Now().UnixNano())
 	must := func(err error) {
 		t.Helper()
@@ -69,7 +68,6 @@ func TestSeedPreservesMutableOperationalData(t *testing.T) {
 	must(tx.Model(&assignment).Updates(map[string]any{"professor_id": otherProfessor.ID, "assigned_at": time.Now().Add(-24 * time.Hour)}).Error)
 	now := time.Now().UTC()
 	for i, company := range companies {
-		// All natural seed keys can change; startup must neither reset nor duplicate them.
 		must(tx.Model(&company).Updates(map[string]any{"name": fmt.Sprintf("runtime-%d", i), "national_id": fmt.Sprintf("runtime-national-%d", i), "economic_code": fmt.Sprintf("runtime-economic-%d", i), "phone": "runtime phone", "address": "runtime address", "is_approved": false, "registration_status": model.CompanyRegistrationStatusRejected, "registration_reviewed_by": admin.ID, "registration_reviewed_at": now, "registration_rejection_reason": "runtime decision"}).Error)
 	}
 	must(tx.Model(&supervisor).Updates(map[string]any{"full_name": "runtime name", "phone": "runtime supervisor phone", "job_title": "runtime title", "company_id": companies[1].ID, "password_hash": "runtime password hash"}).Error)
@@ -99,7 +97,6 @@ func TestSeedPreservesMutableOperationalData(t *testing.T) {
 	if !reflect.DeepEqual(beforeAssignment, afterAssignment) {
 		t.Fatal("seed reset professor assignment or timestamps")
 	}
-	// Missing relationships are safely established once with the original demo roles.
 	must(tx.Delete(&assignment).Error)
 	must(MigrateAndSeed(tx))
 	var recreated model.ProfessorAssignment

@@ -110,7 +110,6 @@ func (service *CompanyRegistrationService) Review(adminID, companyID uint, statu
 	return &company, nil
 }
 
-// Company-row locks serialize profile edits, resubmissions, and admin review.
 func (service *CompanyAccountService) lockedProfile(tx *gorm.DB, userID uint) (*CompanyAccount, error) {
 	account, err := NewCompanyAccountService(tx).GetProfile(userID)
 	if err != nil {
@@ -125,7 +124,6 @@ func (service *CompanyAccountService) lockedProfile(tx *gorm.DB, userID uint) (*
 	return account, nil
 }
 func (service *CompanyAccountService) UpdateProfile(userID uint, input CompanyRegistrationInput) (*CompanyAccount, error) {
-	// Password is never accepted by the profile API or changed by this operation.
 	normalized, err := normalizeCompanyRegistrationDetails(input)
 	if err != nil {
 		return nil, err
@@ -196,7 +194,6 @@ func (service *CompanyAccountService) Resubmit(userID uint) (*CompanyAccount, er
 		if err != nil {
 			return err
 		}
-		// Keep the last review timestamp/reviewer; clear the active rejection reason.
 		if err := tx.Model(&account.Company).Updates(map[string]any{"registration_status": model.CompanyRegistrationStatusPending, "registration_rejection_reason": nil}).Error; err != nil {
 			return err
 		}

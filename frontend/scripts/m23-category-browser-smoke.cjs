@@ -1,4 +1,3 @@
-// Focused M23 polish checks. Use a separate, freshly seeded database.
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict');
 const base = process.env.SMOKE_BASE_URL || 'http://127.0.0.1:14223';

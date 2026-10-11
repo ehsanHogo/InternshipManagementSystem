@@ -16,8 +16,6 @@ var (
 	ErrStudentRatingExists  = errors.New("this case has already been rated")
 )
 
-// CompanyRating is an explicit read-only DTO, never part of the Company model.
-// Company and admin responses therefore do not acquire rating fields implicitly.
 type CompanyRating struct {
 	CompanyAverageRating *float64 `json:"companyAverageRating"`
 	CompanyRatingCount   int64    `json:"companyRatingCount"`
@@ -43,7 +41,6 @@ func companyRatings(db *gorm.DB, companyIDs []uint) (map[uint]CompanyRating, err
 		CompanyID uint
 		CompanyRating
 	}
-	// One grouped query for the request, irrespective of opportunity count.
 	err := db.Model(&model.StudentInternshipRating{}).
 		Select("company_id, AVG(rating) AS company_average_rating, COUNT(id) AS company_rating_count").
 		Where("company_id IN ?", companyIDs).Group("company_id").Scan(&rows).Error
@@ -78,7 +75,6 @@ func (service *InternshipService) CreateStudentRating(studentID, caseID uint, ra
 			return ErrCaseAccessDenied
 		}
 		var item model.InternshipCase
-		// Serialize submissions on this case; the unique index is a second defense.
 		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ? AND student_id = ?", caseID, studentID).First(&item).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ErrCaseNotFound

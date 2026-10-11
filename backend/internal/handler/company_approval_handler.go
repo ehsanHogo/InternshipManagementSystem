@@ -22,8 +22,6 @@ func NewCompanyApprovalHandler(approvalService *service.CompanyApprovalService) 
 	return &CompanyApprovalHandler{service: approvalService}
 }
 
-// Role guards are part of registration so production and integration tests share them.
-// The supplied group must already have RequireAuth installed.
 func (handler *CompanyApprovalHandler) RegisterUniversityRoutes(group *gin.RouterGroup) {
 	companies := group.Group("/companies", appmiddleware.RequireRole(model.RoleUniversitySupervisor))
 	companies.GET("/eligible-for-approval", handler.ListEligible)

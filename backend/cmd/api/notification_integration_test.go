@@ -38,7 +38,6 @@ func TestNotificationOwnershipAndReadSnapshot(t *testing.T) {
 	if len(list) != 2 || list[0].ID != unseen.ID || list[1].ID != first.ID {
 		t.Fatalf("incorrect private newest-first list: %+v", list)
 	}
-	// GET is deliberately read-only; mark-viewed follows successful rendering.
 	count := func(want int64) {
 		t.Helper()
 		result := registrationDecode[struct{ Count int64 }](t, registrationRequest(t, router, "GET", "/api/notifications/unread-count", token, nil, 200))
@@ -88,7 +87,6 @@ func TestNotificationOwnershipAndReadSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 	count(1)
-	// Bounded responses still use the actual database unread count, not list length.
 	rows := make([]model.Notification, 105)
 	for i := range rows {
 		rows[i] = model.Notification{UserID: owner.ID, Type: model.NotificationStudentStatus, Title: "title", Message: "message"}
@@ -130,7 +128,6 @@ func TestRestrictedNotificationAccessPreservesOperationalRestrictions(t *testing
 			registrationRequest(t, router, "GET", "/api/university/students", registrationToken(t, university), nil, 403)
 		})
 	}
-	// Notifications expose only their small DTO, never company rating aggregates.
 	body := registrationRequest(t, router, "GET", "/api/notifications", registrationToken(t, company), nil, 200).Body.String()
 	for _, private := range []string{"rating", "Rating", "userId", "password"} {
 		if strings.Contains(body, private) {
@@ -197,7 +194,6 @@ func TestNotificationBusinessEvents(t *testing.T) {
 	_, err = applications.Review(supervisor.ID, rejectedApp.ID, model.ApplicationStatusRejected, nil)
 	must(err)
 	expect(rejected.ID, model.NotificationStudentStatus, 1)
-	// Both result mappings traverse all actual event hooks, including resubmission.
 	for i, result := range []model.ProfessorFinalResult{model.ProfessorFinalResultGood, model.ProfessorFinalResultFailed} {
 		t.Run(string(result), func(t *testing.T) {
 			st := student(fmt.Sprintf("workflow-%d", i))
@@ -205,7 +201,7 @@ func TestNotificationBusinessEvents(t *testing.T) {
 			must(err)
 			if i == 0 {
 				expect(supervisor.ID, model.NotificationCompanyApplications, 1)
-			} // no per-student flood
+			}
 			_, err = applications.Review(supervisor.ID, app.ID, model.ApplicationStatusAccepted, nil)
 			must(err)
 			expect(st.ID, model.NotificationStudentStatus, 1)
@@ -244,7 +240,7 @@ func TestNotificationBusinessEvents(t *testing.T) {
 			_, err = workflow.SubmitCase(st.ID)
 			must(err)
 			expect(university.ID, model.NotificationUniversityCaseReview, before+1)
-			expect(st.ID, model.NotificationStudentStatus, 2) // own submission is silent
+			expect(st.ID, model.NotificationStudentStatus, 2)
 			clear(supervisor.ID)
 			before = total(supervisor.ID, model.NotificationCompanyPlacement)
 			_, err = workflow.ApproveUniversityPlacement(item.ID, service.UniversityPlacementApprovalInput{PreferenceID: pref.ID, LetterNumber: "m23", LetterDate: time.Now()})
@@ -264,7 +260,6 @@ func TestNotificationBusinessEvents(t *testing.T) {
 			expect(supervisor.ID, model.NotificationCompanyPlacement, before+1)
 			_, err = workflow.SubmitPlacementDetails(supervisor.ID, item.ID, details)
 			must(err)
-			// University has not read its previous alert; no duplicate on correction.
 			_, err = workflow.ApprovePlacementDetails(item.ID)
 			must(err)
 			expect(st.ID, model.NotificationStudentStatus, 4)
@@ -325,7 +320,6 @@ func TestNotificationBusinessEvents(t *testing.T) {
 			if !strings.Contains(list[0].Message, word) {
 				t.Fatalf("incorrect outcome: %s", list[0].Message)
 			}
-			// Production authorization fails before the business action or notification.
 			countBefore := total(st.ID, model.NotificationStudentStatus)
 			registrationRequest(t, router, "POST", fmt.Sprintf("/api/professor/internship-cases/%d/complete", item.ID), registrationToken(t, unrelated), map[string]any{"result": "GOOD"}, 403)
 			expect(st.ID, model.NotificationStudentStatus, countBefore)

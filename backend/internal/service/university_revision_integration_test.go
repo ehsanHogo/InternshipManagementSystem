@@ -122,7 +122,6 @@ func TestUniversityPreferenceRevision(t *testing.T) {
 	if _, err := workflow.GetProfessorCase(professor.ID, item.ID); !errors.Is(err, ErrCaseAccessDenied) {
 		t.Fatalf("professor visibility: %v", err)
 	}
-	// A new recruitment application and company acceptance are possible during revision.
 	third := accepted("revision-new", student.ID, model.ApplicationStatusAccepted)
 	fourth := accepted("revision-extra", student.ID, model.ApplicationStatusAccepted)
 	for _, test := range []struct {
@@ -155,7 +154,6 @@ func TestUniversityPreferenceRevision(t *testing.T) {
 	if err != nil || len(current.Preferences) != 1 || current.Preferences[0].Priority != 1 {
 		t.Fatalf("delete compaction: %+v %v", current, err)
 	}
-	// Single preference update replaces an accepted application and changes priority.
 	if _, err := workflow.UpdatePreference(student.ID, current.Preferences[0].ID, PreferenceInput{Priority: 2, OpportunityApplicationID: third.ID}); err != nil {
 		t.Fatal(err)
 	}
@@ -188,7 +186,6 @@ func TestUniversityPreferenceRevision(t *testing.T) {
 			t.Fatal("reorder lost contiguous priorities")
 		}
 	}
-	// Submission revalidates an application that is no longer accepted.
 	if err := db.Model(&model.OpportunityApplication{}).Where("id = ?", third.ID).Update("status", model.ApplicationStatusRejected).Error; err != nil {
 		t.Fatal(err)
 	}

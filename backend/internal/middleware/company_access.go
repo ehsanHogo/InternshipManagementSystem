@@ -32,7 +32,6 @@ func RequireApprovedCompany(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// Shared business routes keep other roles unchanged while enforcing company access.
 func RequireApprovedCompanyIfSupervisor(db *gorm.DB) gin.HandlerFunc {
 	guard := RequireApprovedCompany(db)
 	return func(ctx *gin.Context) {
