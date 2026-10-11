@@ -28,7 +28,7 @@ type RatingField = keyof Pick<CompanyEvaluation,
   imports: [ButtonModule, CardModule, TagModule, JalaliDatePipe, PersianDigitsPipe, WeeklyReportReviewComponent],
   template: `
     @if (item().weeklyReports.length) {
-      <p-card header="گزارش‌های هفتگی (فقط خواندنی)">
+      <p-card header="گزارش‌های هفتگی">
         @for (report of item().weeklyReports; track report.id) {
           <details>
             <summary>گزارش هفته {{ report.weekNumber | persianDigits }}</summary>
@@ -41,7 +41,7 @@ type RatingField = keyof Pick<CompanyEvaluation,
       </p-card>
     }
     @if (item().companyEvaluation; as evaluation) {
-      <p-card header="ارزیابی سرپرست شرکت (فقط خواندنی)">
+      <p-card header="ارزیابی سرپرست شرکت">
         <div class="details-grid">
           @for (criterion of criteria; track criterion.key) {
             <div><span>{{ criterion.label }}</span><strong>{{ ratingLabels[evaluation[criterion.key]] }}</strong></div>
@@ -54,7 +54,7 @@ type RatingField = keyof Pick<CompanyEvaluation,
       </p-card>
     }
     @if (item().finalReport; as report) {
-      <p-card header="گزارش نهایی (فقط خواندنی)">
+      <p-card header="گزارش نهایی">
         <p-tag [value]="finalLabels[report.status]" [severity]="finalSeverity(report.status)" />
         <div class="details-grid">
           <div><span>نام فایل</span><strong>{{ report.currentFile.originalName }}</strong></div>

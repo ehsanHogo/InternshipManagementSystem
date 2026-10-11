@@ -43,7 +43,7 @@
   @else if (detail(); as item) {
     <h2>{{ termLabel(item.term) | persianDigits }}</h2>
     <p-tag [value]="item.term.status === 'OPEN' ? 'باز — ترم جاری' : 'بسته'" [severity]="item.term.status === 'OPEN' ? 'success' : 'secondary'" />
-    <p>باز شدن: {{ item.term.openedAt | jalaliDate }} · بسته شدن: {{ item.term.closedAt | jalaliDate }}</p>
+    <p>باز شدن: {{ item.term.openedAt | jalaliDate }} بسته شدن: {{ item.term.closedAt | jalaliDate }}</p>
     <p-table [value]="item.cases" responsiveLayout="scroll" [paginator]="item.cases.length > 10" [rows]="10">
       <ng-template #header><tr><th>پرونده</th><th>دانشجو</th><th>وضعیت</th><th>شرکت انتخاب‌شده</th><th>استاد</th><th>تاریخ ایجاد</th><th>تاریخ ارسال</th><th>تاریخ لغو / پایان</th><th>بررسی</th></tr></ng-template>
       <ng-template #body let-case><tr>

@@ -61,7 +61,7 @@ const server = http.createServer((req, res) => {
         await page.goto(origin + '/profile');
         await page.getByRole('heading', { name: 'پروفایل من', exact: true }).waitFor();
         await page.locator('#profile-name').waitFor();
-        assert.equal(await page.locator('.detail').filter({ hasText: 'ایمیل (فقط خواندنی)' }).locator('input').count(), 0);
+        assert.equal(await page.locator('.detail').filter({ hasText: 'ایمیل' }).locator('input').count(), 0);
         assert.equal(await page.locator('#profile-title').count(), status ? 1 : 0);
         if (role === 'STUDENT') {
           assert.match(await page.locator('.detail-grid').innerText(), /40123456/);

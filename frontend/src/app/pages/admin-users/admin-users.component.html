@@ -29,7 +29,7 @@
    <div class="detail"><span>نام</span><strong>{{ account.fullName }}</strong></div>
    <div class="detail"><span>ایمیل</span><strong dir="ltr">{{ account.email }}</strong></div>
    <div class="detail"><span>تلفن</span><strong dir="ltr">{{ account.phone || '—' }}</strong></div>
-   <div class="detail"><span>نقش (فقط خواندنی)</span><strong>{{ roles[account.role] }}</strong></div>
+   <div class="detail"><span>نقش</span><strong>{{ roles[account.role] }}</strong></div>
    <div class="detail"><span>تاریخ ثبت</span><strong>{{ account.createdAt | jalaliDate }}</strong></div>
    <div class="detail"><span>وضعیت حساب</span><strong>{{ account.isActive ? 'فعال' : 'غیرفعال' }}</strong></div>
    @if (account.role === 'STUDENT') {

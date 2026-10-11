@@ -50,7 +50,7 @@
         <td>{{ resultLabel(item) }}</td>
         <td>
           <p-button
-            [label]="item.status === 'ACTIVE' ? 'مشاهده و ارزیابی' : 'مشاهده پرونده (فقط خواندنی)'"
+            [label]="item.status === 'ACTIVE' ? 'مشاهده و ارزیابی' : 'مشاهده پرونده'"
             icon="pi pi-eye"
             [text]="true"
             [routerLink]="['/professor/internships', item.caseId]"

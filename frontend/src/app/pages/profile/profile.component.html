@@ -9,14 +9,14 @@
 } @else if (user(); as account) {
   <p-card header="اطلاعات حساب کاربری">
     <div class="detail-grid">
-      <div class="detail"><span>ایمیل (فقط خواندنی)</span><strong dir="ltr">{{ account.email }}</strong></div>
-      <div class="detail"><span>نقش (فقط خواندنی)</span><strong>{{ roleLabels[account.role] }}</strong></div>
+      <div class="detail"><span>ایمیل</span><strong dir="ltr">{{ account.email }}</strong></div>
+      <div class="detail"><span>نقش</span><strong>{{ roleLabels[account.role] }}</strong></div>
       @if (account.role === 'STUDENT') {
-        <div class="detail"><span>شماره دانشجویی (فقط خواندنی)</span><strong>{{ account.studentNumber || '—' }}</strong></div>
-        <div class="detail"><span>رشته (فقط خواندنی)</span><strong>{{ account.major || '—' }}</strong></div>
+        <div class="detail"><span>شماره دانشجویی</span><strong>{{ account.studentNumber || '—' }}</strong></div>
+        <div class="detail"><span>رشته</span><strong>{{ account.major || '—' }}</strong></div>
       }
       @if (account.role === 'COMPANY_SUPERVISOR') {
-        <div class="detail full-width"><span>شرکت (فقط خواندنی)</span><strong>{{ account.companyName || '—' }}</strong></div>
+        <div class="detail full-width"><span>شرکت</span><strong>{{ account.companyName || '—' }}</strong></div>
       }
     </div>
     <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">

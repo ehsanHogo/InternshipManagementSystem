@@ -73,7 +73,7 @@
         <p>پرونده فعالی ندارید. پس از پرونده مردود یا لغو شده می‌توانید فرایند کارآموزی جدیدی آغاز کنید.</p>
       }
       @if (historicalCase(); as past) {
-        <p-card header="آخرین پرونده تاریخی (فقط خواندنی)">
+        <p-card header="آخرین پرونده تاریخی">
           <p>ترم کارآموزی: {{ termLabel(past.term) | persianDigits }}</p>
           <p-tag [value]="statusLabel(past.status)" [severity]="internshipStatusSeverity(past.status)" />
           @if (past.status !== 'CANCELLED') {

@@ -10,7 +10,7 @@
       <span class="eyebrow">پرونده کارآموزی شماره {{ item.id | persianDigits }}</span>
       <h1>{{ item.student.fullName }}</h1>
       <p>
-        {{ item.student.studentNumber ?? "—" }} ·
+        {{ item.student.studentNumber ?? "—" }}
         {{ item.student.major ?? "—" }}
       </p>
     </div>
@@ -28,7 +28,7 @@
 
   <p>ترم کارآموزی: {{ termLabel(item.term) | persianDigits }}</p>
   @if (item.status === 'CANCELLED') {
-    <div class="state-card"><p>این پرونده لغو شده و فقط خواندنی است. دلیل لغو: {{ item.cancellationComment || '—' }} · {{ item.cancelledAt | jalaliDate }}</p></div>
+    <div class="state-card"><p>این پرونده لغو شده است. دلیل لغو: {{ item.cancellationComment || '—' }} {{ item.cancelledAt | jalaliDate }}</p></div>
   }
 
   <p-card header="اطلاعات دانشجو و استاد">

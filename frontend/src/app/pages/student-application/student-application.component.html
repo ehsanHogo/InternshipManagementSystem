@@ -4,7 +4,7 @@
   <div>
     <span class="eyebrow">درخواست رسمی کارآموزی</span>
     <h1>{{ viewingHistory() ? "پرونده تاریخی کارآموزی" : "پرونده کارآموزی" }}</h1>
-    <p>{{ viewingHistory() ? "اطلاعات ثبت‌شده این پرونده فقط خواندنی است." : "پرونده فعلی و پرونده‌های پیشین خود را مشاهده کنید." }}</p>
+    <p>{{ viewingHistory() ? "اطلاعات ثبت‌شده این پرونده را مشاهده کنید." : "پرونده فعلی و پرونده‌های پیشین خود را مشاهده کنید." }}</p>
   </div>
   @if (internshipCase(); as currentCase) {
     <p-tag [value]="statusLabel(currentCase.status)" [severity]="internshipStatusSeverity(currentCase.status)" />
@@ -12,7 +12,7 @@
 </section>
 
 @if (!loading() && !loadFailed() && historicalCases().length) {
-  <p-card header="پرونده‌های پیشین (فقط خواندنی)">
+  <p-card header="پرونده‌های پیشین">
     @for (past of historicalCases(); track past.id) {
       <div class="card-status-line status-line">
         <span>پرونده {{ past.id | persianDigits }}</span>
@@ -80,7 +80,7 @@
     </div>
   </p-card>
 } @else if (internshipCase(); as currentCase) {
-  <h2>{{ viewingHistory() ? "جزئیات پرونده تاریخی" : "پرونده فعلی" }} · {{ currentCase.id | persianDigits }}</h2>
+  <h2>{{ viewingHistory() ? "جزئیات پرونده تاریخی" : "پرونده فعلی" }} {{ currentCase.id | persianDigits }}</h2>
   <p>ترم کارآموزی: <strong>{{ termLabel(currentCase.term) | persianDigits }}</strong></p>
   @if (!canEditPreferences) {
     <div class="review-notice">
@@ -93,7 +93,6 @@
             [severity]="internshipStatusSeverity(currentCase.status)"
           />
         </div>
-        <p class="review-notice-text">اطلاعات و اولویت‌های این پرونده برای دانشجو فقط خواندنی است.</p>
       </div>
     </div>
   }
@@ -290,7 +289,7 @@
         <div class="rating-stars" dir="ltr" aria-hidden="true">
           @for (star of ratingStars; track star) { <span>{{ star <= currentCase.studentRating ? '★' : '☆' }}</span> }
         </div>
-        <p>{{ currentCase.studentRating | persianDigits }} از ۵ · امتیاز ثبت‌شده نهایی است.</p>
+        <p>{{ currentCase.studentRating | persianDigits }} از ۵ امتیاز ثبت‌شده نهایی است.</p>
       } @else if (currentCase.canRateInternship) {
         <p>تجربه کلی خود از این شرکت را ارزیابی کنید. امتیاز پس از ثبت قابل تغییر نیست.</p>
         <div class="rating-stars" role="group" aria-label="امتیاز شرکت از یک تا پنج" dir="ltr">

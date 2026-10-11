@@ -282,7 +282,7 @@
   }
 
   @if (item.status === 'PASSED' || item.status === 'FAILED') {
-    <p-card header="نتیجه نهایی کارآموزی (فقط خواندنی)">
+    <p-card header="نتیجه نهایی کارآموزی">
       <div class="card-status-line status-line">
         <span class="status-label">وضعیت پرونده</span>
         <p-tag [value]="statusLabel(item.status)" [severity]="internshipStatusSeverity(item.status)" />
