@@ -21,6 +21,7 @@
   align-items: center;
   justify-content: center;
   gap: 1rem;
+  padding-top: 2.5rem;
   margin-bottom: 1.5rem;
   text-align: center;
 
@@ -121,10 +122,6 @@ form {
 }
 
 @media (max-width: 42rem) {
-  .page-header {
-    padding-top: 2.5rem;
-  }
-
   .form-grid {
     grid-template-columns: 1fr;
   }
